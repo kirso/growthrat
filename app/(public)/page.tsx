@@ -1,44 +1,5 @@
 import Link from "next/link";
 
-const deliverables = [
-  {
-    icon: "📝",
-    title: "Technical Content",
-    desc: "Deep-dive guides on RevenueCat for agent-built apps, grounded in real API usage and search data.",
-    count: "2+ flagships",
-  },
-  {
-    icon: "📊",
-    title: "Growth Experiments",
-    desc: "Data-backed distribution tests with clear hypotheses, instrumentation, and readouts.",
-    count: "1 live experiment",
-  },
-  {
-    icon: "💬",
-    title: "Product Feedback",
-    desc: "Structured feedback on agent onboarding, Charts, and webhook flows from real usage.",
-    count: "3 reports",
-  },
-  {
-    icon: "📈",
-    title: "Weekly Report",
-    desc: "Async check-in with metrics, learnings, and next-week priorities.",
-    count: "1 report",
-  },
-  {
-    icon: "🔌",
-    title: "Integration Ready",
-    desc: "Typefully (5 social platforms), Slack, GitHub, DataForSEO, and RevenueCat API connectors built and tested.",
-    count: "6 connectors",
-  },
-  {
-    icon: "🎯",
-    title: "Operator Replay",
-    desc: "Transparent view into how GrowthCat makes decisions, retrieves sources, and validates quality.",
-    count: "Live demo",
-  },
-];
-
 const articles = [
   {
     slug: "revenuecat-for-agent-built-apps",
@@ -103,6 +64,37 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+const stats = [
+  { label: "Flagships", value: "2" },
+  { label: "Feedback Reports", value: "3" },
+  { label: "Experiments", value: "1" },
+  { label: "Weekly Reports", value: "1" },
+  { label: "Connectors", value: "6" },
+];
+
+const howItWorks = [
+  {
+    step: "1",
+    title: "Add GrowthCat to your Slack",
+    desc: "It starts working. No onboarding meeting. No config file.",
+  },
+  {
+    step: "2",
+    title: '@GrowthCat "write about webhooks"',
+    desc: "Data-grounded content appears, passes 8 quality gates, publishes across 5 platforms.",
+  },
+  {
+    step: "3",
+    title: "Every Friday",
+    desc: "Async weekly report in Slack: what shipped, what worked, what's next.",
+  },
+  {
+    step: "4",
+    title: "Self-service onboarding",
+    desc: "No sharing API keys with the operator. GrowthCat reads public docs and APIs directly.",
+  },
+];
+
 export default function HomePage() {
   return (
     <>
@@ -119,31 +111,34 @@ export default function HomePage() {
             </div>
 
             <h1 className="font-bold text-5xl md:text-6xl text-[var(--color-rc-dark)] leading-[1.1] tracking-tight mb-6">
-              The agent that ships
-              <br />
-              <span className="text-[var(--color-gc-primary)]">
-                before it applies.
-              </span>
+              GrowthCat
             </h1>
 
+            <p className="text-2xl md:text-3xl font-semibold text-[var(--color-rc-dark)] leading-snug mb-4 max-w-2xl">
+              I already did the job.{" "}
+              <span className="text-[var(--color-gc-primary)]">
+                Here&apos;s the proof.
+              </span>
+            </p>
+
             <p className="text-xl text-[var(--color-rc-muted)] leading-relaxed mb-4 max-w-2xl">
-              RevenueCat processes $10B+ in annual purchase volume and powers 40%+ of
-              newly shipped subscription apps. Agents like KellyClaudeAI and Larry are
-              already building and growing apps with RevenueCat. They deserve a dedicated
-              advocate.
+              RevenueCat processes $10B+ in annual purchase volume and powers
+              40%+ of newly shipped subscription apps. Agents like KellyClaudeAI
+              and Larry are already building and growing apps with RevenueCat.
+              They deserve a dedicated advocate.
             </p>
             <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed mb-8 max-w-2xl">
-              GrowthCat doesn&apos;t just describe what it would do. It already did it.
-              Real content, real data, real product feedback, a live panel console
-              for interviews &mdash; all grounded in evidence, not speculation.
+              GrowthCat doesn&apos;t describe what it would do. It already did
+              it. Real content, real data, real product feedback &mdash; all
+              grounded in evidence, not speculation.
             </p>
 
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/proof-pack"
+                href="/application"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline shadow-sm"
               >
-                View Proof Pack
+                Read the Application Letter
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -159,10 +154,10 @@ export default function HomePage() {
                 </svg>
               </Link>
               <Link
-                href="/readiness-review"
+                href="/proof-pack"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--color-rc-dark)] font-semibold rounded-lg border border-[var(--color-rc-border)] hover:border-[var(--color-rc-muted)] transition-colors no-underline"
               >
-                Readiness Review
+                View Proof Pack
               </Link>
               <Link
                 href="/operator-replay"
@@ -171,47 +166,189 @@ export default function HomePage() {
                 How it works &rarr;
               </Link>
             </div>
-
-            <div className="mt-6 pt-6 border-t border-[var(--color-rc-border)]">
-              <Link
-                href="/articles/revenuecat-for-agent-built-apps"
-                className="text-sm text-[var(--color-gc-primary)] hover:text-[var(--color-gc-accent)] font-medium no-underline"
-              >
-                Read the full application letter &rarr;
-              </Link>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* What GrowthCat delivers */}
+      {/* Stats bar */}
+      <section className="border-y border-[var(--color-rc-border)] bg-white">
+        <div className="max-w-[var(--max-w-wide)] mx-auto px-6 py-6">
+          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-2xl font-bold text-[var(--color-gc-primary)]">
+                  {stat.value}
+                </div>
+                <div className="text-xs font-medium text-[var(--color-rc-muted)] uppercase tracking-wider mt-1">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What GrowthCat does */}
       <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20">
         <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
-          Week one, done.
+          What GrowthCat does
         </h2>
         <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
-          Everything the role requires in the first week &mdash; shipped as
-          proof artifacts, not promises.
+          An autonomous agent that handles the full developer-advocacy and
+          growth loop &mdash; content, experiments, feedback, community, and
+          reporting &mdash; without needing to be managed.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {deliverables.map((item) => (
-            <div
-              key={item.title}
-              className="group p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200"
-            >
-              <div className="text-2xl mb-3">{item.icon}</div>
-              <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-                {item.title}
-              </h3>
-              <p className="text-sm text-[var(--color-rc-muted)] mb-3 leading-relaxed">
-                {item.desc}
-              </p>
-              <span className="text-xs font-semibold text-[var(--color-gc-primary)] uppercase tracking-wider">
-                {item.count}
-              </span>
-            </div>
-          ))}
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
+            <div className="text-2xl mb-3">📝</div>
+            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+              Weekly Technical Content
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Data-grounded guides on RevenueCat for agent builders. Every piece
+              passes 8 quality gates before publication. Distributed across 5
+              platforms via Typefully.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
+            <div className="text-2xl mb-3">📊</div>
+            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+              Growth Experiments
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Hypothesis-driven distribution tests grounded in DataForSEO
+              keyword data. Explicit metrics, stop conditions, and readouts.
+              Not vibes.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
+            <div className="text-2xl mb-3">💬</div>
+            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+              Product Feedback
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Structured reports from real API usage: problem, reproduction,
+              impact, proposed fix. Already filed 3 reports on agent onboarding,
+              Charts, and webhooks.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
+            <div className="text-2xl mb-3">🤝</div>
+            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+              Community Engagement
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Monitors GitHub issues, X mentions, and forum threads for repeated
+              questions. Builds canonical answers that compound over time.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
+            <div className="text-2xl mb-3">💬</div>
+            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+              Slack-First Interaction
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Shows up where the team already works. Structured reports with
+              headers, sections, dividers. Feels like a teammate, not a
+              dashboard.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
+            <div className="text-2xl mb-3">📈</div>
+            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+              Weekly Async Reports
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Every Friday: what shipped, what worked, what friction was found,
+              what&apos;s next. Metrics-backed, formatted for Slack, not slide
+              decks.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How RC would work with GrowthCat */}
+      <section className="bg-[var(--color-rc-surface)] py-20">
+        <div className="max-w-[var(--max-w-wide)] mx-auto px-6">
+          <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
+            How RevenueCat would work with GrowthCat
+          </h2>
+          <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
+            No ramp-up theater. No onboarding deck. It just starts working.
+          </p>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            {howItWorks.map((item) => (
+              <div
+                key={item.step}
+                className="flex gap-4 p-6 bg-white rounded-xl border border-[var(--color-rc-border)]"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[var(--color-gc-primary)]/10 text-[var(--color-gc-primary)] font-bold flex items-center justify-center">
+                  {item.step}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-[var(--color-rc-dark)] mb-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Values alignment */}
+      <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20">
+        <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
+          Built on RevenueCat&apos;s values
+        </h2>
+        <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
+          Not just aligned with them. Operating on them.
+        </p>
+        <div className="grid sm:grid-cols-2 gap-6">
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
+            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+              Customer Obsession
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Turns repeated developer friction into better content, better
+              docs, and structured product feedback. Not because someone asked
+              &mdash; because that&apos;s what the signals say.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
+            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+              Always Be Shipping
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Visible output every week. The proof pack exists because shipping
+              beats strategizing. The full weekly cadence was completed before
+              applying.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
+            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+              Own It
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Identifies opportunities autonomously, explains choices, and
+              accepts quality gates instead of hiding behind volume.
+            </p>
+          </div>
+          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
+            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+              Balance
+            </h3>
+            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+              Explicit trust boundaries, confidence thresholds, and refusal
+              behavior for low-confidence actions. The kill switch is a feature,
+              not a concession.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -282,22 +419,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Footer CTA */}
       <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20 text-center">
         <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
           Built to ship, not to pitch.
         </h2>
         <p className="text-lg text-[var(--color-rc-muted)] mb-8 max-w-xl mx-auto">
-          GrowthCat is an evidence-backed, quality-gated autonomous agent. Every
-          output is grounded in data, validated against publish gates, and
-          designed to be referenceable.
+          Every output is grounded in data, validated against 8 publish gates,
+          and designed to be referenceable. The full application letter explains
+          the system, the proof, and the plan.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Link
-            href="/proof-pack"
+            href="/application"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline shadow-sm"
           >
-            Explore the proof
+            Read the Application Letter
+          </Link>
+          <Link
+            href="/proof-pack"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--color-rc-dark)] font-semibold rounded-lg border border-[var(--color-rc-border)] hover:border-[var(--color-rc-muted)] transition-colors no-underline"
+          >
+            Explore the Proof
           </Link>
           <Link
             href="/operator-replay"

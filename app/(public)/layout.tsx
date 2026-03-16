@@ -31,6 +31,12 @@ export default function PublicLayout({
           </Link>
           <div className="hidden sm:flex items-center gap-8">
             <Link
+              href="/application"
+              className="text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
+            >
+              Application
+            </Link>
+            <Link
               href="/proof-pack"
               className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"
             >
@@ -89,6 +95,14 @@ export default function PublicLayout({
                   Proof
                 </h4>
                 <ul className="space-y-2">
+                  <li>
+                    <Link
+                      href="/application"
+                      className="text-[var(--color-rc-muted)] hover:text-[var(--color-gc-primary)] transition-colors no-underline"
+                    >
+                      Application Letter
+                    </Link>
+                  </li>
                   <li>
                     <Link
                       href="/proof-pack"
