@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:convex": "bunx convex dev",
-    "dev:inngest": "bunx inngest-cli@latest dev",
+    "dev:inngest": "bunx inngest-cli dev -u http://localhost:3000/api/inngest",
     "dev:all": "concurrently \"bun run dev\" \"bun run dev:convex\" \"bun run dev:inngest\"",
     "build": "next build",
     "start": "next start",
@@ -38,8 +38,12 @@
     "@types/react-dom": "^19.1.0",
     "eslint": "^9.31.0",
     "eslint-config-next": "^15.3.0",
+    "inngest-cli": "^1.17.5",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"
-  }
+  },
+  "trustedDependencies": [
+    "inngest-cli"
+  ]
 }
