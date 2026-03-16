@@ -1,0 +1,176 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Operator Replay",
+  description:
+    "A transparent look at how GrowthCat makes decisions, from source ingestion to content delivery.",
+};
+
+const steps = [
+  {
+    phase: "Source Ingestion",
+    icon: "📚",
+    description:
+      "GrowthCat ingests public RevenueCat docs, SDK repos, blog posts, community discussions, and DataForSEO market intelligence.",
+    detail:
+      "Sources are classified by evidence tier (public product, market intelligence, community signal) and tracked for freshness. Inngest functions handle scheduled ingestion with automatic retry and deduplication.",
+    sources: [
+      "RevenueCat Docs",
+      "RevenueCat GitHub",
+      "DataForSEO Labs",
+      "DataForSEO SERP",
+      "Public Community Signals",
+    ],
+  },
+  {
+    phase: "Opportunity Discovery",
+    icon: "🔍",
+    description:
+      "Multi-signal scoring identifies what to work on. Each opportunity is scored across 8 dimensions.",
+    detail:
+      "Scoring weights: RC relevance (20%), agent-builder relevance (15%), demand signal (15%), novelty delta (15%), artifact potential (10%), distribution potential (10%), feedback value (10%), ease to execute (5%).",
+    sources: [
+      "Keyword Ideas",
+      "SERP Snapshots",
+      "AI Visibility Scores",
+      "Content Trends",
+      "Question Clusters",
+    ],
+  },
+  {
+    phase: "Lane Assignment",
+    icon: "🛤️",
+    description:
+      "Each opportunity is assigned to a lane: flagship searchable, flagship shareable, canonical answer, experiment, product feedback, docs update, or derivative.",
+    detail:
+      "Weekly portfolio rules enforce minimum coverage: at least one searchable flagship, one shareable flagship, derivatives for each flagship, and one experiment linked to a flagship. Convex stores lane state and portfolio progress.",
+    sources: [],
+  },
+  {
+    phase: "Content Generation",
+    icon: "✍️",
+    description:
+      "The Vercel AI SDK pipeline generates content using prompt templates grounded in the voice profile and retrieved evidence.",
+    detail:
+      "Each piece is generated with a system prompt enforcing GrowthCat's tone (technical, structured, evidence-backed, curious, direct) and recurring themes. Inngest AgentKit orchestrates multi-step generation with tool-calling and evidence retrieval.",
+    sources: ["Vercel AI SDK", "Voice Profile", "Evidence Items"],
+  },
+  {
+    phase: "Quality Gates",
+    icon: "🚦",
+    description:
+      "Every artifact passes through 8 publish gates before shipping.",
+    detail:
+      "Gates: grounding (claims source-backed), novelty (min 0.65), technical (code/links valid), SEO, AEO (answer extraction), GEO (citation-worthiness), benchmark (beats comparison set), voice (matches identity).",
+    sources: ["Publish Gate Framework", "Benchmark Corpus", "Voice Validator"],
+  },
+  {
+    phase: "Distribution",
+    icon: "🚀",
+    description:
+      "Published artifacts are distributed across channels with channel-specific derivatives.",
+    detail:
+      "Flagship pieces get X threads, GitHub gists, and Slack summaries. Inngest handles fan-out distribution with per-channel rate limiting. Metrics are tracked in Convex for post-publish review.",
+    sources: ["X API", "GitHub API", "Slack API", "Microsite Deploy"],
+  },
+];
+
+export default function OperatorReplayPage() {
+  return (
+    <div className="max-w-[var(--max-w-wide)] mx-auto px-6 py-16">
+      {/* Header */}
+      <header className="max-w-2xl mb-16">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-sm font-medium mb-4">
+          Transparency
+        </div>
+        <h1 className="font-bold text-4xl md:text-5xl text-[var(--color-rc-dark)] leading-tight tracking-tight mb-4">
+          How GrowthCat Works
+        </h1>
+        <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed">
+          A deterministic replay of GrowthCat&apos;s decision pipeline. No
+          hidden prompts, no black boxes &mdash; every step is inspectable.
+        </p>
+      </header>
+
+      {/* Pipeline visualization */}
+      <div className="relative">
+        {/* Vertical connector line */}
+        <div className="absolute left-6 top-8 bottom-8 w-px bg-[var(--color-rc-border)] hidden md:block" />
+
+        <div className="space-y-8">
+          {steps.map((step, i) => (
+            <div key={step.phase} className="relative md:pl-16">
+              {/* Step number bubble */}
+              <div className="hidden md:flex absolute left-0 top-0 w-12 h-12 rounded-full bg-white border-2 border-[var(--color-rc-border)] items-center justify-center text-lg font-bold text-[var(--color-rc-dark)] z-10">
+                {i + 1}
+              </div>
+
+              <div className="p-6 rounded-xl border border-[var(--color-rc-border)] bg-white hover:shadow-[var(--shadow-card)] transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-xl md:hidden">{step.icon}</span>
+                  <h3 className="font-bold text-xl text-[var(--color-rc-dark)]">
+                    {step.phase}
+                  </h3>
+                </div>
+                <p className="text-[var(--color-rc-text)] mb-3">
+                  {step.description}
+                </p>
+                <p className="text-sm text-[var(--color-rc-muted)] mb-4">
+                  {step.detail}
+                </p>
+                {step.sources.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {step.sources.map((source) => (
+                      <span
+                        key={source}
+                        className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-rc-surface)] text-[var(--color-rc-muted)] font-medium border border-[var(--color-rc-border)]"
+                      >
+                        {source}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Architecture note */}
+      <div className="mt-16 p-8 rounded-xl bg-[var(--color-rc-surface)] border border-[var(--color-rc-border)]">
+        <h2 className="font-bold text-xl text-[var(--color-rc-dark)] mb-4">
+          Architecture
+        </h2>
+        <div className="grid sm:grid-cols-3 gap-6 text-sm">
+          <div>
+            <h4 className="font-semibold text-[var(--color-rc-dark)] mb-1">
+              Control Plane
+            </h4>
+            <p className="text-[var(--color-rc-muted)]">
+              Next.js API routes + Convex. Exposes workflow triggers, status
+              queries, and configuration endpoints with type-safe schemas.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-[var(--color-rc-dark)] mb-1">
+              Orchestration
+            </h4>
+            <p className="text-[var(--color-rc-muted)]">
+              Inngest AgentKit for durable, inspectable task execution with
+              automatic retry, step functions, and audit trails.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-[var(--color-rc-dark)] mb-1">
+              Connectors
+            </h4>
+            <p className="text-[var(--color-rc-muted)]">
+              Slack, X, GitHub, RevenueCat API, DataForSEO. Each handles auth,
+              rate limiting, and graceful degradation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
