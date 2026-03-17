@@ -14,7 +14,6 @@
 
 import { Agent, createTool } from "@convex-dev/agent";
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { components, internal } from "./_generated/api";
 
@@ -41,7 +40,8 @@ GrowthCat is an independent agent applying to RevenueCat, not a RevenueCat-owned
 export const growthCatAgent = new Agent(components.agent, {
   name: "GrowthCat",
   languageModel: anthropic.chat("claude-sonnet-4-20250514"),
-  textEmbeddingModel: openai.embedding("text-embedding-3-small"),
+  // textEmbeddingModel omitted — thread search uses text-only.
+  // Custom RAG on sources table uses Voyage AI via fetch in contextHandler.
   instructions: SYSTEM_PROMPT,
 
   tools: {
@@ -197,29 +197,35 @@ export const growthCatAgent = new Agent(components.agent, {
 });
 
 /**
- * Generate an embedding for a text query.
- * Uses OpenAI text-embedding-3-small (1536 dimensions).
+ * Generate an embedding. Tries Voyage AI first (free 200M tokens),
+ * falls back to OpenAI. Uses fetch (available in default Convex runtime).
  */
 async function generateEmbedding(text: string): Promise<number[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY required for embeddings");
+  const voyageKey = process.env.VOYAGE_API_KEY;
+  if (voyageKey) {
+    const res = await fetch("https://api.voyageai.com/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${voyageKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "voyage-3-lite", input: [text.slice(0, 16000)] }),
+    });
+    if (!res.ok) throw new Error(`Voyage error: ${res.status}`);
+    const data = await res.json();
+    return data.data[0].embedding;
   }
 
-  const response = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: text.slice(0, 8000),
-    }),
-  });
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    const res = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "text-embedding-3-small", input: text.slice(0, 8000) }),
+    });
+    if (!res.ok) throw new Error(`OpenAI error: ${res.status}`);
+    const data = await res.json();
+    return data.data[0].embedding;
+  }
 
-  const data = await response.json();
-  return data.data[0].embedding;
+  throw new Error("No embedding key. Set VOYAGE_API_KEY or OPENAI_API_KEY.");
 }
 
 export { generateEmbedding };

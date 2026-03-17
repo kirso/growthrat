@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { RC_DOC_URLS, processPage } from "./crawler";
 
 // ---------------------------------------------------------------------------
 // DataForSEO
@@ -199,7 +200,7 @@ export const generateReport = internalAction({
 export const ingestKnowledge = internalAction({
   args: {},
   handler: async (ctx) => {
-    const { RC_DOC_URLS, processPage } = await import("../lib/knowledge/crawler");
+    // RC_DOC_URLS and processPage imported statically at top of file
     let totalChunks = 0;
 
     for (const page of RC_DOC_URLS) {
@@ -302,5 +303,121 @@ export const startFeedbackWorkflow = internalAction({
   args: { topics: v.array(v.string()) },
   handler: async () => {
     return { triggered: true };
+  },
+});
+
+// ---------------------------------------------------------------------------
+// Test: Ingest a single page (for debugging)
+// ---------------------------------------------------------------------------
+
+export const testIngestOnePage = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      const page = RC_DOC_URLS[0]; // Just the first page
+      console.log("Starting ingestion for:", page.key, page.url);
+      
+      const chunks = await processPage(page);
+      console.log("Got chunks:", chunks.length);
+      
+      for (const chunk of chunks.slice(0, 3)) { // Only first 3 chunks
+        await ctx.runMutation(internal.sources.upsertWithEmbedding, {
+          key: chunk.key,
+          url: chunk.url,
+          provider: chunk.provider,
+          sourceClass: chunk.sourceClass,
+          evidenceTier: chunk.evidenceTier,
+          lastRefreshed: Date.now(),
+          contentHash: chunk.contentHash,
+          summary: chunk.summary,
+          embedding: chunk.embedding,
+          chunkIndex: chunk.chunkIndex,
+          parentKey: chunk.parentKey,
+        });
+        console.log("Stored chunk:", chunk.key);
+      }
+      
+      return { success: true, chunks: Math.min(chunks.length, 3) };
+    } catch (err) {
+      console.error("Ingestion error:", err);
+      return { success: false, error: String(err) };
+    }
+  },
+});
+
+/** Step-by-step test of ingestion (Node.js runtime — more memory) */
+export const testIngestStep = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const results: string[] = [];
+    
+    try {
+      // Step 1: Fetch (smaller page)
+      const res = await fetch("https://www.revenuecat.com/docs/integrations/webhooks/event-types-and-fields");
+      const html = await res.text();
+      results.push("1. Fetch OK: " + html.length + " chars");
+      
+      // Step 2: Simple text extraction (avoid regex memory blow-up)
+      let text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 10000); // Limit to 10K chars
+      results.push("2. Extract OK: " + text.length + " chars");
+      
+      // Step 3: Chunk
+      const chunkSize = 2000;
+      const chunks: string[] = [];
+      for (let i = 0; i < text.length; i += chunkSize - 200) {
+        chunks.push(text.slice(i, i + chunkSize).trim());
+        if (chunks.length >= 3) break; // Only 3 chunks for testing
+      }
+      results.push("3. Chunks OK: " + chunks.length);
+      
+      // Step 4: Embed via Voyage AI (free 200M tokens)
+      const voyageKey = process.env.VOYAGE_API_KEY;
+      const embRes = await fetch("https://api.voyageai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + voyageKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "voyage-3-lite",
+          input: [chunks[0].slice(0, 16000)],
+        }),
+      });
+      const embData = await embRes.json();
+      const embedding = embData.data?.[0]?.embedding;
+      results.push("4. Embedding OK: " + (embedding?.length ?? "FAILED") + " dims");
+      
+      if (!embedding) {
+        results.push("ERROR: " + JSON.stringify(embData).slice(0, 200));
+        return { success: false, steps: results };
+      }
+      
+      // Step 5: Store
+      await ctx.runMutation(internal.sources.upsertWithEmbedding, {
+        key: "rc-docs:webhook-events:chunk-0",
+        url: "https://www.revenuecat.com/docs/integrations/webhooks/event-types-and-fields",
+        provider: "RevenueCat",
+        sourceClass: "public_product",
+        evidenceTier: "public_product_and_competitor",
+        lastRefreshed: Date.now(),
+        contentHash: String(chunks[0].length),
+        summary: chunks[0].slice(0, 500),
+        embedding: embedding,
+        chunkIndex: 0,
+        parentKey: "rc-docs:webhook-events",
+      });
+      results.push("5. Stored OK");
+      
+      return { success: true, steps: results };
+    } catch (err) {
+      results.push("ERROR: " + String(err));
+      return { success: false, steps: results };
+    }
   },
 });

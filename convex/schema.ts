@@ -111,7 +111,7 @@ export default defineSchema({
     .index("by_key", ["key"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
-      dimensions: 1536,
+      dimensions: 512, // Voyage AI voyage-3-lite
       filterFields: ["provider", "evidenceTier"],
     }),
 

@@ -160,11 +160,14 @@ export const recordInteraction = internalMutation({
 
 // ---------------------------------------------------------------------------
 // Workflow Starters (called by crons → start Convex Workflows)
+// Static imports only — Convex does not support dynamic import()
 // ---------------------------------------------------------------------------
 
+import { workflow } from "./workflows/index";
+
 export const startWeeklyPlan = internalMutation({
+  args: {},
   handler: async (ctx) => {
-    const { workflow } = await import("./workflows/index");
     const weekNumber = Math.ceil(
       (Date.now() - new Date("2026-03-16").getTime()) / (7 * 24 * 60 * 60 * 1000)
     ) + 1;
@@ -173,8 +176,8 @@ export const startWeeklyPlan = internalMutation({
 });
 
 export const startWeeklyReport = internalMutation({
+  args: {},
   handler: async (ctx) => {
-    const { workflow } = await import("./workflows/index");
     const weekNumber = Math.ceil(
       (Date.now() - new Date("2026-03-16").getTime()) / (7 * 24 * 60 * 60 * 1000)
     ) + 1;
@@ -183,15 +186,15 @@ export const startWeeklyReport = internalMutation({
 });
 
 export const startCommunityMonitor = internalMutation({
+  args: {},
   handler: async (ctx) => {
-    const { workflow } = await import("./workflows/index");
     await workflow.start(ctx, internal.workflows.index.communityMonitorWorkflow, {});
   },
 });
 
 export const startKnowledgeIngest = internalMutation({
+  args: {},
   handler: async (ctx) => {
-    const { workflow } = await import("./workflows/index");
     await workflow.start(ctx, internal.workflows.index.knowledgeIngestWorkflow, {});
   },
 });
@@ -199,7 +202,6 @@ export const startKnowledgeIngest = internalMutation({
 export const startContentGen = internalMutation({
   args: { topic: v.string(), targetKeyword: v.string() },
   handler: async (ctx, args) => {
-    const { workflow } = await import("./workflows/index");
     await workflow.start(ctx, internal.workflows.index.contentGenWorkflow, args);
   },
 });
