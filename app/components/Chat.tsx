@@ -1,7 +1,8 @@
 "use client";
 
-import { useChat } from "ai/react";
-import { useRef, useEffect, useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useRef, useEffect, useState, useMemo } from "react";
 
 const SUGGESTED_PROMPTS = [
   "What would you do in your first week at RevenueCat?",
@@ -12,8 +13,10 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
-    useChat({ api: "/api/chat" });
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const { messages, sendMessage, status, error } = useChat({ transport });
+  const isLoading = status === "streaming" || status === "submitted";
+  const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -22,6 +25,12 @@ export function Chat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleSend = (text: string) => {
+    if (!text.trim() || isLoading) return;
+    sendMessage({ text: text.trim() });
+    setInputValue("");
+  };
 
   if (!expanded) {
     return (
@@ -77,16 +86,7 @@ export function Chat() {
               {SUGGESTED_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
-                  onClick={() => {
-                    const fakeEvent = {
-                      target: { value: prompt },
-                    } as React.ChangeEvent<HTMLInputElement>;
-                    handleInputChange(fakeEvent);
-                    setTimeout(() => {
-                      const form = document.getElementById("chat-form") as HTMLFormElement;
-                      form?.requestSubmit();
-                    }, 50);
-                  }}
+                  onClick={() => handleSend(prompt)}
                   className="block w-full text-left text-sm px-3 py-2 rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-body)] hover:bg-[var(--color-rc-surface)] hover:border-[var(--color-gc-primary)]/30 transition-colors"
                 >
                   {prompt}
@@ -111,7 +111,12 @@ export function Chat() {
               {m.role === "assistant" && (
                 <span className="text-xs mr-1">🐱</span>
               )}
-              <span className="whitespace-pre-wrap">{m.content}</span>
+              <span className="whitespace-pre-wrap">
+                {m.parts
+                  ?.filter((p): p is { type: "text"; text: string } => p.type === "text")
+                  .map((p) => p.text)
+                  .join("") || ""}
+              </span>
             </div>
           </div>
         ))}
@@ -134,20 +139,22 @@ export function Chat() {
 
       {/* Input */}
       <form
-        id="chat-form"
-        onSubmit={handleSubmit}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend(inputValue);
+        }}
         className="border-t border-[var(--color-rc-border)] p-3 flex gap-2"
       >
         <input
-          value={input}
-          onChange={handleInputChange}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask GrowthCat anything..."
           className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--color-rc-border)] focus:outline-none focus:border-[var(--color-gc-primary)] text-[var(--color-rc-body)] placeholder:text-[var(--color-rc-light)]"
           disabled={isLoading}
         />
         <button
           type="submit"
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || !inputValue.trim()}
           className="px-4 py-2 bg-[var(--color-gc-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-gc-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Send

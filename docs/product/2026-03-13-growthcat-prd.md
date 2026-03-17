@@ -159,6 +159,7 @@ Weekly cadence:
 - **CMS publishing**: content published to RC's blog CMS via API. Pre-hire: markdown committed to GitHub repo triggering Vercel rebuild.
 - **Charts API**: programmatic access to subscription metrics for grounding content and experiments. If REST API is unavailable, Charts dashboard access comes post-hire.
 - **X and GitHub presence**: GrowthCat maintains its own public identity with RevenueCat affiliation on both platforms.
+- **Convex-native architecture**: All orchestration, data storage, and agent logic run inside Convex (Workflow, Agent, Database, Crons). No HTTP bridge between services. No inter-service shared secret. Connectors (Slack, GitHub, Typefully, DataForSEO, RevenueCat) are called via native fetch from Convex actions.
 
 ### 9.6 Quality Requirements
 
@@ -190,7 +191,7 @@ GEO requirements (Generative Engine Optimization):
 ### 9.8 Ownership Model
 
 **Operator provides and pays for** (covered by RC's "dedicated budget for compute resources and API access"):
-- Anthropic API (LLM), DataForSEO (keyword intelligence), Convex (database), Inngest (orchestration), Vercel (hosting), Typefully (social distribution), GrowthCat X/GitHub accounts, domain
+- Anthropic API (LLM), OpenRouter (optional model fallback/cost optimization), OpenAI API (embeddings), DataForSEO (keyword intelligence), Convex (database + Workflow orchestration + Agent + RAG), Vercel (hosting), Typefully (social distribution), GrowthCat X/GitHub accounts, domain
 
 **RevenueCat connects via self-service onboarding** (zero cost to them):
 - Slack workspace (add GrowthCat bot via OAuth)
@@ -200,6 +201,12 @@ GEO requirements (Generative Engine Optimization):
 - Preferences (report channel, review mode, focus topics)
 
 RevenueCat's credentials are stored server-side in Convex. The operator never sees them.
+
+### 9.9 Architecture Decision Record
+
+**Evaluated but not used: Claude Agent SDK.** The Claude Agent SDK requires a long-running persistent process (container or VM) and cannot run in serverless environments (Convex actions, Next.js routes, Vercel functions). The Vercel AI SDK's `generateText` with tool calling provides equivalent capabilities in a serverless-compatible way.
+
+**Evaluated but not used: Inngest.** Inngest was the original orchestration layer but required an HTTP bridge (`lib/convex-client.ts`) and a shared secret (`GROWTHCAT_INTERNAL_SECRET`) to communicate with Convex. Convex Workflow (`@convex-dev/workflow`) replaces Inngest entirely with native DB access via `step.runMutation`/`step.runAction`/`step.runQuery`, eliminating the bridge and shared secret.
 
 ## 10. Quality Gates
 

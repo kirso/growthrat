@@ -61,9 +61,9 @@ export async function POST(req: Request) {
     model: anthropic("claude-sonnet-4-20250514"),
     system: SYSTEM_PROMPT,
     messages,
-    maxTokens: 2048,
+    maxOutputTokens: 2048,
     temperature: 0.4,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }

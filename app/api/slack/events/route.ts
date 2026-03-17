@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { inngest } from "@/inngest/client";
+// Slack commands are processed via a background fetch to our own API
+// (replaces Inngest event sending)
 
 // ---------------------------------------------------------------------------
 // Slack Event Handler — receives events when someone mentions @GrowthCat
@@ -86,10 +87,13 @@ export async function POST(req: NextRequest) {
       const threadTs = event.thread_ts ?? event.ts;
 
       // Fire-and-forget: send the command to Inngest for background processing
-      await inngest.send({
-        name: "growthcat/slack.command",
-        data: { command: text, channel, threadTs },
-      });
+      // Process in background via fetch to our chat API
+      // (fire-and-forget, don't await — Slack needs response in 3s)
+      fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/slack-command`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: text, channel, threadTs }),
+      }).catch(() => {/* fire and forget */});
     }
 
     // Handle direct messages
@@ -98,10 +102,13 @@ export async function POST(req: NextRequest) {
       const channel = event.channel;
       const threadTs = event.thread_ts ?? event.ts;
 
-      await inngest.send({
-        name: "growthcat/slack.command",
-        data: { command: text, channel, threadTs },
-      });
+      // Process in background via fetch to our chat API
+      // (fire-and-forget, don't await — Slack needs response in 3s)
+      fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/slack-command`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: text, channel, threadTs }),
+      }).catch(() => {/* fire and forget */});
     }
   }
 

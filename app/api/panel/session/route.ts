@@ -90,7 +90,7 @@ Respond to this prompt. Show your thinking:
             model,
             system: systemPrompt,
             prompt: userPrompt,
-            maxTokens: 4096,
+            maxOutputTokens: 4096,
             temperature: 0.3,
           });
 

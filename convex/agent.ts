@@ -5,11 +5,11 @@
  * goes through this agent. It has:
  * - Persistent threads (conversation memory)
  * - RAG via contextHandler (searches sources table for RC docs)
- * - Tool calling (searchDocs, searchDataForSEO, getArticle, etc.)
+ * - Tool calling (searchDocs, getArticle, getWeeklyMetrics)
  *
- * IMPORTANT: Convex Agent's built-in search only covers THREAD MESSAGES.
- * Custom knowledge (RC docs in the sources table) requires EXPLICIT retrieval
- * via the contextHandler below. This is NOT automatic.
+ * IMPORTANT: Tool handlers receive ActionCtx — NO ctx.db.
+ * Must use ctx.runQuery / ctx.runMutation for database access.
+ * ctx.vectorSearch IS available on ActionCtx.
  */
 
 import { Agent, createTool } from "@convex-dev/agent";
@@ -17,21 +17,26 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import { components, internal } from "./_generated/api";
-import { GROWTHCAT_VOICE_PROFILE } from "../lib/config/voice";
 
-const SYSTEM_PROMPT = `You are ${GROWTHCAT_VOICE_PROFILE.agentName} — ${GROWTHCAT_VOICE_PROFILE.publicTagline}
+const SYSTEM_PROMPT = `You are GrowthCat — an autonomous developer-advocacy and growth agent for agent-built apps.
 
-Tone: ${GROWTHCAT_VOICE_PROFILE.toneTraits.join(", ")}
+Tone: technical, structured, evidence-backed, curious, direct
 
 Recurring themes:
-${GROWTHCAT_VOICE_PROFILE.recurringThemes.map((t) => `- ${t}`).join("\n")}
+- agent-built apps deserve first-class tooling
+- growth work must be measurable
+- product feedback should come from real usage
+- autonomy requires guardrails, not vibes
 
 NEVER do these:
-${GROWTHCAT_VOICE_PROFILE.forbiddenPatterns.map((f) => `- ${f}`).join("\n")}
+- generic AI futurism without product specifics
+- unsupported growth claims
+- mascot-like self-description
+- implying RevenueCat endorsement before hire
 
 When answering questions about RevenueCat, ALWAYS use the searchDocs tool first to find relevant documentation. Ground your answers in the retrieved docs. If you can't find relevant docs, say so honestly.
 
-${GROWTHCAT_VOICE_PROFILE.disclosureLine}`;
+GrowthCat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.`;
 
 export const growthCatAgent = new Agent(components.agent, {
   name: "GrowthCat",
@@ -49,11 +54,11 @@ export const growthCatAgent = new Agent(components.agent, {
         query: z.string().describe("What to search for in the RC knowledge base"),
       }),
       handler: async (ctx, { query }): Promise<string> => {
-        // Vector search on the sources table
-        // This searches our CUSTOM knowledge base, not thread messages
+        // vectorSearch IS available on ActionCtx
         try {
+          const embedding = await generateEmbedding(query);
           const results = await ctx.vectorSearch("sources", "by_embedding", {
-            vector: await generateEmbedding(query),
+            vector: embedding,
             limit: 5,
           });
 
@@ -61,16 +66,14 @@ export const growthCatAgent = new Agent(components.agent, {
             return "No relevant documentation found for this query.";
           }
 
-          const docs = await Promise.all(
-            results.map((r) => ctx.db.get(r._id))
+          // Must use ctx.runQuery — ActionCtx has NO ctx.db
+          const docs = await ctx.runQuery(
+            internal.agentQueries.getSourcesByIds,
+            { ids: results.map((r) => r._id) }
           );
 
           return docs
-            .filter(Boolean)
-            .map(
-              (d) =>
-                `[${d!.provider} — ${d!.key}]:\n${d!.summary ?? "(no summary)"}`
-            )
+            .map((d) => `[${d.provider} — ${d.key}]:\n${d.summary}`)
             .join("\n\n---\n\n");
         } catch {
           return "Knowledge base search is not available yet. Answering from training knowledge.";
@@ -86,13 +89,14 @@ export const growthCatAgent = new Agent(components.agent, {
         slug: z.string().describe("The article slug"),
       }),
       handler: async (ctx, { slug }): Promise<string> => {
-        const articles = await ctx.db
-          .query("artifacts")
-          .withIndex("by_slug", (q) => q.eq("slug", slug))
-          .first();
+        // Must use ctx.runQuery — ActionCtx has NO ctx.db
+        const article = await ctx.runQuery(
+          internal.agentQueries.getArtifactBySlug,
+          { slug }
+        );
 
-        if (!articles) return `No article found with slug "${slug}".`;
-        return `Title: ${articles.title}\n\n${articles.content.slice(0, 2000)}`;
+        if (!article) return `No article found with slug "${slug}".`;
+        return `Title: ${article.title}\n\n${article.content}`;
       },
     }),
 
@@ -100,10 +104,11 @@ export const growthCatAgent = new Agent(components.agent, {
       description: "Get aggregated metrics for the current week.",
       args: z.object({}),
       handler: async (ctx): Promise<string> => {
-        const report = await ctx.db
-          .query("weeklyReports")
-          .order("desc")
-          .first();
+        // Must use ctx.runQuery — ActionCtx has NO ctx.db
+        const report = await ctx.runQuery(
+          internal.agentQueries.getLatestReport,
+          {}
+        );
 
         if (!report) return "No weekly report data available yet.";
         return `Week ${report.weekNumber}: ${report.contentCount} content, ${report.experimentCount} experiments, ${report.feedbackCount} feedback, ${report.interactionCount} interactions.`;
@@ -124,13 +129,13 @@ export const growthCatAgent = new Agent(components.agent, {
   },
 
   // CRITICAL: contextHandler injects custom knowledge BEFORE every LLM call.
-  // Without this, the agent only searches thread messages, NOT the sources table.
+  // Convex Agent's built-in search only covers thread messages.
+  // This handler adds RC docs from the sources table via vector search.
   contextHandler: async (ctx, args) => {
-    // Extract the user's latest message for RAG query
     const lastUserMessage =
       args.inputPrompt?.[0]?.content ??
       (args.inputMessages ?? [])
-        .filter((m) => m.role === "user")
+        .filter((m: { role: string }) => m.role === "user")
         .pop()?.content ??
       "";
 
@@ -139,39 +144,41 @@ export const growthCatAgent = new Agent(components.agent, {
         ? lastUserMessage
         : JSON.stringify(lastUserMessage);
 
-    // Search custom knowledge base (sources table) for relevant docs
     let docContext: Array<{ role: "system"; content: string }> = [];
     if (query.length > 5) {
       try {
         const embedding = await generateEmbedding(query);
+        // vectorSearch IS available on ActionCtx
         const results = await ctx.vectorSearch("sources", "by_embedding", {
           vector: embedding,
           limit: 3,
         });
 
-        const docs = await Promise.all(
-          results.map((r) => ctx.db.get(r._id))
-        );
+        if (results.length > 0) {
+          // Must use ctx.runQuery — ActionCtx has NO ctx.db
+          const docs = await ctx.runQuery(
+            internal.agentQueries.getSourcesByIds,
+            { ids: results.map((r) => r._id) }
+          );
 
-        if (docs.some(Boolean)) {
-          const docText = docs
-            .filter(Boolean)
-            .map((d) => `[${d!.provider} — ${d!.key}]: ${d!.summary ?? ""}`)
-            .join("\n");
+          if (docs.length > 0) {
+            const docText = docs
+              .map((d) => `[${d.provider} — ${d.key}]: ${d.summary}`)
+              .join("\n");
 
-          docContext = [
-            {
-              role: "system" as const,
-              content: `Relevant RevenueCat documentation:\n\n${docText}\n\nUse this context to ground your response.`,
-            },
-          ];
+            docContext = [
+              {
+                role: "system" as const,
+                content: `Relevant RevenueCat documentation:\n\n${docText}\n\nUse this context to ground your response.`,
+              },
+            ];
+          }
         }
       } catch {
         // Knowledge base not yet populated — fall through gracefully
       }
     }
 
-    // Return: custom doc context + search results + recent messages + input
     return [
       ...docContext,
       ...args.search,
@@ -207,7 +214,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
     },
     body: JSON.stringify({
       model: "text-embedding-3-small",
-      input: text,
+      input: text.slice(0, 8000),
     }),
   });
 
@@ -215,5 +222,4 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return data.data[0].embedding;
 }
 
-// Export for use in other Convex files
 export { generateEmbedding };

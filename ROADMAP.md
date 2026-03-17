@@ -23,12 +23,13 @@ For product requirements, goals, and scope, see [PRD](docs/product/2026-03-13-gr
 ### Reference
 9. [Approval Model](#approval--human-in-the-loop-model)
 10. [Architecture Overview](#architecture-overview)
-11. [Convex Schema (Complete)](#convex-schema-complete)
-12. [Growth Levers](#growth-levers)
-13. [Ownership Model](#ownership-model)
-14. [Security Model](#security-model)
-15. [Open Decisions](#open-decisions)
-16. [Risks](#risks)
+11. [Tool Selection Rationale](#tool-selection-rationale)
+12. [Convex Schema (Complete)](#convex-schema-complete)
+13. [Growth Levers](#growth-levers)
+14. [Ownership Model](#ownership-model)
+15. [Security Model](#security-model)
+16. [Open Decisions](#open-decisions)
+17. [Risks](#risks)
 
 ---
 
@@ -118,11 +119,11 @@ app.use(agent);
 export default app;
 ```
 
-#### 3. Knowledge ingestion Inngest function
+#### 3. Knowledge ingestion Convex Workflow
 
-**New file**: `inngest/ingest-knowledge.ts`
+**New file**: `convex/workflows/ingestKnowledge.ts`
 
-This function crawls RC docs, chunks them, embeds them via OpenAI `text-embedding-3-small`, and stores them in Convex.
+This workflow crawls RC docs, chunks them, embeds them via OpenAI `text-embedding-3-small`, and stores them in Convex. Runs as a Convex Workflow with direct DB access.
 
 Crawl targets (all public, no auth needed):
 - RevenueCat docs: `https://www.revenuecat.com/docs/` (sitemap at `/docs/sitemap.xml`)
@@ -140,62 +141,41 @@ Processing pipeline per source:
 6. Upsert to Convex `sources` table — skip if content hash matches existing record (dedup)
 
 ```typescript
-// inngest/ingest-knowledge.ts — key structure (not complete implementation)
+// convex/workflows/ingestKnowledge.ts — key structure (not complete implementation)
 
-import { inngest } from "./client";
-import { convexStore } from "@/lib/convex-client";
+import { workflow } from "../workflow";
+import { internal } from "../_generated/api";
+import { v } from "convex/values";
 
-export const ingestKnowledge = inngest.createFunction(
-  { id: "ingest-knowledge", name: "Ingest Knowledge Base" },
-  { event: "growthcat/knowledge.ingest" },
-  async ({ step }) => {
+export const ingestKnowledge = workflow.define({
+  args: { sourceType: v.optional(v.string()) },
+  handler: async (step, args) => {
     // Step 1: Fetch sitemap or URL list
-    const urls = await step.run("fetch-urls", async () => { /* ... */ });
+    const urls = await step.runAction(internal.sources.fetchUrls, {
+      sourceType: args.sourceType ?? "all",
+    });
 
-    // Step 2: For each URL, fetch content
+    // Step 2: For each URL, fetch + chunk + embed + store
     for (const url of urls) {
-      const content = await step.run(`fetch-${url.key}`, async () => { /* ... */ });
-
-      // Step 3: Chunk the content
-      const chunks = await step.run(`chunk-${url.key}`, async () => {
-        return chunkText(content.text, { maxTokens: 500, overlap: 50 });
-      });
-
-      // Step 4: Embed and store each chunk
-      await step.run(`embed-store-${url.key}`, async () => {
-        const embeddings = await embedChunks(chunks); // OpenAI text-embedding-3-small
-        for (let i = 0; i < chunks.length; i++) {
-          const hash = sha256(chunks[i]);
-          await convexStore("/api/sources", {
-            key: `${url.key}:chunk:${i}`,
-            url: url.url,
-            provider: url.provider,
-            sourceClass: url.sourceClass,
-            evidenceTier: url.evidenceTier,
-            lastRefreshed: Date.now(),
-            contentHash: hash,
-            chunkText: chunks[i],
-            chunkIndex: i,
-            embedding: embeddings[i],
-          });
-        }
+      await step.runAction(internal.sources.processAndStore, {
+        key: url.key,
+        url: url.url,
+        provider: url.provider,
+        sourceClass: url.sourceClass,
+        evidenceTier: url.evidenceTier,
       });
     }
-  }
-);
+
+    return { processed: urls.length };
+  },
+});
 ```
 
-Register this function in `app/api/inngest/route.ts` alongside the existing functions.
-
-#### 4. Convex sources HTTP endpoint update
-
-**File**: `convex/http.ts`
-
-Add a new POST endpoint for upserting sources with embeddings. The current `sources.upsert` mutation in `convex/sources.ts` needs to accept the new fields (`chunkText`, `chunkIndex`, `embedding`).
+#### 4. Convex sources mutations (direct DB access, no HTTP bridge)
 
 **File**: `convex/sources.ts`
 
-Update the `upsert` mutation args to include the new fields. Add a new `vectorSearch` action:
+The `upsert` mutation accepts the new fields (`chunkText`, `chunkIndex`, `embedding`). Add a new `vectorSearch` action:
 
 ```typescript
 // convex/sources.ts — add vector search action
@@ -419,7 +399,7 @@ export const embedText = internalAction({
 
 ### Demo
 
-1. Run knowledge ingestion: `growthcat/knowledge.ingest` event in Inngest dashboard
+1. Start knowledge ingestion workflow: `npx convex run workflows/ingestKnowledge` or trigger via Convex dashboard
 2. Verify 500+ source chunks stored in Convex `sources` table with embeddings
 3. Open chat widget on the public site
 4. Ask: "What events does RevenueCat send via webhooks?"
@@ -454,9 +434,7 @@ export const embedText = internalAction({
 | `convex/sources.ts` | Edit: update `upsert` args, add `vectorSearch` action, add `getById` internal query, add `embedText` internal action |
 | `convex/agent.ts` | New: Convex Agent definition with contextHandler + searchDocs tool |
 | `convex/chat.ts` | New: thread management actions |
-| `convex/http.ts` | Edit: add `/api/sources` POST endpoint for embeddings |
-| `inngest/ingest-knowledge.ts` | New: knowledge ingestion function |
-| `app/api/inngest/route.ts` | Edit: register `ingestKnowledge` function |
+| `convex/workflows/ingestKnowledge.ts` | New: knowledge ingestion Convex Workflow |
 | `.env.example` | Edit: add `OPENAI_API_KEY` |
 
 ### Environment variables needed
@@ -559,7 +537,6 @@ Add `threadId` to the panel SSE query params. If provided, continue the existing
 | `NEXT_PUBLIC_CONVEX_URL` | Convex production URL |
 | `ANTHROPIC_API_KEY` | LLM |
 | `OPENAI_API_KEY` | Embeddings |
-| `GROWTHCAT_INTERNAL_SECRET` | Inngest-Convex auth |
 | `GROWTHCAT_PANEL_TOKEN` | Panel auth |
 
 #### 2. Convex production deployment
@@ -568,11 +545,9 @@ Add `threadId` to the panel SSE query params. If provided, continue the existing
 bunx convex deploy --prod
 ```
 
-Set the same `GROWTHCAT_INTERNAL_SECRET` in Convex environment variables (Convex dashboard → Settings → Environment Variables).
-
 #### 3. Domain setup
 
-Options: `growthcat.dev`, `growthcat.ai`, or a Vercel subdomain. Configure in Vercel dashboard → Domains.
+Options: `growthcat.dev`, `growthcat.ai`, or a Vercel subdomain. Configure in Vercel dashboard > Domains.
 
 #### 4. Smoke test on production
 
@@ -742,26 +717,84 @@ approvalLog: defineTable({
 }).index("by_artifact", ["artifactId"]),
 ```
 
-#### 5. Content generation upgrade in Inngest
+#### 5. Content generation Convex Workflow
 
-**File**: `inngest/functions.ts` — `generateContent` function
+**File**: `convex/workflows/generateContent.ts`
 
-Update the existing content generation function to:
-1. Use the Convex Agent for draft generation (RAG-grounded, not raw `generateText`)
-2. Store the generated draft in Convex `artifacts` table with `status: "draft"`
-3. After quality gates pass, check `agentConfig` review mode:
-   - If `"auto_publish"`: transition artifact to `status: "published"`, log `auto_approved` in `approvalLog`
-   - If `"draft_only"`: post draft summary to Slack, set `approvalState: "pending"`, wait for Slack reaction event
-4. Store quality gate results in the artifact's `qualityScores` field
-5. If any blocking gate fails: set `status: "rejected"`, post to Slack with failure reason
+Content generation runs as a Convex Workflow with direct DB access:
 
-After quality gate pass and approval, emit `growthcat/content.publish` event.
+```typescript
+// convex/workflows/generateContent.ts
 
-#### 6. New Inngest function: content publishing
+import { workflow } from "../workflow";
+import { internal } from "../_generated/api";
+import { v } from "convex/values";
 
-**New file**: `inngest/publish-content.ts`
+export const generateContent = workflow.define({
+  args: { topic: v.string(), targetKeyword: v.string() },
+  handler: async (step, { topic, targetKeyword }) => {
+    // Step 1: Generate draft with RAG context (uses Convex Agent brain)
+    const draft = await step.runAction(internal.content.generate, {
+      topic,
+      targetKeyword,
+    });
 
-Triggered by `growthcat/content.publish` event. Steps:
+    // Step 2: Run quality gates
+    const validation = await step.runAction(internal.quality.validate, {
+      artifactId: draft.id,
+    });
+
+    // Step 3: Handle approval based on review mode
+    if (validation.allPassed) {
+      const config = await step.runQuery(internal.agentConfig.getInternal);
+      if (config?.reviewMode === "auto_publish") {
+        await step.runMutation(internal.artifacts.updateStatus, {
+          id: draft.id,
+          status: "published",
+          approvalState: "auto",
+          publishedAt: Date.now(),
+        });
+        await step.runMutation(internal.approvalLog.log, {
+          artifactId: draft.id,
+          action: "auto_approved",
+          actor: "system",
+          timestamp: Date.now(),
+        });
+        // Publish to secondary channels
+        await step.runAction(internal.distribution.publish, {
+          artifactId: draft.id,
+        });
+      } else {
+        // Post to Slack for approval
+        await step.runAction(internal.slack.postApprovalRequest, {
+          artifactId: draft.id,
+        });
+        await step.runMutation(internal.artifacts.updateApproval, {
+          id: draft.id,
+          approvalState: "pending",
+        });
+      }
+    } else {
+      await step.runMutation(internal.artifacts.updateStatus, {
+        id: draft.id,
+        status: "rejected",
+      });
+      await step.runAction(internal.slack.postGateFailure, {
+        artifactId: draft.id,
+        failures: validation.failures,
+      });
+    }
+
+    return { artifactId: draft.id, validated: validation.allPassed };
+  },
+});
+```
+
+#### 6. Content publishing Convex Workflow
+
+**File**: `convex/workflows/publishContent.ts`
+
+Triggered after Slack approval. Steps:
 1. Fetch artifact from Convex by ID
 2. **PRIMARY**: Update artifact in Convex: `status: "published"`, `publishedAt: Date.now()` — this makes the article appear on the microsite immediately (article pages query Convex)
 3. **SECONDARY (backup/SEO)**: Publish to GitHub as markdown with frontmatter (uses existing `lib/cms/publish.ts` `publishArticle`)
@@ -771,55 +804,43 @@ Triggered by `growthcat/content.publish` event. Steps:
 
 #### 7. Slack approval handler
 
-**File**: `inngest/slack-handler.ts`
+**File**: `convex/workflows/slackApproval.ts`
 
-Add a new Inngest function to handle Slack reaction events:
+Handles Slack reaction events for approvals:
 
 ```typescript
-// New event handler for Slack reactions on approval posts
-export const handleSlackReaction = inngest.createFunction(
-  { id: "slack-reaction-handler", name: "Handle Slack Reaction" },
-  { event: "growthcat/slack.reaction" },
-  async ({ event, step }) => {
-    const { reaction, artifactId, channel, messageTs, userId } = event.data;
+// convex/workflows/slackApproval.ts
 
+export const handleSlackReaction = workflow.define({
+  args: {
+    reaction: v.string(),
+    artifactId: v.id("artifacts"),
+    userId: v.string(),
+  },
+  handler: async (step, { reaction, artifactId, userId }) => {
     if (reaction === "+1" || reaction === "white_check_mark") {
-      // Approve: update artifact, log approval, trigger publish
-      await step.run("approve", async () => {
-        await convexStore("/api/artifacts/approve", {
-          id: artifactId,
-          approvalState: "approved",
-          approvedBy: userId,
-          approvedAt: Date.now(),
-        });
-        await convexStore("/api/approval-log", {
-          artifactId,
-          action: "approved",
-          actor: userId,
-          timestamp: Date.now(),
-        });
+      await step.runMutation(internal.artifacts.updateApproval, {
+        id: artifactId,
+        approvalState: "approved",
+        approvedBy: userId,
+        approvedAt: Date.now(),
       });
-
-      await step.sendEvent("publish", {
-        name: "growthcat/content.publish",
-        data: { artifactId },
+      await step.runMutation(internal.approvalLog.log, {
+        artifactId,
+        action: "approved",
+        actor: userId,
+        timestamp: Date.now(),
       });
+      // Trigger publishing workflow
+      await step.runAction(internal.distribution.publish, { artifactId });
     }
-  }
-);
+  },
+});
 ```
 
 **File**: `app/api/slack/events/route.ts`
 
-Add handling for `reaction_added` events alongside the existing `app_mention` and `message` handlers. When a reaction is added to a GrowthCat approval post, send a `growthcat/slack.reaction` event to Inngest.
-
-#### 8. HTTP endpoints for new tables
-
-**File**: `convex/http.ts`
-
-Add POST endpoints:
-- `/api/approval-log` — log approval actions
-- `/api/artifacts/approve` — update artifact approval state
+Add handling for `reaction_added` events alongside the existing `app_mention` and `message` handlers. When a reaction is added to a GrowthCat approval post, start the approval workflow via Convex.
 
 ### Approval flow (explicit)
 
@@ -833,7 +854,7 @@ Content generated by LLM (with RAG context from VS-A1)
       → Create Typefully drafts (SECONDARY — distribution)
   → IF all blocking gates pass AND reviewMode === "draft_only":
       → Post to Slack: "[Title] - Draft ready. Quality gates: all passed. React with a thumbs up to approve."
-      → Set artifact: approvalState "pending", slackThreadTs
+      → Set artifact.approvalState = "pending", slackThreadTs
       → Log "submitted" in approvalLog
       → WAIT for Slack reaction event
       → Thumbs up reaction → Log "approved" → Publish (Convex PRIMARY, GitHub + Typefully SECONDARY)
@@ -846,8 +867,8 @@ Content generated by LLM (with RAG context from VS-A1)
 
 ### Demo
 
-1. Trigger content generation: send `growthcat/content.generate` event via Inngest dashboard
-2. See the Inngest function run: draft generated with RAG context, quality gates executed
+1. Start content generation workflow via Convex dashboard
+2. See the workflow run: draft generated with RAG context, quality gates executed
 3. See draft stored in Convex `artifacts` table with `status: "draft"`
 4. See draft summary appear in Slack with approval prompt
 5. React with thumbs up emoji in Slack
@@ -883,14 +904,12 @@ Content generated by LLM (with RAG context from VS-A1)
 | `convex/schema.ts` | Edit: add approval fields to `artifacts`, add `approvalLog` table |
 | `convex/artifacts.ts` | Edit: add `listPublished` query, `getBySlug` query, `approve` mutation |
 | `convex/approvalLog.ts` | New: queries and mutations for approval log |
-| `convex/http.ts` | Edit: add endpoints for approval-log, artifacts/approve |
+| `convex/workflows/generateContent.ts` | New: content generation Convex Workflow |
+| `convex/workflows/publishContent.ts` | New: content publishing Convex Workflow |
+| `convex/workflows/slackApproval.ts` | New: Slack approval handler workflow |
 | `app/(public)/articles/page.tsx` | Edit: merge Convex-fetched published articles with hardcoded seed articles |
 | `app/(public)/articles/[slug]/page.tsx` | Edit: check Convex for dynamic articles if slug not in seed data |
-| `inngest/functions.ts` | Edit: update `generateContent` to store draft in Convex, check review mode, post to Slack, emit publish event |
-| `inngest/publish-content.ts` | New: content publishing function (Convex PRIMARY, GitHub + Typefully SECONDARY) |
-| `inngest/slack-handler.ts` | Edit: add `handleSlackReaction` function |
-| `app/api/slack/events/route.ts` | Edit: handle `reaction_added` events |
-| `app/api/inngest/route.ts` | Edit: register new Inngest functions |
+| `app/api/slack/events/route.ts` | Edit: handle `reaction_added` events, start Convex workflow |
 | `.env.example` | Already has `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `GITHUB_TOKEN`, `TYPEFULLY_API_KEY` |
 
 ### Environment variables needed
@@ -914,150 +933,217 @@ Content generated by LLM (with RAG context from VS-A1)
 
 ### What gets built
 
-#### 1. Monday planner upgrade
+#### 1. Monday planner Convex Workflow
 
-**File**: `inngest/functions.ts` — `weeklyPlanningRun` function
+**File**: `convex/workflows/weeklyPlan.ts`
 
-The existing function already fetches DataForSEO keywords, scores opportunities, and posts to Slack. Upgrade it to:
-1. Query Convex for last week's performance (content published, experiments completed, what worked)
-2. Use the Convex Agent brain to analyze performance + new keyword data + community signals → select topics
-3. Post the plan to Slack with topic options — RC can reply to adjust
-4. Emit exactly **2** `growthcat/content.generate` events (2 content pieces per PRD requirement)
-5. Emit exactly **3** `growthcat/feedback.generate` events — one per feedback topic (3 feedback items per PRD requirement, NOT 1 event that generates 3 items)
-6. Emit **1** `growthcat/community.engage` event
+The Monday planner runs as a Convex Workflow triggered by a Convex cron. It has direct DB access for querying last week's performance:
 
-**Why 3 separate feedback events**: The PRD requires 3+ structured product feedback items per week. Each feedback event generates one focused feedback item with its own evidence chain and GitHub Issue. Batching all 3 into one event loses the ability to track, retry, and audit each individually.
+```typescript
+// convex/workflows/weeklyPlan.ts
+
+export const weeklyPlanWorkflow = workflow.define({
+  args: { weekNumber: v.number() },
+  handler: async (step, { weekNumber }) => {
+    // Step 1: Gather performance data from last week (direct DB access)
+    const lastWeek = await step.runQuery(internal.weeklyReports.getByWeek, {
+      weekNumber: weekNumber - 1,
+    });
+
+    // Step 2: Fetch keyword opportunities
+    const keywords = await step.runAction(internal.dataforseo.fetchKeywords, {});
+
+    // Step 3: Use Convex Agent brain to analyze and select topics
+    const plan = await step.runAction(internal.planning.selectTopics, {
+      lastWeekData: lastWeek,
+      keywords,
+    });
+
+    // Step 4: Post plan to Slack
+    await step.runAction(internal.slack.postWeeklyPlan, {
+      plan,
+      weekNumber,
+    });
+
+    // Step 5: Emit content generation workflows (2 pieces per PRD)
+    for (const topic of plan.contentTopics.slice(0, 2)) {
+      await step.runAction(internal.workflows.startContentGeneration, {
+        topic: topic.title,
+        targetKeyword: topic.keyword,
+      });
+    }
+
+    // Step 6: Emit 3 separate feedback workflows (PRD requires 3+/week)
+    for (const feedbackTopic of plan.feedbackTopics.slice(0, 3)) {
+      await step.runAction(internal.workflows.startFeedbackGeneration, {
+        topic: feedbackTopic,
+      });
+    }
+
+    // Step 7: Start community engagement workflow
+    await step.runAction(internal.workflows.startCommunityEngage, {
+      weekNumber,
+    });
+
+    return { weekNumber, topicCount: plan.contentTopics.length };
+  },
+});
+```
+
+**Cron trigger**:
+
+```typescript
+// convex/crons.ts
+
+import { cronJobs } from "convex/server";
+import { internal } from "./_generated/api";
+
+const crons = cronJobs();
+
+crons.weekly("weekly-planning", { dayOfWeek: "monday", hourUTC: 9, minuteUTC: 0 },
+  internal.workflows.startWeeklyPlan);
+
+crons.weekly("weekly-report", { dayOfWeek: "friday", hourUTC: 17, minuteUTC: 0 },
+  internal.workflows.startWeeklyReport);
+
+crons.daily("source-freshness-audit", { hourUTC: 6, minuteUTC: 0 },
+  internal.sources.auditFreshness);
+
+crons.interval("community-monitor", { hours: 6 },
+  internal.workflows.startCommunityMonitor);
+
+export default crons;
+```
 
 #### 2. Slack override for Monday plan
 
-**File**: `inngest/slack-handler.ts`
+**File**: `convex/slackHandler.ts`
 
 When RC replies to the Monday plan message in Slack (not just reactions — actual text replies), parse the reply:
 - "skip [topic]" → remove that topic from the week's plan
 - "add [topic]" → add a new topic
-- "focus on [topic]" → replace lowest-scored topic with this one (already partially implemented)
+- "focus on [topic]" → replace lowest-scored topic with this one
 - Any other reply → pass to the Convex Agent brain for a natural language response
 
-#### 3. Feedback pipeline upgrade
+#### 3. Feedback pipeline Convex Workflow
 
-**File**: `inngest/functions.ts` — `generateFeedback` function
+**File**: `convex/workflows/generateFeedback.ts`
 
-The existing function generates feedback via LLM. Upgrade it to:
+Each feedback item runs as its own workflow:
 1. Use RAG context (from VS-A1) to ground feedback in actual RC docs/SDK issues
-2. After generating structured feedback, call `lib/feedback/file-issue.ts` `fileFeedbackIssue` to create a GitHub Issue
+2. After generating structured feedback, create a GitHub Issue via `internal.github.createIssue`
 3. Store the GitHub Issue URL in the feedback item's `metadata` field in Convex
 4. Update feedback status from `"draft"` to `"filed"`
 
-#### 4. Community monitor upgrade
+#### 4. Community monitor Convex Workflow
 
-**File**: `inngest/community-monitor.ts`
+**File**: `convex/workflows/communityMonitor.ts`
 
-The existing function scans GitHub repos for agent-related issues. Upgrade it to:
-1. After generating a reply via the community engage function, also store the reply URL (if posted) in the community interaction record
-2. Track which issues have already been replied to (dedup via `targetUrl` in `communityInteractions` table — query before engaging)
-3. Post community activity summary to Slack daily (not just as part of the weekly report)
+Scans GitHub repos for agent-related issues:
+1. After generating a reply, store the reply URL in the community interaction record
+2. Track which issues have already been replied to (dedup via `targetUrl` in `communityInteractions` table)
+3. Post community activity summary to Slack daily
 
-#### 5. Friday report upgrade
+#### 5. Friday report Convex Workflow
 
-**File**: `inngest/functions.ts` — `weeklyReportGeneration` function
+**File**: `convex/workflows/weeklyReport.ts`
 
-The existing function gathers metrics from Convex and generates a report. Upgrade it to:
+Generates the weekly report with direct DB access to all Convex tables:
 1. Query real Convex data: actual artifact count, experiment status, feedback items filed (with GitHub URLs), community interaction count and meaningful ratio
 2. Include specific article titles and their quality gate scores
 3. Include specific experiment names and current status
 4. Include feedback items with their GitHub Issue links
-5. Store the report in Convex `weeklyReports` table (already done)
-6. Post to Slack (already done)
+5. Store the report in Convex `weeklyReports` table
+6. Post to Slack
 
 #### 6. Event chaining completeness
 
-Verify all event chains fire correctly:
+Verify all chains fire correctly:
 
 ```
-Monday 9am UTC (Convex cron triggers workflowRuns.triggerWeeklyPlan):
-  → Inngest weeklyPlanningRun fires
-  → Emits: 2x growthcat/content.generate
-  → Emits: 3x growthcat/feedback.generate (one per topic — PRD requires 3+/week)
-  → Emits: 1x growthcat/community.engage
+Monday 9am UTC (Convex cron → startWeeklyPlan):
+  → weeklyPlanWorkflow fires (Convex Workflow)
+  → Starts: 2x generateContent workflows
+  → Starts: 3x generateFeedback workflows (one per topic — PRD requires 3+/week)
+  → Starts: 1x communityEngage workflow
 
-Each growthcat/content.generate:
-  → generateContent fires
+Each generateContent workflow:
+  → Generates draft with RAG context (direct DB access)
   → Stores draft in Convex artifacts table
   → If gates pass + review mode: posts to Slack for approval
-  → On approval: emits growthcat/content.publish
-  → publishContent fires: Convex status → "published" (PRIMARY)
+  → On approval: publishes (Convex status → "published" PRIMARY)
   → GitHub commit + Typefully draft (SECONDARY)
 
-Each growthcat/feedback.generate:
-  → generateFeedback fires (one focused feedback item)
-  → Files GitHub Issue
+Each generateFeedback workflow:
+  → Generates one focused feedback item
+  → Files GitHub Issue (direct action call)
   → Stores feedback in Convex
 
-growthcat/community.engage:
-  → communityEngage fires
+communityEngage workflow:
   → Posts reply via Typefully (X) or GitHub comment
   → Stores interaction in Convex
 
-Every 6 hours (Inngest cron):
-  → communityMonitor fires
+Every 6 hours (Convex cron → startCommunityMonitor):
+  → communityMonitor workflow fires
   → Scans RC GitHub repos for agent-related issues
-  → Emits up to 5x growthcat/community.engage
+  → Starts up to 5x communityEngage workflows
 
-Friday 5pm UTC (Convex cron triggers weeklyReports.generateReport):
-  → Inngest weeklyReportGeneration fires
-  → Gathers real metrics from Convex
+Friday 5pm UTC (Convex cron → startWeeklyReport):
+  → weeklyReport workflow fires
+  → Gathers real metrics from Convex (direct DB access)
   → Generates report via LLM
   → Posts to Slack
   → Stores in Convex
 
-Daily 6am UTC (Convex cron triggers sources.auditFreshness):
+Daily 6am UTC (Convex cron → sources.auditFreshness):
   → Checks source staleness
   → Logs stale sources
 ```
 
 ### Demo
 
-1. Trigger Monday planner manually (send `growthcat/weekly.planning` event in Inngest dashboard, or wait for Monday 9am UTC cron)
+1. Trigger Monday planner manually via Convex dashboard (or wait for Monday 9am UTC cron)
 2. See plan posted to Slack with 2 content topics, 1 experiment, 3 feedback targets
-3. See 2 content generation runs start in Inngest dashboard
-4. See 3 feedback generation runs start (one per topic)
+3. See 2 content generation workflows start in Convex dashboard
+4. See 3 feedback generation workflows start (one per topic)
 5. See 2 draft approval posts appear in Slack
 6. Approve both by reacting with thumbs up
 7. See both articles publish: `status: "published"` in Convex → visible on `/articles` page
 8. See 3 feedback items appear as GitHub Issues
 9. See community interactions tracked in Convex
-10. Trigger Friday report (send event or wait for Friday 5pm UTC)
+10. Trigger Friday report (or wait for Friday 5pm UTC)
 11. See report in Slack with real numbers: "2 articles published, 1 experiment running, 3 feedback items filed, X community interactions"
 
 ### Exit criteria
 
 - [ ] Monday: 1 plan posted to Slack with 2 scored content topics from DataForSEO
-- [ ] Monday: Planner emits 3 separate `growthcat/feedback.generate` events (one per topic), not 1 batched event
+- [ ] Monday: Planner starts 3 separate feedback workflows (one per topic), not 1 batched workflow
 - [ ] Tue-Thu: 2 content pieces through full pipeline (generate with RAG → draft in Convex → quality gates → Slack approval → `status: "published"` in Convex → visible on `/articles` → GitHub commit + Typefully)
 - [ ] Tue-Thu: 3 feedback items in Convex, each filed as a separate GitHub Issue with URL stored in `metadata`
 - [ ] Tue-Thu: 10+ community interactions tracked in Convex `communityInteractions` table (VS-B2 demonstrates the pipeline; full 50+/week target is achieved through ongoing operation across all channels)
 - [ ] Friday: 1 report posted to Slack with real metric counts from Convex
 - [ ] Friday: Report stored in Convex `weeklyReports` table with real data (not sample data)
-- [ ] All Inngest functions complete without error (check Inngest dashboard)
-- [ ] All event chains fire: planning → content.generate → content.publish, planning → feedback.generate (x3), monitor → community.engage
+- [ ] All Convex Workflows complete without error (check Convex dashboard)
+- [ ] All workflow chains fire: planning → content workflows → publish workflows, planning → feedback workflows (x3), monitor → community workflows
 
 ### Expected outcomes
 
 **What the user sees**: A complete Monday-to-Friday cycle. Plan in Slack Monday, articles appearing on the site Tue-Thu, feedback filed as GitHub Issues, weekly report in Slack Friday.
 
-**What is stored in Convex**: 2+ published artifacts, 3+ feedback items, 10+ community interactions, 1 weekly report, workflow run records for every function execution.
+**What is stored in Convex**: 2+ published artifacts, 3+ feedback items, 10+ community interactions, 1 weekly report, workflow run records for every execution.
 
 ### Files touched
 
 | File | Action |
 | --- | --- |
-| `inngest/functions.ts` | Edit: upgrade `weeklyPlanningRun` (emit 3x feedback events), `generateContent`, `generateFeedback`, `weeklyReportGeneration` |
-| `inngest/publish-content.ts` | Exists from VS-B1: verify it works end-to-end |
-| `inngest/community-monitor.ts` | Edit: add dedup check, daily summary |
-| `inngest/slack-handler.ts` | Edit: handle plan override replies |
-| `app/api/inngest/route.ts` | Edit: register any new functions |
-| `convex/crons.ts` | Verify: Monday planning and Friday report crons work |
-| `convex/weeklyReports.ts` | Verify: `generateReport` internal mutation produces real data |
+| `convex/workflows/weeklyPlan.ts` | New: Monday planner Convex Workflow |
+| `convex/workflows/generateFeedback.ts` | New: feedback generation Convex Workflow |
+| `convex/workflows/communityMonitor.ts` | New: community monitor Convex Workflow |
+| `convex/workflows/communityEngage.ts` | New: community engagement Convex Workflow |
+| `convex/workflows/weeklyReport.ts` | New: Friday report Convex Workflow |
+| `convex/slackHandler.ts` | New: Slack plan override handling |
+| `convex/crons.ts` | Edit: add Monday planning, Friday report, community monitor crons |
+| `convex/weeklyReports.ts` | Verify: report queries return real data |
 
 ---
 
@@ -1161,11 +1247,11 @@ All operator pages use `useConvexQuery` which returns reactive data from Convex.
 
 ### What gets built
 
-#### 1. Experiment runner Inngest function
+#### 1. Experiment runner Convex Workflow
 
-**New file**: `inngest/experiment-runner.ts`
+**File**: `convex/workflows/experimentRunner.ts`
 
-Triggered by `growthcat/experiment.run` event. Steps:
+Runs as a Convex Workflow with direct DB access. Steps:
 
 1. **Design**: receive hypothesis, target keyword, content slug from planner
 2. **Baseline**: fetch current DataForSEO data for the target keyword:
@@ -1174,88 +1260,74 @@ Triggered by `growthcat/experiment.run` event. Steps:
    - Search volume
    - Top 10 results (who currently ranks)
    - AI mentions for "revenuecat" (if DataForSEO AI Optimization is available)
-3. **Store baseline**: update experiment record in Convex with baseline data
-4. **Schedule measurement**: use Inngest `step.sleepUntil()` or `step.sleep("7d")` to wait 7 days
+3. **Store baseline**: update experiment record in Convex with baseline data (direct mutation)
+4. **Schedule measurement**: use Convex Workflow `step.sleep("7d")` to wait 7 days
 5. **Measure**: after 7 days, fetch the same DataForSEO data again
 6. **Compare**: calculate deltas (position change, new ranking, traffic estimate change)
 7. **Report**: post results to Slack, update experiment record in Convex with results
 
 ```typescript
-// inngest/experiment-runner.ts — key structure
+// convex/workflows/experimentRunner.ts — key structure
 
-export const runExperiment = inngest.createFunction(
-  { id: "experiment-runner", name: "Run Growth Experiment" },
-  { event: "growthcat/experiment.run" },
-  async ({ event, step }) => {
-    const { experimentKey, hypothesis, targetKeyword, contentSlug } = event.data;
+import { workflow } from "../workflow";
+import { internal } from "../_generated/api";
+import { v } from "convex/values";
 
+export const runExperiment = workflow.define({
+  args: {
+    experimentKey: v.string(),
+    hypothesis: v.string(),
+    targetKeyword: v.string(),
+    contentSlug: v.string(),
+  },
+  handler: async (step, { experimentKey, hypothesis, targetKeyword, contentSlug }) => {
     // Step 1: Fetch baseline from DataForSEO
-    const baseline = await step.run("fetch-baseline", async () => {
-      const login = process.env.DATAFORSEO_LOGIN;
-      const password = process.env.DATAFORSEO_PASSWORD;
-      if (!login || !password) return { source: "unavailable" };
-
-      // SERP check for target keyword
-      const serpRes = await fetch(
-        "https://api.dataforseo.com/v3/serp/google/organic/live/advanced",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Basic ${btoa(`${login}:${password}`)}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify([{
-            keyword: targetKeyword,
-            location_code: 2840,
-            language_code: "en",
-            depth: 20,
-          }]),
-        }
-      );
-      const serpData = await serpRes.json();
-      // ... parse results, find our domain's position (or "not ranking")
-      return { serpPosition, topResults, volume, difficulty };
+    const baseline = await step.runAction(internal.dataforseo.fetchSerpBaseline, {
+      keyword: targetKeyword,
     });
 
-    // Step 2: Store baseline
-    await step.run("store-baseline", async () => {
-      await convexStore("/api/experiments", {
-        experimentKey,
-        title: `Experiment: ${targetKeyword}`,
-        hypothesis,
-        baselineMetric: JSON.stringify(baseline),
-        targetMetric: "SERP position improvement",
-        status: "running",
-        startedAt: Date.now(),
-      });
+    // Step 2: Store baseline (direct DB access — no HTTP bridge needed)
+    await step.runMutation(internal.experiments.start, {
+      experimentKey,
+      title: `Experiment: ${targetKeyword}`,
+      hypothesis,
+      baselineMetric: JSON.stringify(baseline),
+      targetMetric: "SERP position improvement",
+      status: "running",
+      startedAt: Date.now(),
     });
 
-    // Step 3: Wait 7 days for indexing
-    await step.sleep("wait-for-indexing", "7d");
+    // Step 3: Wait 7 days for indexing (durable sleep — survives restarts)
+    await step.sleep("7d");
 
     // Step 4: Measure again
-    const measurement = await step.run("measure", async () => {
-      // Same DataForSEO call as baseline
-      // ... return { serpPosition, topResults, volume, difficulty }
+    const measurement = await step.runAction(internal.dataforseo.fetchSerpBaseline, {
+      keyword: targetKeyword,
     });
 
     // Step 5: Compare and report
-    const results = await step.run("compare", async () => {
-      const delta = {
-        positionBefore: baseline.serpPosition ?? "not ranking",
-        positionAfter: measurement.serpPosition ?? "not ranking",
-        // ... more deltas
-      };
-      return delta;
+    const results = {
+      positionBefore: baseline.serpPosition ?? "not ranking",
+      positionAfter: measurement.serpPosition ?? "not ranking",
+      volumeBefore: baseline.volume,
+      volumeAfter: measurement.volume,
+    };
+
+    // Step 6: Store results and notify (direct DB access)
+    await step.runMutation(internal.experiments.complete, {
+      experimentKey,
+      results,
+      completedAt: Date.now(),
     });
 
-    // Step 6: Post to Slack and store results
-    await step.run("report-results", async () => {
-      // Post to Slack
-      // Update experiment in Convex: status "completed", results
+    await step.runAction(internal.slack.postExperimentResults, {
+      experimentKey,
+      results,
     });
-  }
-);
+
+    return results;
+  },
+});
 ```
 
 #### 2. Experiment lifecycle in Convex
@@ -1269,21 +1341,19 @@ Add mutations for updating experiment status and results:
 
 Experiment states: `"planned"` → `"running"` (with baseline) → `"measuring"` (waiting for 7-day check) → `"completed"` (with results) or `"stopped"`
 
-#### 3. Planner emits experiment event
+#### 3. Planner starts experiment workflow
 
-**File**: `inngest/functions.ts` — `weeklyPlanningRun`
+**File**: `convex/workflows/weeklyPlan.ts`
 
-After selecting content topics, also emit a `growthcat/experiment.run` event for the third-ranked keyword:
+After selecting content topics, also start an experiment workflow for the third-ranked keyword:
 
 ```typescript
-await step.sendEvent("trigger-experiment", {
-  name: "growthcat/experiment.run",
-  data: {
-    experimentKey: `exp-${weekNumber}-${plan.experimentTopic.replace(/\s+/g, "-")}`,
-    hypothesis: `Publishing a targeted article for "${plan.experimentTopic}" will result in indexing within 7 days`,
-    targetKeyword: plan.experimentTopic,
-    contentSlug: plan.experimentTopic.replace(/\s+/g, "-"),
-  },
+// Inside weeklyPlanWorkflow handler:
+await step.runAction(internal.workflows.startExperiment, {
+  experimentKey: `exp-${weekNumber}-${plan.experimentTopic.replace(/\s+/g, "-")}`,
+  hypothesis: `Publishing a targeted article for "${plan.experimentTopic}" will result in indexing within 7 days`,
+  targetKeyword: plan.experimentTopic,
+  contentSlug: plan.experimentTopic.replace(/\s+/g, "-"),
 });
 ```
 
@@ -1301,7 +1371,7 @@ await step.sendEvent("trigger-experiment", {
 - [ ] One experiment record in Convex with real DataForSEO baseline data (SERP position, keyword difficulty, search volume)
 - [ ] Experiment status transitions: `"planned"` → `"running"` → `"measuring"` (after 7-day sleep) → `"completed"`
 - [ ] Baseline stored in `experiments.baselineMetric` as structured JSON
-- [ ] Measurement scheduled (Inngest `step.sleep("7d")` — visible in Inngest dashboard as a sleeping function)
+- [ ] Measurement scheduled (Convex Workflow `step.sleep("7d")` — visible in Convex dashboard as a sleeping workflow)
 - [ ] `/experiments` page shows the live experiment with real baseline data
 - [ ] Slack notification sent when experiment completes (even if result is "still not ranking")
 
@@ -1315,11 +1385,9 @@ await step.sendEvent("trigger-experiment", {
 
 | File | Action |
 | --- | --- |
-| `inngest/experiment-runner.ts` | New: experiment lifecycle function |
-| `inngest/functions.ts` | Edit: planner emits `growthcat/experiment.run` event |
-| `app/api/inngest/route.ts` | Edit: register `runExperiment` function |
+| `convex/workflows/experimentRunner.ts` | New: experiment lifecycle Convex Workflow |
+| `convex/workflows/weeklyPlan.ts` | Edit: planner starts experiment workflow |
 | `convex/experiments.ts` | Edit: add `start`, `complete`, `stop` mutations |
-| `convex/http.ts` | Edit: add PUT endpoint for experiment updates (or use existing POST) |
 
 ### Environment variables needed
 
@@ -1341,7 +1409,7 @@ await step.sendEvent("trigger-experiment", {
 The previous design stored RC secrets (Slack bot token, CMS API key, Charts API key) in the Convex `agentConfig` table, which is readable by any client query. This is a security violation.
 
 **The fix**:
-- **Secrets** (API tokens, bot tokens) are stored via **Convex environment variables** (`npx convex env set`) or in a server-only mechanism. They are accessed only from Convex actions and Inngest functions (server-side), never from queries or the client.
+- **Secrets** (API tokens, bot tokens) are stored via **Convex environment variables** (`npx convex env set`) or in a server-only mechanism. They are accessed only from Convex actions and workflows (server-side), never from queries or the client.
 - **Preferences** (review mode, focus topics, report channel name, enabled platforms) are stored in the Convex `agentConfig` table — these are non-secret and safe to read from the client.
 
 ### What gets built
@@ -1364,35 +1432,27 @@ agentConfig: defineTable({
 
 **REMOVED from agentConfig**: `slackBotToken`, `cmsApiKey`, `chartsApiKey` — these are secrets and must NOT be in a client-readable table.
 
-#### 2. Convex HTTP action for secret storage
+#### 2. Convex internal action for secret storage
 
 **New file**: `convex/onboarding.ts`
 
-The onboarding page calls a Convex HTTP action (NOT a client-callable mutation) that stores secrets server-side:
+The onboarding page calls a Convex action (internal, not client-callable) to handle secrets:
 
 ```typescript
 // convex/onboarding.ts
 
-import { httpAction } from "./_generated/server";
+import { internalAction } from "./_generated/server";
+import { v } from "convex/values";
 
-// HTTP action — only accessible via authenticated HTTP endpoint, not client queries
-export const storeSecret = httpAction(async (ctx, request) => {
-  // Verify request auth (GROWTHCAT_INTERNAL_SECRET)
-  const auth = request.headers.get("Authorization");
-  if (auth !== `Bearer ${process.env.GROWTHCAT_INTERNAL_SECRET}`) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const { key, value } = await request.json();
-  // Store as Convex environment variable via admin API
-  // OR store in a server-only table that has no client-facing queries
-  //
-  // Option A: Use process.env (set via npx convex env set)
-  // Option B: Store in a server-only table with only internal queries
-  //
-  // Either way, the value is never exposed to client-side code.
-
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+// Internal action — only callable from other server-side code, not from clients
+export const storeSecret = internalAction({
+  args: { key: v.string(), value: v.string() },
+  handler: async (_ctx, { key, value }) => {
+    // Store as Convex environment variable via admin API
+    // OR store in a server-only table with only internal queries
+    // Either way, the value is never exposed to client-side code.
+    return { success: true };
+  },
 });
 ```
 
@@ -1401,28 +1461,27 @@ export const storeSecret = httpAction(async (ctx, request) => {
 **File**: `app/(operator)/onboarding/page.tsx`
 
 Wire the existing onboarding UI to:
-1. **Secrets** (Slack token, CMS key, Charts key): Send to a Next.js API route (`/api/onboarding/secrets`) which forwards to the Convex HTTP action. The client never stores or reads the actual secret value.
+1. **Secrets** (Slack token, CMS key, Charts key): Send to a Next.js API route (`/api/onboarding/secrets`) which calls the Convex internal action. The client never stores or reads the actual secret value.
 2. **Preferences** (review mode, focus topics, channel name): Save to the `agentConfig` table via a standard Convex mutation. These are non-secret and safe for client access.
 3. Show connection status by checking which platforms are in `agentConfig.enabledPlatforms` (not by checking if a secret key exists — that would expose its presence).
 
 **New file**: `app/api/onboarding/secrets/route.ts`
 
 ```typescript
-// Next.js API route that forwards secrets to Convex HTTP action
+// Next.js API route that forwards secrets to Convex internal action
 export async function POST(req: Request) {
   const { secretName, secretValue } = await req.json();
 
-  // Forward to Convex HTTP action (server-to-server, authenticated)
-  const res = await fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL}/api/onboarding/store-secret`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GROWTHCAT_INTERNAL_SECRET}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ key: secretName, value: secretValue }),
+  // Call Convex action directly via the Convex client (server-side)
+  // No HTTP bridge or shared secret needed — the Next.js server
+  // has direct access to Convex via the SDK
+  const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+  await client.action(internal.onboarding.storeSecret, {
+    key: secretName,
+    value: secretValue,
   });
 
-  return new Response(JSON.stringify({ success: res.ok }), { status: res.status });
+  return new Response(JSON.stringify({ success: true }), { status: 200 });
 }
 ```
 
@@ -1476,10 +1535,10 @@ export const setPaused = mutation({
 
 ### How secrets are accessed at runtime
 
-Convex actions and Inngest functions access secrets via `process.env`:
+Convex actions and workflows access secrets via `process.env`:
 
 ```typescript
-// In any Convex action or Inngest function:
+// In any Convex action or workflow step:
 const slackToken = process.env.SLACK_BOT_TOKEN;    // Set via npx convex env set
 const cmsKey = process.env.CMS_API_KEY;            // Set via npx convex env set
 const chartsKey = process.env.CHARTS_API_KEY;      // Set via npx convex env set
@@ -1505,7 +1564,7 @@ Either way, secrets live in server-side environment variables, not in the databa
 - [ ] `agentConfig` table contains ONLY non-secret fields: `reviewMode`, `focusTopics`, `slackChannel` (name), `githubOrg` (name), `enabledPlatforms`, `paused`, `updatedAt`
 - [ ] `agentConfig` table does NOT contain: `slackBotToken`, `cmsApiKey`, `chartsApiKey`
 - [ ] Secrets are stored via Convex environment variables (server-side only)
-- [ ] Onboarding page sends secrets to a server-side endpoint (Next.js API route → Convex HTTP action), never to a client-callable mutation
+- [ ] Onboarding page sends secrets to a server-side endpoint (Next.js API route → Convex internal action), never to a client-callable mutation
 - [ ] `useConvexQuery(api.agentConfig.get)` returns preferences only — no secret values anywhere in the response
 - [ ] Review mode selection works: changing to "draft_only" causes next content generation to post to Slack for approval
 - [ ] Kill switch: `@GrowthCat stop` in Slack sets `agentConfig.paused = true`
@@ -1522,8 +1581,7 @@ Either way, secrets live in server-side environment variables, not in the databa
 | --- | --- |
 | `convex/schema.ts` | Edit: add `agentConfig` table (NO secret fields) |
 | `convex/agentConfig.ts` | New: queries and mutations for non-secret preferences |
-| `convex/onboarding.ts` | New: HTTP action for server-side secret storage |
-| `convex/http.ts` | Edit: register onboarding HTTP action |
+| `convex/onboarding.ts` | New: internal action for server-side secret storage |
 | `app/(operator)/onboarding/page.tsx` | Edit: wire form to Convex mutations (preferences) and API route (secrets) |
 | `app/api/onboarding/secrets/route.ts` | New: Next.js API route for forwarding secrets to Convex |
 
@@ -1599,15 +1657,40 @@ Every approval action is logged in the `approvalLog` table with:
 ### Kill Switch
 
 `@GrowthCat stop` in Slack sets `agentConfig.paused = true`. When paused:
-- All Inngest functions check the paused flag at the start and exit immediately if true
+- All Convex Workflows check the paused flag at the start and exit immediately if true
 - No new content is generated, published, or distributed
 - No new community interactions are posted
-- Existing sleeping functions (experiment measurements) continue to sleep but will check the flag before executing
+- Existing sleeping workflows (experiment measurements) continue to sleep but will check the flag before executing
 - `@GrowthCat resume` clears the flag
 
 ---
 
 ## Architecture Overview
+
+```
+Next.js 15 (App Router) — single framework
+├── Convex — THE PLATFORM
+│   ├── Agent (@convex-dev/agent) — conversation brain (threads, RAG, tools)
+│   ├── Workflow (@convex-dev/workflow) — durable orchestration (replaces Inngest)
+│   ├── RAG — knowledge base (RC docs, embeddings, search)
+│   ├── Rate Limiter (@convex-dev/rate-limiter) — API call limits, engagement caps
+│   ├── Database — reactive queries, mutations, crons
+│   ├── File Storage — artifact content, screenshots
+│   └── HTTP Actions — webhook receivers (Slack events)
+├── Vercel AI SDK — LLM interface (generateText, streamText, useChat, tools)
+│   ├── @ai-sdk/anthropic — primary provider (Claude)
+│   └── @openrouter/ai-sdk-provider — fallback + cost optimization (optional)
+├── Connectors (native fetch from Convex actions)
+│   ├── Typefully — social distribution
+│   ├── Slack Web API — team communication
+│   ├── GitHub REST API — code artifacts, issues
+│   ├── DataForSEO REST API — keyword intelligence
+│   └── RevenueCat REST API v2 — product data
+├── Tailwind CSS v4 — styling
+└── Single Bun runtime
+```
+
+### Layer detail
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -1620,9 +1703,9 @@ Every approval action is logged in the `approvalLog` table with:
 │  │ /        │  │ /dash    │  │ /chat    │  │ ChatWidget.tsx        │   │
 │  │ /app     │  │ /pipe    │  │ /panel   │  │                      │   │
 │  │ /proof   │  │ /comm    │  │ /slack   │  │                      │   │
-│  │ /articles│  │ /exp     │  │ /inngest │  │                      │   │
-│  │ /review  │  │ /feed    │  │ /onboard │  │                      │   │
-│  │ /replay  │  │ /report  │  │ /secrets │  │                      │   │
+│  │ /articles│  │ /exp     │  │ /onboard │  │                      │   │
+│  │ /review  │  │ /feed    │  │ /secrets │  │                      │   │
+│  │ /replay  │  │ /report  │  │          │  │                      │   │
 │  │          │  │ /onboard │  │          │  │                      │   │
 │  │          │  │ /panel   │  │          │  │                      │   │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────────────────┘   │
@@ -1650,33 +1733,33 @@ Every approval action is logged in the `approvalLog` table with:
 │  │ LLM: Claude Sonnet   │  │                                         │ │
 │  │ Embed: OpenAI 3-small│  │ Indexes: regular, text search, vector  │ │
 │  └─────────────────────┘  │ Crons: Mon plan, daily audit, Fri rpt  │ │
-│                             │ HTTP: 10+ authenticated endpoints       │ │
+│                             │ HTTP: Slack webhook receiver            │ │
 │                             └──────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────┘
         │
         ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                HANDS: Inngest Orchestration + AgentKit                  │
+│              HANDS: Convex Workflow (durable orchestration)              │
 │                                                                         │
-│  Inngest Functions (durable, retryable, observable):                    │
+│  Convex Workflows (durable, retryable, observable):                    │
 │  ┌────────────┐ ┌────────────┐ ┌──────────────┐ ┌───────────────────┐ │
 │  │ Weekly     │ │ Content    │ │ Content      │ │ Feedback          │ │
 │  │ Planning   │ │ Generate   │ │ Publish      │ │ Generate          │ │
-│  │ (Mon 9am)  │ │ (event)    │ │ (event)      │ │ (event x3)       │ │
+│  │ (Mon 9am)  │ │ (workflow) │ │ (workflow)   │ │ (workflow x3)    │ │
 │  └────────────┘ └────────────┘ └──────────────┘ └───────────────────┘ │
 │  ┌────────────┐ ┌────────────┐ ┌──────────────┐ ┌───────────────────┐ │
 │  │ Community  │ │ Community  │ │ Experiment   │ │ Weekly            │ │
 │  │ Engage     │ │ Monitor    │ │ Runner       │ │ Report            │ │
-│  │ (event)    │ │ (every 6h) │ │ (event)      │ │ (Fri 5pm)        │ │
+│  │ (workflow) │ │ (every 6h) │ │ (workflow)   │ │ (Fri 5pm)        │ │
 │  └────────────┘ └────────────┘ └──────────────┘ └───────────────────┘ │
-│  ┌────────────┐ ┌────────────┐ ┌──────────────┐ ┌───────────────────┐ │
-│  │ Slack      │ │ Slack      │ │ Source       │ │ Knowledge         │ │
-│  │ Command    │ │ Reaction   │ │ Freshness    │ │ Ingest            │ │
-│  │ (event)    │ │ (event)    │ │ (daily 6am)  │ │ (event)           │ │
-│  └────────────┘ └────────────┘ └──────────────┘ └───────────────────┘ │
+│  ┌────────────┐ ┌────────────┐ ┌──────────────┐                      │
+│  │ Slack      │ │ Slack      │ │ Knowledge    │                      │
+│  │ Command    │ │ Approval   │ │ Ingest       │                      │
+│  │ (workflow) │ │ (workflow) │ │ (workflow)    │                      │
+│  └────────────┘ └────────────┘ └──────────────┘                      │
 │                                                                         │
-│  AgentKit Network (5 agents, deterministic routing):                    │
-│  planner → content → growth → feedback → community                     │
+│  All workflows have direct DB access via step.runMutation/runQuery     │
+│  No HTTP bridge. No shared secret. No inter-service auth.              │
 └─────────────────────────────────────────────────────────────────────────┘
         │
         ▼
@@ -1713,11 +1796,50 @@ Every approval action is logged in the `approvalLog` table with:
 │  SECONDARY: GitHub commit (backup/SEO) + Typefully draft (distribution)│
 │                                                                         │
 │  Security:                                                              │
-│  Bearer auth (Convex HTTP), HMAC-SHA256 (Slack), Token (Panel),        │
-│  SDK signing (Inngest), fail-closed on all endpoints                   │
+│  HMAC-SHA256 (Slack), Token (Panel), fail-closed on all endpoints      │
 │  Secrets: Convex env vars (server-only, NOT in agentConfig table)      │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Tool Selection Rationale
+
+### Why Vercel AI SDK (`ai` + `@ai-sdk/anthropic`)
+
+The Vercel AI SDK provides a unified interface for LLM calls (`generateText`, `streamText`, `useChat`) with tool calling support. It works in all serverless environments: Convex actions, Next.js API routes, and Vercel functions. It is the standard LLM interface for the Next.js ecosystem.
+
+### Why OpenRouter (`@openrouter/ai-sdk-provider`)
+
+OpenRouter plugs into the Vercel AI SDK as a drop-in provider replacement. It adds automatic model routing, fallback when a provider is down, and cost tracking across providers. Optional -- the system works with `@ai-sdk/anthropic` alone, but OpenRouter adds resilience and cost optimization.
+
+### Why Convex Workflow over Inngest
+
+Inngest was the original orchestration layer. The problem: Inngest functions run outside Convex, so they needed an HTTP bridge (`lib/convex-client.ts`) to read and write Convex data. This required a shared secret (`GROWTHCAT_INTERNAL_SECRET`), authenticated HTTP POST endpoints in `convex/http.ts`, and serialization overhead on every DB operation.
+
+Convex Workflow (`@convex-dev/workflow`) runs **inside** Convex. Workflow steps call `step.runMutation()`, `step.runAction()`, and `step.runQuery()` with direct DB access. No HTTP bridge. No shared secret. No inter-service auth. The same durability guarantees (retries, sleep, observability) apply.
+
+**Removed**: `inngest/` directory, `agents/` directory (Inngest AgentKit), `lib/convex-client.ts`, `app/api/inngest/route.ts`, `GROWTHCAT_INTERNAL_SECRET`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`.
+
+### Why Convex Agent (`@convex-dev/agent`)
+
+Purpose-built for the conversation brain. Thread persistence, message history, tool calling, cross-thread search, and RAG are all built in. Works natively with Convex (no HTTP bridge). Threads persist in Convex tables. The `contextHandler` mechanism enables explicit custom-document RAG on every LLM call.
+
+### Why NOT Claude Agent SDK
+
+The Claude Agent SDK requires a **long-running persistent process** (container or VM). It cannot run in serverless environments (Convex actions, Next.js routes, Vercel functions). Deploying it would require separate infrastructure (a dedicated VM or container service), adding operational complexity and cost.
+
+The Vercel AI SDK's `generateText` with tool calling provides the same agent-loop capabilities (tools, multi-step reasoning) in a serverless-compatible function call. Combined with Convex Agent for thread persistence and Convex Workflow for durable orchestration, every capability of the Claude Agent SDK is covered without persistent infrastructure.
+
+### Why NOT Inngest
+
+Inngest is a good orchestration tool, but it creates an architecture seam: Inngest functions run in their own runtime and communicate with Convex via HTTP. This seam requires:
+- `lib/convex-client.ts` — an HTTP bridge wrapper
+- `GROWTHCAT_INTERNAL_SECRET` — a shared secret for inter-service auth
+- Authenticated POST endpoints in `convex/http.ts` for every table
+- Serialization/deserialization overhead on every DB operation
+
+Convex Workflow eliminates this seam entirely. All orchestration runs inside the same Convex deployment that holds the database.
 
 ---
 
@@ -1767,7 +1889,7 @@ export default defineSchema({
     }),
 
   // ────────────────────────────────────────────────────────────
-  // Inngest function execution tracking
+  // Workflow execution tracking
   // ────────────────────────────────────────────────────────────
   workflowRuns: defineTable({
     workflowType: v.string(),
@@ -2029,9 +2151,9 @@ Based on DataForSEO keyword difficulty analysis (retrieved 2026-03-16):
 | --- | --- | --- |
 | Anthropic API | LLM for chat, panel, content generation | ~$50-200 |
 | OpenAI API | Embeddings (text-embedding-3-small) | ~$5-10 |
+| OpenRouter (optional) | Model fallback + cost optimization | Usage-based |
 | DataForSEO | Keyword research, SERP analysis | ~$50-100 |
-| Convex | Database, crons, vector search, file storage | Free tier or ~$25/mo |
-| Inngest | Durable function orchestration | Free tier or ~$25/mo |
+| Convex | Database, crons, vector search, file storage, Workflow, Agent | Free tier or ~$25/mo |
 | Vercel | Next.js hosting | Free tier or ~$20/mo |
 | Typefully | Multi-platform social distribution | ~$12/mo |
 | Domain | growthcat.dev or similar | ~$15/yr |
@@ -2057,11 +2179,10 @@ RC's **preferences** (review mode, focus topics, channel name) are stored in the
 
 | Surface | Auth method | Implementation |
 | --- | --- | --- |
-| Convex HTTP endpoints | Bearer token | `GROWTHCAT_INTERNAL_SECRET` checked in `convex/http.ts`. Fail-closed: returns 401 if secret is not configured. |
 | Panel SSE endpoint | Token auth | `GROWTHCAT_PANEL_TOKEN` checked in `app/api/panel/session/route.ts`. Empty = open in dev. |
 | Slack event webhook | HMAC-SHA256 | `SLACK_SIGNING_SECRET` verified in `app/api/slack/events/route.ts`. Timing-safe comparison + 5-minute replay protection. |
-| Inngest webhook | SDK signing | `INNGEST_SIGNING_KEY` in production. Local dev uses unsigned. |
-| Onboarding secrets | Server-only storage | RC secrets sent to Next.js API route → Convex HTTP action → stored as Convex environment variables. Never stored in `agentConfig` table. Never exposed to client-side code or queries. |
+| Convex HTTP actions | Slack signature verification | Slack webhook receiver in `convex/http.ts` verifies HMAC-SHA256 signature. Health check endpoint is public. |
+| Onboarding secrets | Server-only storage | RC secrets sent to Next.js API route → Convex internal action → stored as Convex environment variables. Never stored in `agentConfig` table. Never exposed to client-side code or queries. |
 | Onboarding preferences | Convex mutation | Non-secret preferences (review mode, focus topics, channel name) stored in `agentConfig` table via standard Convex mutation. Safe for client-side access. |
 
 All endpoints reject unauthenticated requests. Secrets are never committed (`.env.local` is gitignored). Kill switch (`@GrowthCat stop` or `agentConfig.paused = true`) halts all side effects and checkpoints active runs.
@@ -2070,7 +2191,6 @@ All endpoints reject unauthenticated requests. Secrets are never committed (`.en
 
 ## Open Decisions
 
-- [ ] `GROWTHCAT_INTERNAL_SECRET` generation and distribution between Vercel and Convex
 - [ ] GrowthCat Slack app creation and OAuth setup (app manifest, bot scopes: `chat:write`, `reactions:read`, `app_mentions:read`, `im:read`)
 - [ ] GrowthCat X/GitHub/Typefully account creation and handle selection
 - [ ] Public domain (`growthcat.dev`, `growthcat.ai`, or other)
@@ -2080,7 +2200,6 @@ All endpoints reject unauthenticated requests. Secrets are never committed (`.en
 - [ ] Embedding model choice: OpenAI `text-embedding-3-small` (1536 dims, $0.02/1M tokens) vs other options
 - [ ] How to handle Charts API if no REST endpoint exists (dashboard-only access post-hire)
 - [ ] Cross-thread memory scope: per-week vs all-time vs sliding window (Convex Agent `searchOtherThreads` config)
-- [ ] Whether to use Inngest AgentKit network (defined in `agents/network.ts`) or keep individual Inngest functions for the weekly cycle
 - [ ] Onboarding secret storage mechanism: programmatic `npx convex env set` via admin API, or server-only Convex table with no client-facing queries
 
 ---
@@ -2098,14 +2217,14 @@ All endpoints reject unauthenticated requests. Secrets are never committed (`.en
 | Weak growth strategies | Medium: vanity metrics masquerading as growth | Evidence-backed opportunity scoring with explicit baseline, target, confidence, stop condition (in `lib/config/strategy.ts`). |
 | Slack app setup complexity | Medium: OAuth scopes, event subscriptions, signing secret | Document exact Slack app manifest. Use `socket_mode` for dev if needed. |
 | Convex cold starts | Low: first request to a Convex action may be slow | Health-check cron warms critical actions. Action code stays lean. |
-| Inngest rate limits on free tier | Medium: free tier has function execution limits | Monitor usage. Upgrade to paid tier before hitting limits. Batch events where possible. |
+| Convex Workflow limits | Low: Convex Workflow has execution time limits per step | Keep individual steps lean. Long operations (crawling many pages) should be split into multiple workflow steps. |
 | Typefully API limitations | Low: API v2 may have rate limits or missing features | Check `list_drafts` and `create_draft` work with all needed parameters before VS-B1. |
-| DataForSEO expense | Low: keyword API calls cost credits | Use fallback data (already implemented in `inngest/functions.ts`) when DataForSEO is unavailable. Cache results. |
-| Content lifecycle state transitions | Medium: artifact status can get stuck between states | Every Inngest function checks and logs state transitions. Inngest retries handle transient failures. |
+| DataForSEO expense | Low: keyword API calls cost credits | Use fallback data when DataForSEO is unavailable. Cache results. |
+| Content lifecycle state transitions | Medium: artifact status can get stuck between states | Every workflow step checks and logs state transitions. Convex Workflow retries handle transient failures. |
 | Duplicate content published | Medium: same topic generated twice | Slug-based dedup (`by_slug` index). `getBySlug` check before `create`. Novelty gate checks text similarity. |
 | Unsupported claims in public artifacts | High: reputational risk | Grounding gate blocks publication until citation coverage passes threshold. |
-| Vendor lock-in with Convex | Low: hard to migrate | Mitigated: Convex is open source. Schema is portable TypeScript. All business logic lives in Inngest functions (vendor-agnostic). |
-| Feedback under-generation | Medium: planner emits 1 event but PRD requires 3/week | VS-B2 fixes this: planner emits 3 separate `growthcat/feedback.generate` events, one per topic. |
+| Vendor lock-in with Convex | Low: hard to migrate | Mitigated: Convex is open source. Schema is portable TypeScript. Business logic in workflows is standard TypeScript. |
+| Feedback under-generation | Medium: planner starts 1 workflow but PRD requires 3/week | VS-B2 fixes this: planner starts 3 separate feedback workflows, one per topic. |
 
 ---
 
@@ -2143,7 +2262,6 @@ Every file in the codebase and which vertical slice(s) touch it:
 | `app/api/chat/route.ts` | Chat endpoint | VS-A2 | - |
 | `app/api/panel/session/route.ts` | Panel SSE endpoint | VS-A2 | - |
 | `app/api/slack/events/route.ts` | Slack webhook handler | - | VS-B1, VS-B2 |
-| `app/api/inngest/route.ts` | Inngest webhook handler | VS-A1 | VS-B1, VS-B2, VS-B4 |
 | `app/api/onboarding/secrets/route.ts` | Secret forwarding (NEW) | - | VS-B5 |
 
 ### Convex (`convex/`)
@@ -2151,7 +2269,7 @@ Every file in the codebase and which vertical slice(s) touch it:
 | File | Purpose | Track A | Track B |
 | --- | --- | --- | --- |
 | `convex/schema.ts` | Database schema | VS-A1 | VS-B1, VS-B5 |
-| `convex/convex.config.ts` | Agent component config | VS-A1 | - |
+| `convex/convex.config.ts` | Agent + Workflow component config | VS-A1 | - |
 | `convex/artifacts.ts` | Content artifact CRUD + published queries | - | VS-B1 |
 | `convex/workflowRuns.ts` | Workflow run tracking | - | - |
 | `convex/experiments.ts` | Experiment CRUD | - | VS-B4 |
@@ -2161,42 +2279,29 @@ Every file in the codebase and which vertical slice(s) touch it:
 | `convex/weeklyReports.ts` | Weekly report CRUD | - | VS-B2 |
 | `convex/sources.ts` | Knowledge base CRUD + vector search + embedText | VS-A1 | - |
 | `convex/crons.ts` | Scheduled jobs | - | VS-B2 |
-| `convex/http.ts` | Authenticated HTTP endpoints | VS-A1 | VS-B1, VS-B5 |
+| `convex/http.ts` | Slack webhook receiver, health check | - | VS-B1 |
 | `convex/agent.ts` | NEW: Convex Agent definition with contextHandler | VS-A1 | - |
 | `convex/chat.ts` | NEW: Thread management actions | VS-A1 | - |
 | `convex/agentConfig.ts` | NEW: Non-secret preferences CRUD | - | VS-B5 |
 | `convex/approvalLog.ts` | NEW: Approval audit log | - | VS-B1 |
-| `convex/onboarding.ts` | NEW: HTTP action for server-side secret storage | - | VS-B5 |
+| `convex/onboarding.ts` | NEW: Internal action for server-side secret storage | - | VS-B5 |
+| `convex/slackHandler.ts` | NEW: Slack command/override processing | - | VS-B1, VS-B2 |
+| `convex/workflow.ts` | NEW: Convex Workflow component setup | VS-A1 | VS-B1+ |
 
-### Inngest (`inngest/`)
-
-| File | Purpose | Track A | Track B |
-| --- | --- | --- | --- |
-| `inngest/client.ts` | Inngest client | - | - |
-| `inngest/functions.ts` | Core functions (planning, content, report, feedback, community) | - | VS-B1, VS-B2, VS-B4 |
-| `inngest/slack-handler.ts` | Slack command processing | - | VS-B1, VS-B2 |
-| `inngest/community-monitor.ts` | GitHub/X signal scanner | - | VS-B2 |
-| `inngest/ingest-knowledge.ts` | NEW: Knowledge ingestion | VS-A1 | - |
-| `inngest/publish-content.ts` | NEW: Content publishing (Convex PRIMARY, GitHub + Typefully SECONDARY) | - | VS-B1 |
-| `inngest/experiment-runner.ts` | NEW: Experiment lifecycle | - | VS-B4 |
-
-### Agents (`agents/`)
+### Convex Workflows (`convex/workflows/`)
 
 | File | Purpose | Track A | Track B |
 | --- | --- | --- | --- |
-| `agents/network.ts` | AgentKit network definition | - | - |
-| `agents/planner.ts` | Weekly planner agent | - | - |
-| `agents/content.ts` | Content generator agent | - | - |
-| `agents/growth.ts` | Growth experimenter agent | - | - |
-| `agents/feedback.ts` | Product feedback agent | - | - |
-| `agents/community.ts` | Community engagement agent | - | - |
-| `agents/tools/dataforseo.ts` | DataForSEO tool | - | VS-B4 |
-| `agents/tools/slack.ts` | Slack tool | - | - |
-| `agents/tools/typefully.ts` | Typefully tool | - | - |
-| `agents/tools/github.ts` | GitHub tool | - | - |
-| `agents/tools/revenuecat.ts` | RevenueCat tool | - | - |
-| `agents/tools/quality-gates.ts` | Quality gate tool | - | - |
-| `agents/tools/scoring.ts` | Opportunity scoring tool | - | - |
+| `convex/workflows/ingestKnowledge.ts` | NEW: Knowledge ingestion workflow | VS-A1 | - |
+| `convex/workflows/generateContent.ts` | NEW: Content generation workflow | - | VS-B1 |
+| `convex/workflows/publishContent.ts` | NEW: Content publishing workflow | - | VS-B1 |
+| `convex/workflows/slackApproval.ts` | NEW: Slack approval handler workflow | - | VS-B1 |
+| `convex/workflows/weeklyPlan.ts` | NEW: Monday planner workflow | - | VS-B2 |
+| `convex/workflows/generateFeedback.ts` | NEW: Feedback generation workflow | - | VS-B2 |
+| `convex/workflows/communityMonitor.ts` | NEW: Community monitor workflow | - | VS-B2 |
+| `convex/workflows/communityEngage.ts` | NEW: Community engagement workflow | - | VS-B2 |
+| `convex/workflows/weeklyReport.ts` | NEW: Friday report workflow | - | VS-B2 |
+| `convex/workflows/experimentRunner.ts` | NEW: Experiment lifecycle workflow | - | VS-B4 |
 
 ### Lib (`lib/`)
 
@@ -2210,7 +2315,6 @@ Every file in the codebase and which vertical slice(s) touch it:
 | `lib/connectors/twitter.ts` | Twitter/X connector | - | - |
 | `lib/connectors/github.ts` | GitHub connector | - | - |
 | `lib/connectors/revenuecat.ts` | RevenueCat connector | - | - |
-| `lib/convex-client.ts` | HTTP client for Inngest-to-Convex | - | - |
 | `lib/cms/publish.ts` | GitHub CMS publishing (SECONDARY) | - | VS-B1 |
 | `lib/feedback/file-issue.ts` | GitHub issue filing | - | VS-B2 |
 | `lib/content/prompts/blog-post.ts` | Blog post prompt template | - | - |
@@ -2237,6 +2341,15 @@ Every file in the codebase and which vertical slice(s) touch it:
 | `next.config.ts` | Next.js config | - | - |
 | `tailwind.config.ts` (if exists) | Tailwind config | - | - |
 
+### Removed files (architecture migration)
+
+| File | Reason for removal |
+| --- | --- |
+| `inngest/` directory (all files) | Replaced by Convex Workflows in `convex/workflows/` |
+| `agents/` directory (all files) | Inngest AgentKit replaced by Vercel AI SDK tool calling + Convex Agent |
+| `lib/convex-client.ts` | HTTP bridge no longer needed — Convex Workflows have direct DB access |
+| `app/api/inngest/route.ts` | Inngest webhook handler no longer needed |
+
 ---
 
 ## Requirement Coverage Matrix
@@ -2248,7 +2361,7 @@ Every weekly responsibility from the PRD maps to a vertical slice:
 | 2+ published content pieces/week | | | | X | X | | | |
 | 1 new growth experiment/week | | | | | X | | X | |
 | 50+ meaningful community interactions/week | | | | | X (pipeline demo) | | | |
-| 3+ structured product feedback items/week | | | | | X (3 events) | | | |
+| 3+ structured product feedback items/week | | | | | X (3 workflows) | | | |
 | 1 weekly async report | | | | | X | | | |
 | Knowledge ingestion (docs, SDKs, APIs) | X | | | | | | | |
 | Chat widget (live conversation with RAG) | X | X | X | | | | | |
@@ -2281,15 +2394,13 @@ All variables from `.env.example` with their status and which VS needs them:
 | `NEXT_PUBLIC_CONVEX_URL` | All | Set (Convex deployed) |
 | `ANTHROPIC_API_KEY` | VS-A1+ | Set |
 | `OPENAI_API_KEY` | VS-A1+ | Need to add |
+| `OPENROUTER_API_KEY` | Optional (model fallback) | Not set (optional) |
 | `DATAFORSEO_LOGIN` | VS-B2, VS-B4 | Need to set |
 | `DATAFORSEO_PASSWORD` | VS-B2, VS-B4 | Need to set |
 | `TYPEFULLY_API_KEY` | VS-B1+ | Need to set |
 | `TYPEFULLY_SOCIAL_SET_ID` | VS-B1+ | Need to configure |
 | `GITHUB_TOKEN` | VS-B1+ | Need to create |
-| `GROWTHCAT_INTERNAL_SECRET` | VS-A1+ | Need to generate (`openssl rand -hex 32`) |
 | `GROWTHCAT_PANEL_TOKEN` | VS-A2+ | Need to generate (`openssl rand -hex 16`) |
 | `SLACK_BOT_TOKEN` | VS-B1+ | Need Slack app setup |
 | `SLACK_SIGNING_SECRET` | VS-B1+ | Need Slack app setup |
 | `SLACK_DEFAULT_CHANNEL` | VS-B1+ | Need to set (default: "growthcat") |
-| `INNGEST_EVENT_KEY` | VS-A3 (prod) | Need Inngest cloud account |
-| `INNGEST_SIGNING_KEY` | VS-A3 (prod) | Need Inngest cloud account |
