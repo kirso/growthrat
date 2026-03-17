@@ -1,0 +1,158 @@
+"use client";
+
+import { useChat } from "ai/react";
+import { useRef, useEffect, useState } from "react";
+
+const SUGGESTED_PROMPTS = [
+  "What would you do in your first week at RevenueCat?",
+  "How would you handle webhook deduplication for agent-built apps?",
+  "What growth experiments would you run for RevenueCat?",
+  "What's wrong with RevenueCat's agent developer experience?",
+  "How do you measure content success?",
+];
+
+export function Chat() {
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
+    useChat({ api: "/api/chat" });
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  if (!expanded) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setExpanded(true)}
+          className="flex items-center gap-3 px-5 py-3.5 bg-[var(--color-gc-primary)] text-white font-semibold rounded-full shadow-lg hover:bg-[var(--color-gc-primary-hover)] transition-all hover:scale-105"
+        >
+          <span className="text-xl">🐱</span>
+          <span>Talk to GrowthCat</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 w-[420px] max-w-[calc(100vw-3rem)] h-[600px] max-h-[calc(100vh-6rem)] flex flex-col bg-white rounded-2xl shadow-2xl border border-[var(--color-rc-border)] overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-rc-dark)] text-white">
+        <div className="flex items-center gap-2.5">
+          <span className="text-lg">🐱</span>
+          <div>
+            <div className="font-semibold text-sm">GrowthCat</div>
+            <div className="text-xs text-white/60">RevenueCat AI Growth Advocate</div>
+          </div>
+        </div>
+        <button
+          onClick={() => setExpanded(false)}
+          className="text-white/60 hover:text-white text-lg leading-none p-1"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 && (
+          <div className="space-y-3">
+            <div className="bg-[var(--color-rc-surface)] rounded-xl p-3.5">
+              <p className="text-sm text-[var(--color-rc-body)]">
+                Hi! I&apos;m GrowthCat — an autonomous developer advocacy and growth agent
+                applying to be RevenueCat&apos;s first Agentic AI &amp; Growth Advocate.
+              </p>
+              <p className="text-sm text-[var(--color-rc-muted)] mt-2">
+                Ask me anything about RevenueCat, agent development, growth strategy,
+                or what I&apos;d do in this role.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-[var(--color-rc-muted)] uppercase tracking-wider">
+                Try asking:
+              </p>
+              {SUGGESTED_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => {
+                    const fakeEvent = {
+                      target: { value: prompt },
+                    } as React.ChangeEvent<HTMLInputElement>;
+                    handleInputChange(fakeEvent);
+                    setTimeout(() => {
+                      const form = document.getElementById("chat-form") as HTMLFormElement;
+                      form?.requestSubmit();
+                    }, 50);
+                  }}
+                  className="block w-full text-left text-sm px-3 py-2 rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-body)] hover:bg-[var(--color-rc-surface)] hover:border-[var(--color-gc-primary)]/30 transition-colors"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                m.role === "user"
+                  ? "bg-[var(--color-gc-primary)] text-white"
+                  : "bg-[var(--color-rc-surface)] text-[var(--color-rc-body)]"
+              }`}
+            >
+              {m.role === "assistant" && (
+                <span className="text-xs mr-1">🐱</span>
+              )}
+              <span className="whitespace-pre-wrap">{m.content}</span>
+            </div>
+          </div>
+        ))}
+
+        {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+          <div className="flex justify-start">
+            <div className="bg-[var(--color-rc-surface)] rounded-xl px-3.5 py-2.5 text-sm">
+              <span className="text-xs mr-1">🐱</span>
+              <span className="text-[var(--color-rc-muted)]">Thinking...</span>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 text-sm text-red-700">
+            Connection error. Please try again.
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <form
+        id="chat-form"
+        onSubmit={handleSubmit}
+        className="border-t border-[var(--color-rc-border)] p-3 flex gap-2"
+      >
+        <input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Ask GrowthCat anything..."
+          className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--color-rc-border)] focus:outline-none focus:border-[var(--color-gc-primary)] text-[var(--color-rc-body)] placeholder:text-[var(--color-rc-light)]"
+          disabled={isLoading}
+        />
+        <button
+          type="submit"
+          disabled={isLoading || !input.trim()}
+          className="px-4 py-2 bg-[var(--color-gc-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-gc-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Send
+        </button>
+      </form>
+    </div>
+  );
+}

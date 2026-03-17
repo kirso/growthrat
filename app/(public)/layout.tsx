@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChatWidget } from "@/app/components/ChatWidget";
 
 export const metadata: Metadata = {
   title: {
@@ -68,6 +69,9 @@ export default function PublicLayout({
 
       {/* Main */}
       <main className="flex-1">{children}</main>
+
+      {/* Chat Widget — RC can talk to GrowthCat on any public page */}
+      <ChatWidget />
 
       {/* Footer */}
       <footer className="border-t border-[var(--color-rc-border)] mt-20">
