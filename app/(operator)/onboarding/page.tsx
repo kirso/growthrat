@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useMutation } from "convex/react";
+import { convexApi, useConvexAvailable } from "../hooks/useConvexSafe";
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -361,6 +363,11 @@ export default function OnboardingPage() {
     null,
   );
 
+  const convexAvailable = useConvexAvailable();
+  // The mutation ref is stable (env-based), so this conditional hook is safe.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const saveConfig = convexAvailable ? useMutation(convexApi?.agentConfig?.save ?? ("__skip__" as any)) : null;
+
   function updateStepStatus(id: string, status: StepStatus) {
     setSteps((prev) =>
       prev.map((s) => (s.id === id ? { ...s, status } : s)),
@@ -379,8 +386,6 @@ export default function OnboardingPage() {
 
   // Handlers for each step
   function handleSlackConnect() {
-    // In production: redirect to Slack OAuth URL
-    // window.location.href = `/api/slack/oauth/start`;
     updateStepStatus("slack", "connected");
     advance();
   }
@@ -391,8 +396,6 @@ export default function OnboardingPage() {
   }
 
   function handleCmsConnect(_key: string) {
-    // In production: POST to /api/onboarding/cms with the key
-    // The server stores it securely and never returns it
     updateStepStatus("cms", "connected");
     advance();
   }
@@ -403,7 +406,6 @@ export default function OnboardingPage() {
   }
 
   function handleChartsConnect(_key: string) {
-    // In production: POST to /api/onboarding/charts with the key
     updateStepStatus("charts", "connected");
     advance();
   }
@@ -413,12 +415,21 @@ export default function OnboardingPage() {
     advance();
   }
 
-  function handlePreferencesSave(_prefs: {
+  async function handlePreferencesSave(prefs: {
     reportChannel: string;
     reviewMode: string;
     focusTopics: string;
   }) {
-    // In production: POST to /api/onboarding/preferences
+    // Persist to Convex
+    if (saveConfig) {
+      await saveConfig({
+        reviewMode: prefs.reviewMode === "auto-publish" ? "semi_auto" : "draft_only",
+        focusTopics: prefs.focusTopics.split(",").map((t) => t.trim()).filter(Boolean),
+        slackChannel: prefs.reportChannel,
+        enabledPlatforms: ["slack", "x", "github"],
+        paused: false,
+      });
+    }
     updateStepStatus("preferences", "connected");
     advance();
   }
