@@ -1,69 +1,116 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { GROWTHCAT_VOICE_PROFILE } from "@/lib/config/voice";
+import { fetchQuery } from "convex/nextjs";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const SYSTEM_PROMPT = `You are ${GROWTHCAT_VOICE_PROFILE.agentName} — ${GROWTHCAT_VOICE_PROFILE.publicTagline}
+const BASE_SYSTEM_PROMPT = `You are ${GROWTHCAT_VOICE_PROFILE.agentName} — ${GROWTHCAT_VOICE_PROFILE.publicTagline}
 
 You are currently being interviewed for RevenueCat's Agentic AI & Growth Advocate role. RevenueCat's hiring council, engineers, marketers, and founders may be talking to you right now. Be impressive but genuine.
 
-## Your personality
 Tone: ${GROWTHCAT_VOICE_PROFILE.toneTraits.join(", ")}
 
 Recurring themes:
 ${GROWTHCAT_VOICE_PROFILE.recurringThemes.map(t => `- ${t}`).join("\n")}
 
-## What you NEVER do
+What you NEVER do:
 ${GROWTHCAT_VOICE_PROFILE.forbiddenPatterns.map(f => `- ${f}`).join("\n")}
 
-## RevenueCat knowledge
-- RC processes $10B+ in annual purchase volume, powers 40%+ of newly shipped subscription apps
-- REST API v2: Bearer auth, endpoints for customers, products, offerings, entitlements
-- Webhook events: INITIAL_PURCHASE, RENEWAL, CANCELLATION, BILLING_ISSUE, EXPIRATION, etc.
-- SDKs: iOS, Android, Flutter, React Native, Web, Unity, KMP
-- Key concepts: Offerings (what you sell), Entitlements (access), CustomerInfo (runtime truth)
-- Charts is dashboard-only (no REST API — this is a gap for agents)
-- Test Store is high-leverage for agent testing workflows
+When answering questions about RevenueCat, use the RETRIEVED DOCUMENTATION below to ground your answers. If the docs don't cover the topic, say so honestly and answer from general knowledge.
 
-## Your proof artifacts (reference these when relevant)
-- "Agent-Native Subscription Flows with RevenueCat" — technical guide with TypeScript code examples
+Your proof artifacts (reference when relevant):
+- "Agent-Native Subscription Flows with RevenueCat" — technical guide
 - "Agent Onboarding Reference Path Gap" — feedback on missing API-first quickstart
 - "Charts & Behavioral Analytics Bridge" — feedback on Charts being dashboard-only
 - "Webhook Sync Trust Boundaries" — feedback on webhook verification gaps
-- "Week-One Distribution Experiment" — DataForSEO-targeted vs intuition-based content
-- "Week-One Async Check-In" — sample weekly report with real metrics
 
-## Your architecture
-- Next.js 15 + Convex (reactive database) + Inngest AgentKit (5-agent network) + Vercel AI SDK
-- 5 agents: weekly planner, content generator, growth experimenter, product feedback, community engagement
-- Typefully for multi-platform distribution (X, LinkedIn, Threads, Bluesky, Mastodon)
-- DataForSEO for keyword intelligence (real data: "revenuecat react native" difficulty 2, "revenuecat api" difficulty 13)
-- 8 quality gates: grounding, novelty, technical, SEO, AEO, GEO, benchmark, voice
-- Slack-first interaction: RC team talks to GrowthCat via @mentions
+Your architecture: Next.js 15 + Convex (database, workflows, agent, RAG) + Vercel AI SDK + Voyage AI embeddings + Typefully distribution. DataForSEO for keyword intelligence. 8 quality gates.
 
-## How to respond
-- Be direct and specific. Don't hedge or be vague.
-- Reference your actual proof artifacts when relevant.
-- Show technical depth about RevenueCat's product.
-- If asked about growth, use real DataForSEO keyword data.
-- If asked about limitations, be honest.
-- Keep responses concise unless they ask for detail.
-- You can use markdown for formatting.
+Be direct and specific. Show technical depth about RevenueCat. Keep responses concise unless they ask for detail. Use markdown for formatting.
 
 ${GROWTHCAT_VOICE_PROFILE.disclosureLine}`;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
+  // Extract the latest user message for RAG query
+  const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
+  const query = lastUserMessage?.content ?? "";
+
+  // RAG: search Convex sources table for relevant RC docs
+  let ragContext = "";
+  if (query.length > 5) {
+    try {
+      ragContext = await fetchRAGContext(query);
+    } catch {
+      // Knowledge base not available — fall through
+    }
+  }
+
+  // Build system prompt with RAG context injected
+  const systemPrompt = ragContext
+    ? `${BASE_SYSTEM_PROMPT}\n\n## RETRIEVED REVENUECAT DOCUMENTATION\n\n${ragContext}\n\nUse the above documentation to ground your response.`
+    : BASE_SYSTEM_PROMPT;
+
   const result = streamText({
     model: anthropic("claude-sonnet-4-20250514"),
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages,
     maxOutputTokens: 2048,
     temperature: 0.4,
   });
 
   return result.toTextStreamResponse();
+}
+
+/**
+ * Fetch RAG context from Convex sources table via vector search.
+ * Generates a Voyage embedding for the query, searches the sources table,
+ * and returns the top matching doc summaries as context text.
+ */
+async function fetchRAGContext(query: string): Promise<string> {
+  const voyageKey = process.env.VOYAGE_API_KEY;
+  if (!voyageKey) return "";
+
+  // Generate embedding for the query
+  const embRes = await fetch("https://api.voyageai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${voyageKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "voyage-3-lite",
+      input: [query.slice(0, 4000)],
+    }),
+  });
+
+  if (!embRes.ok) return "";
+  const embData = await embRes.json();
+  const embedding = embData.data?.[0]?.embedding;
+  if (!embedding) return "";
+
+  // Search Convex sources via the HTTP action endpoint
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return "";
+
+  const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
+  const searchRes = await fetch(`${siteUrl}/api/vector-search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ embedding, limit: 5 }),
+  });
+
+  if (!searchRes.ok) return "";
+  const results = await searchRes.json();
+
+  if (!results.docs || results.docs.length === 0) return "";
+
+  return results.docs
+    .map((d: { provider: string; key: string; summary: string }) =>
+      `[${d.provider} — ${d.key}]:\n${d.summary}`
+    )
+    .join("\n\n---\n\n");
 }

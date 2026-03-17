@@ -166,4 +166,56 @@ http.route({
   }),
 });
 
+// ---------------------------------------------------------------------------
+// Vector search endpoint — used by the chat API for RAG
+// Public (read-only, returns only summaries, no secrets)
+// ---------------------------------------------------------------------------
+
+http.route({
+  path: "/api/vector-search",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { embedding, limit = 5 } = body;
+
+    if (!embedding || !Array.isArray(embedding)) {
+      return new Response(JSON.stringify({ error: "embedding array required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const results = await ctx.vectorSearch("sources", "by_embedding", {
+      vector: embedding,
+      limit,
+    });
+
+    // Fetch full docs for the results
+    const docs = await Promise.all(
+      results.map(async (r) => {
+        const doc = await ctx.runQuery(api.sources.getById, { id: r._id });
+        return doc;
+      })
+    );
+
+    return new Response(
+      JSON.stringify({
+        docs: docs.filter(Boolean).map((d) => ({
+          provider: d!.provider,
+          key: d!.key,
+          summary: d!.summary ?? "",
+          score: results.find((r) => r._id === d!._id)?._score ?? 0,
+        })),
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
+  }),
+});
+
 export default http;

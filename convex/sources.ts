@@ -4,7 +4,14 @@ import { v } from "convex/values";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("sources").collect();
+    return await ctx.db.query("sources").take(100);
+  },
+});
+
+export const getById = query({
+  args: { id: v.id("sources") },
+  handler: async (ctx, { id }) => {
+    return await ctx.db.get(id);
   },
 });
 
