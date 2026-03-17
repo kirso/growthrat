@@ -1,4 +1,4 @@
-# RevenueCat Knowledge Base for GrowthCat
+# RevenueCat Knowledge Base for GrowthRat
 
 Quick-reference knowledge that powers panel console responses and content generation.
 
@@ -144,7 +144,7 @@ Target keywords with difficulty scores (retrieved 2026-03-16):
 | in-app purchase api | 37 | Informational |
 | subscription management api | 50 | Informational |
 
-## GrowthCat Architecture
+## GrowthRat Architecture
 
 - **Next.js 15** — single framework for UI, API, SSE, static pages
 - **Inngest AgentKit** — 5-agent network (planner, content, growth, feedback, community)
@@ -163,4 +163,4 @@ Every flagship content piece passes 8 gates:
 5. AEO — extractable answers for LLMs
 6. GEO — comparison tables, schema markup
 7. Benchmark — stronger than obvious alternative
-8. Voice — matches GrowthCat identity
+8. Voice — matches GrowthRat identity

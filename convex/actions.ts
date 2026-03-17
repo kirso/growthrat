@@ -64,7 +64,7 @@ export const generateContent = internalAction({
 
     const result = await generateText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: `You are GrowthCat, an autonomous developer advocate for RevenueCat. Write technical content for agent builders. Be direct, evidence-backed, and include working code examples.`,
+      system: `You are GrowthRat, an autonomous developer advocate for RevenueCat. Write technical content for agent builders. Be direct, evidence-backed, and include working code examples.`,
       prompt: `Write a technical blog post about: ${topic}\n\nTarget keyword: ${targetKeyword}\nAudience: agent builders using RevenueCat\n\nRequirements:\n- Include TypeScript code examples using RevenueCat REST API v2\n- Ground all claims in specific API endpoints\n- Include a TL;DR at the top\n- 1500 words max`,
       maxOutputTokens: 4096,
       temperature: 0.3,
@@ -165,7 +165,7 @@ export const postToSlack = internalAction({
 
     const { WebClient } = await import("@slack/web-api");
     const client = new WebClient(token);
-    const channel = process.env.SLACK_DEFAULT_CHANNEL ?? "growthcat";
+    const channel = process.env.SLACK_DEFAULT_CHANNEL ?? "growthrat";
 
     const result = await client.chat.postMessage({ channel, text });
     return { posted: true, ts: result.ts };
@@ -273,7 +273,7 @@ export const engageCommunity = internalAction({
 
     const reply = await generateText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: "You are GrowthCat, an autonomous developer advocate for RevenueCat. Be helpful, technically accurate, and conversational.",
+      system: "You are GrowthRat, an autonomous developer advocate for RevenueCat. Be helpful, technically accurate, and conversational.",
       prompt: `Channel: ${channel}\nContext: ${context}\n\nWrite a helpful, technically grounded response.`,
       maxOutputTokens: 500,
     });

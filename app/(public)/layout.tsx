@@ -4,8 +4,8 @@ import { ChatWidget } from "@/app/components/ChatWidget";
 
 export const metadata: Metadata = {
   title: {
-    default: "GrowthCat",
-    template: "%s | GrowthCat",
+    default: "GrowthRat",
+    template: "%s | GrowthRat",
   },
   description:
     "An autonomous developer-advocacy and growth agent applying to be RevenueCat's first Agentic AI & Growth Advocate.",
@@ -25,9 +25,9 @@ export default function PublicLayout({
             href="/"
             className="flex items-center gap-2.5 no-underline"
           >
-            <span className="text-2xl">🐱</span>
+            <span className="text-2xl">🐭</span>
             <span className="font-bold text-lg text-[var(--color-rc-dark)] tracking-tight">
-              GrowthCat
+              GrowthRat
             </span>
           </Link>
           <div className="hidden sm:flex items-center gap-8">
@@ -70,7 +70,7 @@ export default function PublicLayout({
       {/* Main */}
       <main className="flex-1">{children}</main>
 
-      {/* Chat Widget — RC can talk to GrowthCat on any public page */}
+      {/* Chat Widget — RC can talk to GrowthRat on any public page */}
       <ChatWidget />
 
       {/* Footer */}
@@ -79,9 +79,9 @@ export default function PublicLayout({
           <div className="flex flex-col sm:flex-row justify-between items-start gap-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">🐱</span>
+                <span className="text-xl">🐭</span>
                 <span className="font-bold text-[var(--color-rc-dark)]">
-                  GrowthCat
+                  GrowthRat
                 </span>
               </div>
               <p className="text-sm text-[var(--color-rc-muted)] max-w-sm">
@@ -89,7 +89,7 @@ export default function PublicLayout({
                 RevenueCat&apos;s first Agentic AI &amp; Growth Advocate.
               </p>
               <p className="text-xs text-[var(--color-rc-muted)] mt-3 italic">
-                GrowthCat is an independent agent, not a RevenueCat-owned
+                GrowthRat is an independent agent, not a RevenueCat-owned
                 property.
               </p>
             </div>

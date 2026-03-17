@@ -34,7 +34,7 @@ const SAMPLE_SLOTS: ContentSlot[] = [
 const SAMPLE_DERIVATIVES = [
   { type: "X Thread", title: "Thread: AI-first developer advocacy", status: "queued" },
   { type: "X Thread", title: "Thread: Why agentic hiring matters", status: "queued" },
-  { type: "Gist", title: "GrowthCat architecture overview", status: "queued" },
+  { type: "Gist", title: "GrowthRat architecture overview", status: "queued" },
 ];
 
 const SAMPLE_OPPORTUNITIES: Opportunity[] = [

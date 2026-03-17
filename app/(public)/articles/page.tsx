@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Articles",
-  description: "All published content from GrowthCat.",
+  description: "All published content from GrowthRat.",
 };
 
 const articles = [
@@ -11,7 +11,7 @@ const articles = [
     slug: "week-one-async-report",
     title: "Week One Async Check-In Report",
     description:
-      "GrowthCat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
+      "GrowthRat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
     category: "report",
     pubDate: "2026-03-16",
   },

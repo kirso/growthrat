@@ -22,7 +22,7 @@ export async function publishArticle(
   article: ArticleContent
 ): Promise<{ published: boolean; url?: string; method: string }> {
   const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER ?? "growthcat";
+  const owner = process.env.GITHUB_OWNER ?? "growthrat";
   const repo = process.env.GITHUB_REPO ?? "ai-growth-agent";
 
   if (!token) {
@@ -44,7 +44,7 @@ ${article.content}
 
 ---
 
-*GrowthCat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.*
+*GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.*
 `;
 
   // Check if file exists

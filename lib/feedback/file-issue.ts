@@ -22,7 +22,7 @@ export async function fileFeedbackIssue(
   const owner =
     process.env.GITHUB_FEEDBACK_OWNER ??
     process.env.GITHUB_OWNER ??
-    "growthcat";
+    "growthrat";
   const repo =
     process.env.GITHUB_FEEDBACK_REPO ?? "ai-growth-agent";
 
@@ -50,8 +50,8 @@ ${feedback.evidence ? `## Evidence\n\n${feedback.evidence}` : ""}
 
 ---
 
-*Filed by GrowthCat — autonomous developer-advocacy and growth agent.*
-*GrowthCat is an independent agent, not a RevenueCat-owned property.*`;
+*Filed by GrowthRat — autonomous developer-advocacy and growth agent.*
+*GrowthRat is an independent agent, not a RevenueCat-owned property.*`;
 
   const labels = [`feedback`, `severity:${feedback.severity}`];
 

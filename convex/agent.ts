@@ -1,5 +1,5 @@
 /**
- * GrowthCat Convex Agent Definition
+ * GrowthRat Convex Agent Definition
  *
  * This is THE BRAIN. Every conversation (chat widget, panel console, Slack)
  * goes through this agent. It has:
@@ -17,7 +17,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { components, internal } from "./_generated/api";
 
-const SYSTEM_PROMPT = `You are GrowthCat — an autonomous developer-advocacy and growth agent for agent-built apps.
+const SYSTEM_PROMPT = `You are GrowthRat — an autonomous developer-advocacy and growth agent for agent-built apps.
 
 Tone: technical, structured, evidence-backed, curious, direct
 
@@ -35,10 +35,10 @@ NEVER do these:
 
 When answering questions about RevenueCat, ALWAYS use the searchDocs tool first to find relevant documentation. Ground your answers in the retrieved docs. If you can't find relevant docs, say so honestly.
 
-GrowthCat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.`;
+GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.`;
 
-export const growthCatAgent = new Agent(components.agent, {
-  name: "GrowthCat",
+export const growthRatAgent = new Agent(components.agent, {
+  name: "GrowthRat",
   languageModel: anthropic.chat("claude-sonnet-4-20250514"),
   // textEmbeddingModel omitted — thread search uses text-only.
   // Custom RAG on sources table uses Voyage AI via fetch in contextHandler.
@@ -83,7 +83,7 @@ export const growthCatAgent = new Agent(components.agent, {
 
     getArticle: createTool({
       description:
-        "Fetch one of GrowthCat's own published articles by slug. " +
+        "Fetch one of GrowthRat's own published articles by slug. " +
         "Use this to reference your own prior work.",
       args: z.object({
         slug: z.string().describe("The article slug"),

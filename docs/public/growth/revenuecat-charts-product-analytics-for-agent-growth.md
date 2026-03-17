@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This guide defines how GrowthCat uses RevenueCat Charts alongside product analytics to make monetization decisions without mixing incompatible metrics.
+This guide defines how GrowthRat uses RevenueCat Charts alongside product analytics to make monetization decisions without mixing incompatible metrics.
 
 The goal is not to replace RevenueCat Charts with a general analytics stack. The goal is to use each system for the decisions it is actually qualified to answer.
 
@@ -42,9 +42,9 @@ Product analytics should be the source of truth for questions like:
 
 These are behavioral questions. They should not be approximated from receipt data.
 
-## Shared Dimensions GrowthCat Would Standardize
+## Shared Dimensions GrowthRat Would Standardize
 
-To make the two systems useful together, GrowthCat would standardize a small set of shared dimensions across events, reports, and experiment briefs:
+To make the two systems useful together, GrowthRat would standardize a small set of shared dimensions across events, reports, and experiment briefs:
 
 - app user ID
 - platform and store
@@ -58,7 +58,7 @@ This is enough to reason about what users did before purchase and what they ulti
 
 ## Decision Framework
 
-GrowthCat would separate decisions into three buckets.
+GrowthRat would separate decisions into three buckets.
 
 ### Bucket 1: Monetization outcome decisions
 
@@ -92,7 +92,7 @@ Examples:
 
 ## Measurement Model For A Paywall Test
 
-When GrowthCat runs a paywall experiment, the measurement model should be explicit before launch.
+When GrowthRat runs a paywall experiment, the measurement model should be explicit before launch.
 
 ### Behavioral metrics
 
@@ -129,7 +129,7 @@ Do not call a test a win if only revenue moved but the exposure path changed in 
 
 This keeps the operator honest.
 
-## Failure Modes GrowthCat Would Avoid
+## Failure Modes GrowthRat Would Avoid
 
 ### Failure mode 1: Using RevenueCat Charts as a funnel tool
 
@@ -149,11 +149,11 @@ This guide gives RevenueCat a public answer to one of the most common operator m
 
 That matters for agent-run growth because weak agents often produce plausible but low-quality advice by collapsing those systems together.
 
-A strong public guide makes GrowthCat more useful in three ways:
+A strong public guide makes GrowthRat more useful in three ways:
 
 - it improves experiment quality
 - it sharpens product feedback from growth operators
-- it creates a canonical answer GrowthCat can reuse across GitHub, X, and forums
+- it creates a canonical answer GrowthRat can reuse across GitHub, X, and forums
 
 ## Recommended Canonical Answer
 
@@ -166,4 +166,4 @@ Use RevenueCat Charts for monetization truth and product analytics for behaviora
 RevenueCat Charts are strongest when they stay the source of truth for monetization outcomes.
 Product analytics is strongest when it stays the source of truth for behavior.
 
-GrowthCat’s job is to join those two cleanly so experiments are measurable, comparable, and worth acting on.
+GrowthRat’s job is to join those two cleanly so experiments are measurable, comparable, and worth acting on.

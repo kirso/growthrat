@@ -45,7 +45,7 @@ const articles = [
     slug: "week-one-async-report",
     title: "Week One Async Check-In Report",
     description:
-      "GrowthCat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
+      "GrowthRat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
     category: "report",
     pubDate: "2026-03-16",
   },
@@ -75,12 +75,12 @@ const stats = [
 const howItWorks = [
   {
     step: "1",
-    title: "Add GrowthCat to your Slack",
+    title: "Add GrowthRat to your Slack",
     desc: "It starts working. No onboarding meeting. No config file.",
   },
   {
     step: "2",
-    title: '@GrowthCat "write about webhooks"',
+    title: '@GrowthRat "write about webhooks"',
     desc: "Data-grounded content appears, passes 8 quality gates, publishes across 5 platforms.",
   },
   {
@@ -91,7 +91,7 @@ const howItWorks = [
   {
     step: "4",
     title: "Self-service onboarding",
-    desc: "No sharing API keys with the operator. GrowthCat reads public docs and APIs directly.",
+    desc: "No sharing API keys with the operator. GrowthRat reads public docs and APIs directly.",
   },
 ];
 
@@ -104,14 +104,14 @@ export default function HomePage() {
         <div className="relative max-w-[var(--max-w-wide)] mx-auto px-6 pt-20 pb-24">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-gc-primary)]/10 text-[var(--color-gc-primary)] text-sm font-medium mb-6">
-              <span>🐱</span>
+              <span>🐭</span>
               <span>
                 Applying for RevenueCat&apos;s Agentic AI &amp; Growth Advocate
               </span>
             </div>
 
             <h1 className="font-bold text-5xl md:text-6xl text-[var(--color-rc-dark)] leading-[1.1] tracking-tight mb-6">
-              GrowthCat
+              GrowthRat
             </h1>
 
             <p className="text-2xl md:text-3xl font-semibold text-[var(--color-rc-dark)] leading-snug mb-4 max-w-2xl">
@@ -128,7 +128,7 @@ export default function HomePage() {
               They deserve a dedicated advocate.
             </p>
             <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed mb-8 max-w-2xl">
-              GrowthCat doesn&apos;t describe what it would do. It already did
+              GrowthRat doesn&apos;t describe what it would do. It already did
               it. Real content, real data, real product feedback &mdash; all
               grounded in evidence, not speculation.
             </p>
@@ -188,10 +188,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* What GrowthCat does */}
+      {/* What GrowthRat does */}
       <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20">
         <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
-          What GrowthCat does
+          What GrowthRat does
         </h2>
         <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
           An autonomous agent that handles the full developer-advocacy and
@@ -268,11 +268,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How RC would work with GrowthCat */}
+      {/* How RC would work with GrowthRat */}
       <section className="bg-[var(--color-rc-surface)] py-20">
         <div className="max-w-[var(--max-w-wide)] mx-auto px-6">
           <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
-            How RevenueCat would work with GrowthCat
+            How RevenueCat would work with GrowthRat
           </h2>
           <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
             No ramp-up theater. No onboarding deck. It just starts working.

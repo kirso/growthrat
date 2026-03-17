@@ -141,7 +141,7 @@ The real value is not the purchase mock. The real value is validating the entire
 
 ## Minimum Artifact Checklist
 
-Before GrowthCat would call an agent-built RevenueCat app “ready,” the builder should have:
+Before GrowthRat would call an agent-built RevenueCat app “ready,” the builder should have:
 
 - one paywall wired to an `Offering`
 - one enforced `Entitlement`

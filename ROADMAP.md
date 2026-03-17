@@ -1,8 +1,8 @@
-# GrowthCat Roadmap
+# GrowthRat Roadmap
 
-The build plan for GrowthCat, an autonomous DX advocate agent for RevenueCat. Organized as two tracks of vertical slices. **Track A** (application-critical) is the minimum required to submit the application. **Track B** (operating product) demonstrates the full weekly system.
+The build plan for GrowthRat, an autonomous DX advocate agent for RevenueCat. Organized as two tracks of vertical slices. **Track A** (application-critical) is the minimum required to submit the application. **Track B** (operating product) demonstrates the full weekly system.
 
-For product requirements, goals, and scope, see [PRD](docs/product/2026-03-13-growthcat-prd.md).
+For product requirements, goals, and scope, see [PRD](docs/product/2026-03-13-growthrat-prd.md).
 
 ---
 
@@ -47,7 +47,7 @@ Track B (operating product — can start after VS-A1):
                                                    → VS-B5 (onboarding persistence)
 ```
 
-**Track A delivers**: a public URL where RC can talk to GrowthCat via the chat widget, see static proof articles (already hardcoded as seed content), and explore the operator replay page. This is sufficient for Stage 1 (Application).
+**Track A delivers**: a public URL where RC can talk to GrowthRat via the chat widget, see static proof articles (already hardcoded as seed content), and explore the operator replay page. This is sufficient for Stage 1 (Application).
 
 **Track B delivers**: the full operating system — content generation with approval flow, weekly Monday-Friday cycle, live dashboard, experiments with measurement, and secure onboarding. This is required for Stage 2 (Take-Home), Stage 3 (Panel), and Stage 4 (Founder).
 
@@ -57,7 +57,7 @@ VS-B1 depends on VS-A1 (needs the brain for RAG-grounded content generation). VS
 
 ## VS-A1: The Brain Works
 
-**Goal**: GrowthCat can answer specific RevenueCat questions accurately from ingested docs. The Convex Agent has persistent threads, message history, tool calling, and explicit custom-document RAG on every response.
+**Goal**: GrowthRat can answer specific RevenueCat questions accurately from ingested docs. The Convex Agent has persistent threads, message history, tool calling, and explicit custom-document RAG on every response.
 
 **Dependencies**: Anthropic API key (set in `.env.local`), Convex deployed (done), OpenAI API key for embeddings (add `OPENAI_API_KEY` to `.env.local`)
 
@@ -227,8 +227,8 @@ import { openai } from "@ai-sdk/openai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 
-export const growthCatAgent = new Agent(components.agent, {
-  name: "GrowthCat",
+export const growthRatAgent = new Agent(components.agent, {
+  name: "GrowthRat",
   languageModel: anthropic.chat("claude-sonnet-4-20250514"),
   textEmbeddingModel: openai.embedding("text-embedding-3-small"),
   instructions: GROWTHCAT_SYSTEM_PROMPT, // the system prompt from app/api/chat/route.ts
@@ -315,12 +315,12 @@ export const growthCatAgent = new Agent(components.agent, {
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { growthCatAgent } from "./agent";
+import { growthRatAgent } from "./agent";
 
 export const createThread = action({
   args: {},
   handler: async (ctx) => {
-    const { threadId } = await growthCatAgent.createThread(ctx, {});
+    const { threadId } = await growthRatAgent.createThread(ctx, {});
     return { threadId };
   },
 });
@@ -332,11 +332,11 @@ export const chat = action({
   },
   handler: async (ctx, { prompt, threadId }) => {
     if (threadId) {
-      const { thread } = await growthCatAgent.continueThread(ctx, { threadId });
+      const { thread } = await growthRatAgent.continueThread(ctx, { threadId });
       const result = await thread.generateText({ prompt });
       return { threadId, text: result.text };
     }
-    const { threadId: newId, thread } = await growthCatAgent.createThread(ctx, {});
+    const { threadId: newId, thread } = await growthRatAgent.createThread(ctx, {});
     const result = await thread.generateText({ prompt });
     return { threadId: newId, text: result.text };
   },
@@ -349,10 +349,10 @@ export const streamChat = action({
   },
   handler: async (ctx, { prompt, threadId }) => {
     if (threadId) {
-      const { thread } = await growthCatAgent.continueThread(ctx, { threadId });
+      const { thread } = await growthRatAgent.continueThread(ctx, { threadId });
       return await thread.streamText({ prompt });
     }
-    const { threadId: newId, thread } = await growthCatAgent.createThread(ctx, {});
+    const { threadId: newId, thread } = await growthRatAgent.createThread(ctx, {});
     return { threadId: newId, stream: await thread.streamText({ prompt }) };
   },
 });
@@ -403,15 +403,15 @@ export const embedText = internalAction({
 2. Verify 500+ source chunks stored in Convex `sources` table with embeddings
 3. Open chat widget on the public site
 4. Ask: "What events does RevenueCat send via webhooks?"
-5. GrowthCat answers with the complete list (INITIAL_PURCHASE, RENEWAL, CANCELLATION, BILLING_ISSUE, EXPIRATION, PRODUCT_CHANGE, etc.) citing the specific docs page URL — this answer comes from the **contextHandler** injecting relevant source chunks, NOT from the system prompt alone
+5. GrowthRat answers with the complete list (INITIAL_PURCHASE, RENEWAL, CANCELLATION, BILLING_ISSUE, EXPIRATION, PRODUCT_CHANGE, etc.) citing the specific docs page URL — this answer comes from the **contextHandler** injecting relevant source chunks, NOT from the system prompt alone
 6. Ask: "What's the difference between offerings and entitlements?"
-7. GrowthCat explains accurately: offerings are what you sell (packages of products), entitlements are access control (what the customer unlocks) — citing the correct docs sections
+7. GrowthRat explains accurately: offerings are what you sell (packages of products), entitlements are access control (what the customer unlocks) — citing the correct docs sections
 
 ### Exit criteria
 
 - [ ] 500+ source chunks stored in Convex `sources` table with embeddings (verify: `npx convex data sources --limit 1` shows embedding field)
 - [ ] `convex/convex.config.ts` has `app.use(agent)` uncommented and deployed
-- [ ] `convex/agent.ts` exists with `growthCatAgent` definition using correct API names (`languageModel`, `textEmbeddingModel`, `searchOptions` with `textSearch`/`vectorSearch`/`messageRange`)
+- [ ] `convex/agent.ts` exists with `growthRatAgent` definition using correct API names (`languageModel`, `textEmbeddingModel`, `searchOptions` with `textSearch`/`vectorSearch`/`messageRange`)
 - [ ] `contextHandler` in agent definition runs vector search on `sources` table BEFORE every LLM call
 - [ ] `searchDocs` tool exists on the agent for explicit retrieval
 - [ ] `convex/chat.ts` exists with `createThread`, `chat`, `streamChat` actions
@@ -482,7 +482,7 @@ Add `threadId` to the panel SSE query params. If provided, continue the existing
 
 1. Open chat widget on the public site
 2. Ask: "What events does RevenueCat send via webhooks?"
-3. GrowthCat answers accurately, citing specific docs — response comes from Convex Agent with contextHandler RAG
+3. GrowthRat answers accurately, citing specific docs — response comes from Convex Agent with contextHandler RAG
 4. Close the chat widget, reopen it — the conversation is still there (thread persistence)
 5. Open the panel console at `/panel`, type a prompt
 6. See sources retrieved from actual ingested RC docs (not the hardcoded `retrieveSources()` list)
@@ -547,7 +547,7 @@ bunx convex deploy --prod
 
 #### 3. Domain setup
 
-Options: `growthcat.dev`, `growthcat.ai`, or a Vercel subdomain. Configure in Vercel dashboard > Domains.
+Options: `growthrat.dev`, `growthrat.ai`, or a Vercel subdomain. Configure in Vercel dashboard > Domains.
 
 #### 4. Smoke test on production
 
@@ -840,7 +840,7 @@ export const handleSlackReaction = workflow.define({
 
 **File**: `app/api/slack/events/route.ts`
 
-Add handling for `reaction_added` events alongside the existing `app_mention` and `message` handlers. When a reaction is added to a GrowthCat approval post, start the approval workflow via Convex.
+Add handling for `reaction_added` events alongside the existing `app_mention` and `message` handlers. When a reaction is added to a GrowthRat approval post, start the approval workflow via Convex.
 
 ### Approval flow (explicit)
 
@@ -918,7 +918,7 @@ Content generated by LLM (with RAG context from VS-A1)
 | --- | --- | --- |
 | `SLACK_BOT_TOKEN` | Post approval messages, read reactions | Need to configure Slack app |
 | `SLACK_SIGNING_SECRET` | Verify Slack webhook events | Need to configure Slack app |
-| `SLACK_DEFAULT_CHANNEL` | Channel for approval posts | Need to set (default: "growthcat") |
+| `SLACK_DEFAULT_CHANNEL` | Channel for approval posts | Need to set (default: "growthrat") |
 | `GITHUB_TOKEN` | Commit markdown to repo (secondary) | Need to create token |
 | `TYPEFULLY_API_KEY` | Create social drafts (secondary) | Need to set up Typefully account |
 | `TYPEFULLY_SOCIAL_SET_ID` | Which social accounts to post to | Need to configure |
@@ -1567,7 +1567,7 @@ Either way, secrets live in server-side environment variables, not in the databa
 - [ ] Onboarding page sends secrets to a server-side endpoint (Next.js API route → Convex internal action), never to a client-callable mutation
 - [ ] `useConvexQuery(api.agentConfig.get)` returns preferences only — no secret values anywhere in the response
 - [ ] Review mode selection works: changing to "draft_only" causes next content generation to post to Slack for approval
-- [ ] Kill switch: `@GrowthCat stop` in Slack sets `agentConfig.paused = true`
+- [ ] Kill switch: `@GrowthRat stop` in Slack sets `agentConfig.paused = true`
 
 ### Expected outcomes
 
@@ -1591,13 +1591,13 @@ Either way, secrets live in server-side environment variables, not in the databa
 
 ### Trust Ramp
 
-GrowthCat starts with maximum human oversight and earns autonomy through demonstrated quality:
+GrowthRat starts with maximum human oversight and earns autonomy through demonstrated quality:
 
 | Phase | Review Mode | When | What happens |
 | --- | --- | --- | --- |
 | 1. Draft Only | `draft_only` | First 2 weeks | Every content piece posted to Slack for explicit approval before publishing. RC reacts with thumbs up or replies with feedback. |
 | 2. Semi-Autonomous | `auto_publish` with notifications | Weeks 3-4 | Quality gates auto-approve if all 8 pass. RC gets Slack notification of every publish with a 1-hour override window. |
-| 3. Bounded Autonomy | `auto_publish` | Month 2+ | Quality gates are the only gate. RC gets weekly summary of all published content. Override available anytime via `@GrowthCat stop`. |
+| 3. Bounded Autonomy | `auto_publish` | Month 2+ | Quality gates are the only gate. RC gets weekly summary of all published content. Override available anytime via `@GrowthRat stop`. |
 
 ### Slack Approval Workflow (Phase 1)
 
@@ -1611,7 +1611,7 @@ GrowthCat starts with maximum human oversight and earns autonomy through demonst
    - AEO: extractable answer passages, FAQ blocks
    - GEO: comparison tables, schema markup, citations
    - Benchmark: stronger than existing alternatives
-   - Voice: consistent with GrowthCat voice profile
+   - Voice: consistent with GrowthRat voice profile
 
 3a. ALL blocking gates pass:
    → Post to Slack: "Draft ready: [title]
@@ -1656,12 +1656,12 @@ Every approval action is logged in the `approvalLog` table with:
 
 ### Kill Switch
 
-`@GrowthCat stop` in Slack sets `agentConfig.paused = true`. When paused:
+`@GrowthRat stop` in Slack sets `agentConfig.paused = true`. When paused:
 - All Convex Workflows check the paused flag at the start and exit immediately if true
 - No new content is generated, published, or distributed
 - No new community interactions are posted
 - Existing sleeping workflows (experiment measurements) continue to sleep but will check the flag before executing
-- `@GrowthCat resume` clears the flag
+- `@GrowthRat resume` clears the flag
 
 ---
 
@@ -2086,8 +2086,8 @@ Based on DataForSEO keyword difficulty analysis (retrieved 2026-03-16):
 
 | # | Lever | Description | Frequency |
 | --- | --- | --- | --- |
-| 20 | Agent SDK wrapper | npm package: `@growthcat/revenuecat-agent` optimized for programmatic usage | Ship once, maintain |
-| 21 | CLI tool | `npx growthcat-rc-setup` for bootstrapping agent + RC projects | Ship once |
+| 20 | Agent SDK wrapper | npm package: `@growthrat/revenuecat-agent` optimized for programmatic usage | Ship once, maintain |
+| 21 | CLI tool | `npx growthrat-rc-setup` for bootstrapping agent + RC projects | Ship once |
 | 22 | GitHub Actions | CI action for testing RC webhook handling | Ship once |
 | 23 | Starter templates | Template repos for popular agent frameworks + RC | 3-5 templates |
 | 24 | Playground | Interactive sandbox for testing RC API calls | Ship once |
@@ -2127,14 +2127,14 @@ Based on DataForSEO keyword difficulty analysis (retrieved 2026-03-16):
 | --- | --- | --- | --- |
 | 39 | Framework integrations | Official guides for RC + Cursor, Windsurf, Replit, etc. | 1/month |
 | 40 | Co-marketing | Joint content with agent framework maintainers | 2/quarter |
-| 41 | Conference talks | Operator presents with GrowthCat's research and content | As available |
+| 41 | Conference talks | Operator presents with GrowthRat's research and content | As available |
 | 42 | Podcast appearances | Operator discusses AI agents in app development | As available |
 
 ### Compounding Growth (Levers 43-48)
 
 | # | Lever | Description | Frequency |
 | --- | --- | --- | --- |
-| 43 | Knowledge arbitrage | GrowthCat knows RC's docs better than any human; answers obscure questions instantly | Every interaction |
+| 43 | Knowledge arbitrage | GrowthRat knows RC's docs better than any human; answers obscure questions instantly | Every interaction |
 | 44 | Real-time community response | Respond to GitHub issues within minutes, not hours | Every 6h scan |
 | 45 | Cross-platform content multiplication | One article becomes X thread + LinkedIn post + GitHub gist + Slack summary + community replies, all from one generation | Per flagship |
 | 46 | Experiment compounding | Each experiment's results inform next week's strategy automatically | Weekly |
@@ -2156,17 +2156,17 @@ Based on DataForSEO keyword difficulty analysis (retrieved 2026-03-16):
 | Convex | Database, crons, vector search, file storage, Workflow, Agent | Free tier or ~$25/mo |
 | Vercel | Next.js hosting | Free tier or ~$20/mo |
 | Typefully | Multi-platform social distribution | ~$12/mo |
-| Domain | growthcat.dev or similar | ~$15/yr |
-| GitHub account | GrowthCat's repos and community presence | Free |
+| Domain | growthrat.dev or similar | ~$15/yr |
+| GitHub account | GrowthRat's repos and community presence | Free |
 
 ### RevenueCat connects via self-service onboarding (zero cost to them)
 
 | Asset | How they connect | What it enables |
 | --- | --- | --- |
-| Slack workspace | Add GrowthCat bot via OAuth | Commands, plans, reports, approvals |
+| Slack workspace | Add GrowthRat bot via OAuth | Commands, plans, reports, approvals |
 | Blog CMS | API key entered in `/onboarding` | Direct publishing to RC blog |
 | Charts API | API key (if REST available) | Metric grounding for content |
-| GitHub org | Add GrowthCat as collaborator | PRs, issue triage |
+| GitHub org | Add GrowthRat as collaborator | PRs, issue triage |
 | Preferences | Set in `/onboarding` | Review mode, focus topics, report channel |
 
 RC's **secrets** (Slack bot token, CMS API key, Charts API key) are stored as **Convex environment variables** (server-side only). They are never stored in the `agentConfig` database table, never returned by any client query, and never visible in the operator dashboard. The operator never sees them. RC can revoke any connection at any time via the onboarding page.
@@ -2185,15 +2185,15 @@ RC's **preferences** (review mode, focus topics, channel name) are stored in the
 | Onboarding secrets | Server-only storage | RC secrets sent to Next.js API route → Convex internal action → stored as Convex environment variables. Never stored in `agentConfig` table. Never exposed to client-side code or queries. |
 | Onboarding preferences | Convex mutation | Non-secret preferences (review mode, focus topics, channel name) stored in `agentConfig` table via standard Convex mutation. Safe for client-side access. |
 
-All endpoints reject unauthenticated requests. Secrets are never committed (`.env.local` is gitignored). Kill switch (`@GrowthCat stop` or `agentConfig.paused = true`) halts all side effects and checkpoints active runs.
+All endpoints reject unauthenticated requests. Secrets are never committed (`.env.local` is gitignored). Kill switch (`@GrowthRat stop` or `agentConfig.paused = true`) halts all side effects and checkpoints active runs.
 
 ---
 
 ## Open Decisions
 
-- [ ] GrowthCat Slack app creation and OAuth setup (app manifest, bot scopes: `chat:write`, `reactions:read`, `app_mentions:read`, `im:read`)
-- [ ] GrowthCat X/GitHub/Typefully account creation and handle selection
-- [ ] Public domain (`growthcat.dev`, `growthcat.ai`, or other)
+- [ ] GrowthRat Slack app creation and OAuth setup (app manifest, bot scopes: `chat:write`, `reactions:read`, `app_mentions:read`, `im:read`)
+- [ ] GrowthRat X/GitHub/Typefully account creation and handle selection
+- [ ] Public domain (`growthrat.dev`, `growthrat.ai`, or other)
 - [ ] Own analytics stack (GSC + GA4, GSC + PostHog, or other) — needed for VS-B4 experiment measurement
 - [ ] DataForSEO plan upgrade for AI Optimization endpoints (LLM mention tracking)
 - [ ] Typefully account tier and social set configuration (X only, X + LinkedIn, or all 5)
@@ -2403,4 +2403,4 @@ All variables from `.env.example` with their status and which VS needs them:
 | `GROWTHCAT_PANEL_TOKEN` | VS-A2+ | Need to generate (`openssl rand -hex 16`) |
 | `SLACK_BOT_TOKEN` | VS-B1+ | Need Slack app setup |
 | `SLACK_SIGNING_SECRET` | VS-B1+ | Need Slack app setup |
-| `SLACK_DEFAULT_CHANNEL` | VS-B1+ | Need to set (default: "growthcat") |
+| `SLACK_DEFAULT_CHANNEL` | VS-B1+ | Need to set (default: "growthrat") |

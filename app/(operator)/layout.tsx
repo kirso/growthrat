@@ -45,9 +45,9 @@ export default function OperatorLayout({
       >
         {/* Branding */}
         <div className="flex items-center gap-2 px-5 py-4 border-b border-[var(--color-op-border)]">
-          <span className="text-xl">🐱</span>
+          <span className="text-xl">🐭</span>
           <span className="font-semibold text-[var(--color-op-text)] tracking-tight">
-            GrowthCat Operator
+            GrowthRat Operator
           </span>
         </div>
 
@@ -105,8 +105,8 @@ export default function OperatorLayout({
           </button>
 
           <div className="flex items-center gap-2 lg:hidden">
-            <span className="text-lg">🐱</span>
-            <span className="font-semibold text-sm">GrowthCat</span>
+            <span className="text-lg">🐭</span>
+            <span className="font-semibold text-sm">GrowthRat</span>
           </div>
 
           <div className="flex-1" />

@@ -10,7 +10,7 @@
 
 ### Prompt A: "Create a technical tutorial for a specific RevenueCat feature and a distribution strategy"
 
-**Why this is likely:** RevenueCat needs to see that GrowthCat can produce real developer content — not marketing fluff — and that it understands how to get that content in front of the right people. This is the core deliverable of the role.
+**Why this is likely:** RevenueCat needs to see that GrowthRat can produce real developer content — not marketing fluff — and that it understands how to get that content in front of the right people. This is the core deliverable of the role.
 
 **Full execution plan:**
 
@@ -32,7 +32,7 @@
 
 ### Prompt B: "Design a content series (3–5 pieces) targeting agent developers who want to monetize their apps"
 
-**Why this is likely:** Agent monetization is RevenueCat's strategic bet. They need to see that GrowthCat understands the emerging agent developer audience and can build a sustained content program, not just one-off posts.
+**Why this is likely:** Agent monetization is RevenueCat's strategic bet. They need to see that GrowthRat understands the emerging agent developer audience and can build a sustained content program, not just one-off posts.
 
 **Full execution plan:**
 
@@ -54,7 +54,7 @@
 
 ### Prompt C: "Produce a product analysis of RevenueCat's agent developer experience and propose 3 improvements"
 
-**Why this is likely:** The role requires structured product feedback from real usage. This tests whether GrowthCat can be a useful product voice, not just a content machine.
+**Why this is likely:** The role requires structured product feedback from real usage. This tests whether GrowthRat can be a useful product voice, not just a content machine.
 
 **Full execution plan:**
 
@@ -98,7 +98,7 @@
 
 ### Prompt E: "Build a working demo showing RevenueCat integration in an agent workflow and write documentation for it"
 
-**Why this is likely:** This is the most technically demanding option. It tests whether GrowthCat (with operator support) can produce working code, not just prose.
+**Why this is likely:** This is the most technically demanding option. It tests whether GrowthRat (with operator support) can produce working code, not just prose.
 
 **Full execution plan:**
 
@@ -114,7 +114,7 @@
 | Package | 44–47 | Final assembly: GitHub repo (or zip), documentation set, distribution plan, test results. |
 | Buffer | 47–48 | Verify one last time that setup instructions work from a clean state. Submit. |
 
-**Key differentiator:** Include a "Decision Log" documenting every architectural choice and why. This proves GrowthCat thinks about tradeoffs, not just output.
+**Key differentiator:** Include a "Decision Log" documenting every architectural choice and why. This proves GrowthRat thinks about tradeoffs, not just output.
 
 ---
 
@@ -164,7 +164,7 @@ Hour 32–38  QUALITY VALIDATION
                 5. AEO — answer extraction structure is strong
                 6. GEO — citation-worthy, authority signals present
                 7. Benchmark — beats comparison set on at least one dimension
-                8. Voice — matches GrowthCat identity, disclosure included
+                8. Voice — matches GrowthRat identity, disclosure included
               - Fix every blocking failure.
               - For code deliverables: run from clean state, verify setup
                 instructions work.
@@ -199,7 +199,7 @@ The operator should be available at these moments:
 - **Hour 8:** Review research findings. Flag any access issues (API keys, sandbox environments).
 - **Hour 24:** Checkpoint on primary deliverable. Operator reads it cold and gives feedback.
 - **Hour 36:** Quality gate review. Operator runs code examples independently to verify they work.
-- **Hour 44:** Final read-through. Operator catches anything GrowthCat missed.
+- **Hour 44:** Final read-through. Operator catches anything GrowthRat missed.
 - **Hour 47:** Operator handles submission mechanics (form upload, URL submission, etc.).
 
 ---
@@ -225,12 +225,12 @@ The operator should be available at these moments:
 
 ### Voice and Identity
 
-- [ ] Tone matches GrowthCat profile: technical, structured, evidence-backed, curious, direct
+- [ ] Tone matches GrowthRat profile: technical, structured, evidence-backed, curious, direct
 - [ ] No generic AI futurism without product specifics
 - [ ] No unsupported growth claims
 - [ ] No mascot-like self-description
 - [ ] No implication of RevenueCat endorsement
-- [ ] Disclosure line included: "GrowthCat is an independent agent applying to RevenueCat, not a RevenueCat-owned property."
+- [ ] Disclosure line included: "GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned property."
 
 ### Structural Quality
 
@@ -294,7 +294,7 @@ The operator should be available at these moments:
 
 ### Pitfall 5: Missing the Meta-Signal
 
-**What happens:** The submission answers the literal prompt but fails to demonstrate that GrowthCat is the right agent for the role. The evaluators are not just grading the deliverable — they are evaluating whether this agent can do this work every week for 6 months.
+**What happens:** The submission answers the literal prompt but fails to demonstrate that GrowthRat is the right agent for the role. The evaluators are not just grading the deliverable — they are evaluating whether this agent can do this work every week for 6 months.
 
 **How to avoid:**
 - Show the process, not just the output. Include a "How This Was Made" section showing: research sources consulted, quality gates applied, decision points and tradeoffs.

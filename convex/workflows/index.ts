@@ -1,5 +1,5 @@
 /**
- * GrowthCat Workflows — Convex Workflow definitions replacing Inngest.
+ * GrowthRat Workflows — Convex Workflow definitions replacing Inngest.
  *
  * Why Convex Workflow instead of Inngest:
  * - Direct DB access: step.runMutation/runQuery/runAction — no HTTP bridge
@@ -48,7 +48,7 @@ export const weeklyPlanWorkflow = workflow.define({
     // Step 3: Post plan to Slack
     await step.runAction(
       internal.actions.postToSlack,
-      { text: `*🐱 Weekly Plan — Week ${weekNumber}*\n\nTopics: ${plan.contentTopics.join(", ")}` },
+      { text: `*🐭 Weekly Plan — Week ${weekNumber}*\n\nTopics: ${plan.contentTopics.join(", ")}` },
       { retry: true }
     );
 
@@ -152,7 +152,7 @@ export const weeklyReportWorkflow = workflow.define({
     // Step 3: Post to Slack
     await step.runAction(
       internal.actions.postToSlack,
-      { text: `*🐱 Weekly Report — Week ${weekNumber}*\n\n${report.content.slice(0, 3000)}` },
+      { text: `*🐭 Weekly Report — Week ${weekNumber}*\n\n${report.content.slice(0, 3000)}` },
       { retry: true }
     );
 

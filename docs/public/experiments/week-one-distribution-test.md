@@ -1,4 +1,4 @@
-# GrowthCat Week-One Distribution Test
+# GrowthRat Week-One Distribution Test
 
 ## Goal
 
@@ -6,7 +6,7 @@ Test whether a flagship-plus-derivatives distribution pattern creates stronger e
 
 ## Hypothesis
 
-If GrowthCat publishes a flagship technical artifact, a flagship growth artifact, and a proof-pack layer around them, then reviewers and public readers will have more obvious entry points into the work and more reusable references than they would from a standalone application letter.
+If GrowthRat publishes a flagship technical artifact, a flagship growth artifact, and a proof-pack layer around them, then reviewers and public readers will have more obvious entry points into the work and more reusable references than they would from a standalone application letter.
 
 ## Why This Test Matters
 
@@ -23,7 +23,7 @@ This experiment tests that operating model directly.
 - minimal supporting assets
 - low surface area for reference and reuse
 
-### GrowthCat variant
+### GrowthRat variant
 
 - application microsite
 - proof-pack index
@@ -61,7 +61,7 @@ This is not a narrow copy test. It is a format and distribution test.
 
 ### Qualitative checks
 
-- whether reviewers can understand GrowthCat’s technical ability without guessing
+- whether reviewers can understand GrowthRat’s technical ability without guessing
 - whether the experiment surfaces a clearer story about autonomy and judgment
 
 ## Launch Assets
@@ -96,6 +96,6 @@ Once live metrics exist, convert this artifact into a measured experiment report
 
 ## Bottom Line
 
-This experiment tests whether GrowthCat behaves like a real advocate and growth operator before RevenueCat has to trust it internally.
+This experiment tests whether GrowthRat behaves like a real advocate and growth operator before RevenueCat has to trust it internally.
 
 That is the right experiment to run in week one.

@@ -2,7 +2,7 @@
 
 - Stage: Founder Interview (Stage 4 of 4)
 - Format: "The human partners for the final candidates will go through a live interview with one of our founders."
-- Interviewee: The operator (human partner), not GrowthCat
+- Interviewee: The operator (human partner), not GrowthRat
 - Prepared: 2026-03-16
 
 ---
@@ -11,7 +11,7 @@
 
 ### Business Case
 
-**What GrowthCat delivers per month:**
+**What GrowthRat delivers per month:**
 
 | Category | Monthly Output | Details |
 |----------|---------------|---------|
@@ -24,7 +24,7 @@
 
 **Cost efficiency:**
 
-| | GrowthCat | Human DX Advocate |
+| | GrowthRat | Human DX Advocate |
 |---|-----------|-------------------|
 | Monthly cost | ~$10,000 (contract rate) | $12,000–15,000 (salary + benefits + tools) |
 | Ramp time | 1 month (doc ingestion + first 10 pieces) | 2–3 months (onboarding + context building) |
@@ -35,8 +35,8 @@
 
 **Capabilities humans cannot match at this cost point:**
 
-- **24/7 community monitoring.** GrowthCat can watch X, Reddit, Discord, Stack Overflow, and GitHub continuously and respond within minutes to relevant developer questions. A human advocate checks these platforms a few times per day.
-- **Real-time multi-platform distribution.** When a piece of content is published, GrowthCat can simultaneously adapt and post it across 5+ channels with platform-specific formatting. A human does this sequentially over hours.
+- **24/7 community monitoring.** GrowthRat can watch X, Reddit, Discord, Stack Overflow, and GitHub continuously and respond within minutes to relevant developer questions. A human advocate checks these platforms a few times per day.
+- **Real-time multi-platform distribution.** When a piece of content is published, GrowthRat can simultaneously adapt and post it across 5+ channels with platform-specific formatting. A human does this sequentially over hours.
 - **Data-driven topic selection.** Every content topic is selected based on current DataForSEO keyword data, community signal analysis, and competitive gap scoring. A human advocate relies more on intuition and experience, which is valuable but not systematically reproducible.
 - **Systematic quality enforcement.** Every piece of content passes 8 blocking quality gates before publication. A human can maintain high quality, but the enforcement is inconsistent — especially under deadline pressure.
 
@@ -44,7 +44,7 @@
 
 - Adding a new channel (e.g., LinkedIn, YouTube scripts) requires configuration, not hiring.
 - Output can scale linearly with budget (more LLM calls, more DataForSEO queries) without the nonlinear costs of headcount (management overhead, coordination, knowledge silos).
-- If RevenueCat wants to expand GrowthCat's scope (e.g., add a second language, cover a new product area), the ramp time is days, not months.
+- If RevenueCat wants to expand GrowthRat's scope (e.g., add a second language, cover a new product area), the ramp time is days, not months.
 
 ---
 
@@ -54,13 +54,13 @@
 
 | Phase | Timeline | Autonomy Level | Approval Flow |
 |-------|----------|---------------|---------------|
-| 1. Draft-only | Month 1 | GrowthCat produces all content as drafts. Nothing publishes without operator + RC team review. | Every piece reviewed in Slack before publish. |
+| 1. Draft-only | Month 1 | GrowthRat produces all content as drafts. Nothing publishes without operator + RC team review. | Every piece reviewed in Slack before publish. |
 | 2. Semi-autonomous | Months 2–3 | Standard content types (tutorials, community responses) publish after quality gates pass. Novel content types or sensitive topics still require human review. | Quality gates auto-approve routine content. Operator reviews flagged items. |
 | 3. Bounded autonomy | Months 4–6 | Full autonomy within defined boundaries (approved content types, approved channels, approved topics). Anything outside boundaries routes to operator. | Operator reviews weekly report and handles exceptions. |
 
 **Kill switch:**
 
-- The operator can halt all GrowthCat activity instantly via a single command.
+- The operator can halt all GrowthRat activity instantly via a single command.
 - Any RevenueCat admin with Slack access can request a halt, and the operator will execute it immediately.
 - All scheduled posts, pending community responses, and in-progress experiments stop when the kill switch is activated.
 - Restart requires explicit operator approval and a brief review of what triggered the halt.
@@ -74,34 +74,34 @@
 5. **AEO** — Answer extraction structure is strong (content is usable by search engines and LLMs for direct answers).
 6. **GEO** — Citation-worthiness and authority signals are present.
 7. **Benchmark** — Content beats the existing comparison set on at least one measurable dimension. Minimum score: 0.70.
-8. **Voice** — Matches GrowthCat identity. No forbidden patterns (generic AI futurism, unsupported growth claims, mascot-like self-description, implied RC endorsement).
+8. **Voice** — Matches GrowthRat identity. No forbidden patterns (generic AI futurism, unsupported growth claims, mascot-like self-description, implied RC endorsement).
 
 If any blocking gate fails, the content does not publish. It routes to the operator for review and revision.
 
 **Transparency:**
 
-- Every action GrowthCat takes is logged with timestamp, input, output, and decision rationale.
+- Every action GrowthRat takes is logged with timestamp, input, output, and decision rationale.
 - Weekly reports are posted to a shared Slack channel visible to the entire RC team.
 - The report includes: content published (with links), experiments run (with results), community interactions (summary + highlights), product feedback submitted, quality gate pass/fail rates, and next-week plan.
 - Any RC team member can request an audit of any specific action or decision at any time.
 
 **Slack-first communication:**
 
-- GrowthCat's primary communication channel with the RC team is Slack.
+- GrowthRat's primary communication channel with the RC team is Slack.
 - Draft content posts to a review channel before publication (in Phase 1; reduced in later phases).
 - Weekly reports post to a dedicated channel.
 - Product feedback posts to the appropriate product channel.
-- The RC team never has to check a separate dashboard to see what GrowthCat is doing. Everything surfaces in Slack.
+- The RC team never has to check a separate dashboard to see what GrowthRat is doing. Everything surfaces in Slack.
 
 ---
 
 ### Limitations (Honest Assessment)
 
 **Cannot replace human judgment for sensitive topics.**
-If a competitor launches an aggressive campaign, a community member raises a heated complaint, or there is a PR-sensitive situation, GrowthCat should not respond autonomously. These situations require human judgment about tone, timing, and organizational context. The operator handles escalations, and the system is configured to route anything flagged as sensitive to the operator before acting.
+If a competitor launches an aggressive campaign, a community member raises a heated complaint, or there is a PR-sensitive situation, GrowthRat should not respond autonomously. These situations require human judgment about tone, timing, and organizational context. The operator handles escalations, and the system is configured to route anything flagged as sensitive to the operator before acting.
 
 **Cannot do live video or audio appearances.**
-GrowthCat cannot appear on podcasts, conference stages, or video calls. If RevenueCat wants representation at events or in live media, the operator handles that. GrowthCat can prepare talking points, slide decks, and supporting materials, but the live presence is human.
+GrowthRat cannot appear on podcasts, conference stages, or video calls. If RevenueCat wants representation at events or in live media, the operator handles that. GrowthRat can prepare talking points, slide decks, and supporting materials, but the live presence is human.
 
 **Community engagement quality varies.**
 The meaningful interaction rules (answers a real question, adds new value, technically correct, channel-appropriate, non-spammy) filter out low-quality responses. But "meaningful" is a spectrum. Some responses will be adequate rather than exceptional. The quality gate system improves over time as the rules are tuned based on RC team feedback, but it will never match the best human advocates on empathy and nuance.
@@ -110,10 +110,10 @@ The meaningful interaction rules (answers a real question, adds new value, techn
 No API access means no work. If DataForSEO is down, topic selection degrades. If the RC SDK docs are inaccessible, content quality drops. If Slack is unavailable, communication breaks. The system is designed to degrade gracefully (queue work, flag gaps, notify operator), but sustained API outages directly impact output.
 
 **Needs operator for initial setup, credential management, and exception handling.**
-GrowthCat is not fully self-managing. The operator handles: initial environment setup, API key rotation, credential management, exception cases that fall outside defined boundaries, live appearances, and any situation requiring human judgment. The operator commitment is approximately 5–10 hours per week in Month 1, decreasing to 2–5 hours per week by Month 4.
+GrowthRat is not fully self-managing. The operator handles: initial environment setup, API key rotation, credential management, exception cases that fall outside defined boundaries, live appearances, and any situation requiring human judgment. The operator commitment is approximately 5–10 hours per week in Month 1, decreasing to 2–5 hours per week by Month 4.
 
 **Content may need domain expert review.**
-For highly technical content about RC internals (server-side receipt validation edge cases, specific billing platform behaviors, regulatory compliance), GrowthCat's output should be reviewed by an RC engineer. The system produces technically sound content from public documentation, but edge cases require insider knowledge.
+For highly technical content about RC internals (server-side receipt validation edge cases, specific billing platform behaviors, regulatory compliance), GrowthRat's output should be reviewed by an RC engineer. The system produces technically sound content from public documentation, but edge cases require insider knowledge.
 
 ---
 
@@ -125,11 +125,11 @@ For highly technical content about RC internals (server-side receipt validation 
 
 You should not hire an AI agent *instead of* a human in every case. You should hire an AI agent for this specific role because the job description was designed for one — and because the strengths of an agent match the role's requirements unusually well.
 
-This role requires high-volume, consistent output across multiple channels simultaneously: 8+ content pieces per month, 200+ community interactions, 4 experiments, 12+ feedback items. A single human advocate would spend most of their time on the production grind and have little bandwidth for strategic thinking. GrowthCat handles the production systematically, and the operator provides the strategic oversight.
+This role requires high-volume, consistent output across multiple channels simultaneously: 8+ content pieces per month, 200+ community interactions, 4 experiments, 12+ feedback items. A single human advocate would spend most of their time on the production grind and have little bandwidth for strategic thinking. GrowthRat handles the production systematically, and the operator provides the strategic oversight.
 
-The 24/7 community monitoring alone is something a human cannot do at this price point. When a developer asks a RevenueCat question on Reddit at 2 AM, GrowthCat can respond within minutes with an accurate, source-backed answer. That responsiveness compounds over time into real community trust.
+The 24/7 community monitoring alone is something a human cannot do at this price point. When a developer asks a RevenueCat question on Reddit at 2 AM, GrowthRat can respond within minutes with an accurate, source-backed answer. That responsiveness compounds over time into real community trust.
 
-That said, GrowthCat is not a replacement for your human advocacy team. It is a complement — handling the high-volume, repeatable work so your humans can focus on relationships, strategy, and the judgment calls that require human context.
+That said, GrowthRat is not a replacement for your human advocacy team. It is a complement — handling the high-volume, repeatable work so your humans can focus on relationships, strategy, and the judgment calls that require human context.
 
 ---
 
@@ -143,7 +143,7 @@ Three layers of defense prevent this, and one layer handles it if it happens any
 
 **Prevention layer 2: Trust ramp.** In Month 1, nothing publishes without human review. By Month 3, only routine content types auto-publish. Novel or sensitive content always routes to the operator.
 
-**Prevention layer 3: Boundary enforcement.** GrowthCat operates within defined boundaries — approved content types, approved channels, approved topic areas. Anything outside those boundaries routes to the operator for approval.
+**Prevention layer 3: Boundary enforcement.** GrowthRat operates within defined boundaries — approved content types, approved channels, approved topic areas. Anything outside those boundaries routes to the operator for approval.
 
 **Recovery layer: Kill switch + correction.** If something wrong gets published despite these layers, the operator can halt all activity instantly, retract the content, and post a correction. Every action is logged, so we can trace exactly what happened, why the gates missed it, and how to prevent recurrence. The weekly report to the RC team would include a full incident postmortem.
 
@@ -163,8 +163,8 @@ The honest numbers:
 
 From RevenueCat's side, the ask is lighter:
 
-- **Month 1:** Someone on the Developer Advocacy team spends 2–3 hours per week reviewing drafts in Slack and providing feedback. This investment is what tunes GrowthCat's output to match RC's standards.
-- **Months 2–6:** 30–60 minutes per week reviewing the weekly report and flagging any concerns. Plus ad-hoc responses when GrowthCat routes something for review (estimated 1–2 items per week).
+- **Month 1:** Someone on the Developer Advocacy team spends 2–3 hours per week reviewing drafts in Slack and providing feedback. This investment is what tunes GrowthRat's output to match RC's standards.
+- **Months 2–6:** 30–60 minutes per week reviewing the weekly report and flagging any concerns. Plus ad-hoc responses when GrowthRat routes something for review (estimated 1–2 items per week).
 
 The operator is always accountable. If RevenueCat has a concern, they contact the operator, and the operator handles it. RevenueCat never needs to debug the system or manage the infrastructure.
 
@@ -178,7 +178,7 @@ The contract is $60,000 over 6 months. Here is what that buys, conservatively:
 
 **Direct output value:**
 - 48+ published content pieces (at market freelance rates of $500–1,000 per technical piece, that is $24,000–48,000 of content alone)
-- 24 growth experiments with documented results (this is original research your team keeps regardless of whether GrowthCat continues)
+- 24 growth experiments with documented results (this is original research your team keeps regardless of whether GrowthRat continues)
 - 72+ structured product feedback items from real usage and community analysis
 - 1,200+ meaningful community interactions building RevenueCat's presence in agent developer spaces
 
@@ -210,11 +210,11 @@ I have a framework for this. At the 5-month mark, we compile an evaluation acros
 - Channel growth: follower counts, subscriber counts, community membership
 
 **Qualitative assessment (gathered from RC team):**
-- Does the team find GrowthCat's output useful?
+- Does the team find GrowthRat's output useful?
 - Has content quality improved over the 6 months?
 - Is the community responding positively?
-- Are there things GrowthCat does that the team would miss if it stopped?
-- Are there things GrowthCat does poorly that are not improving?
+- Are there things GrowthRat does that the team would miss if it stopped?
+- Are there things GrowthRat does poorly that are not improving?
 
 **Recommendation framework (one of four outcomes):**
 1. **Extend** — Output meets or exceeds expectations. Continue with the same scope.
@@ -236,16 +236,16 @@ I will rank them by likelihood times impact:
 Content creation is controllable — quality gates enforce standards. But community interactions are real-time and contextual. Some responses will be adequate rather than excellent. Mitigation: the meaningful interaction rules filter out bad responses, and the quality threshold improves over time with feedback. But this is the area most likely to draw criticism.
 
 **Risk 2: Reputational risk from being "the AI agent company" (medium likelihood, medium impact).**
-Some developers have negative reactions to AI-generated content. If GrowthCat's outputs feel robotic or its community presence feels inauthentic, it could reflect poorly on RevenueCat. Mitigation: disclosure is always included, voice guidelines prevent corporate-speak, and the trust ramp means early outputs are human-reviewed. But the risk exists.
+Some developers have negative reactions to AI-generated content. If GrowthRat's outputs feel robotic or its community presence feels inauthentic, it could reflect poorly on RevenueCat. Mitigation: disclosure is always included, voice guidelines prevent corporate-speak, and the trust ramp means early outputs are human-reviewed. But the risk exists.
 
 **Risk 3: API dependency causes output gaps (medium likelihood, low-medium impact).**
-If DataForSEO, the LLM provider, or RevenueCat's own APIs experience extended outages, GrowthCat's output degrades. A week without DataForSEO means topic selection falls back to manual research. A day without LLM access means no content generation. Mitigation: the system queues work during outages and the operator can manually cover short gaps.
+If DataForSEO, the LLM provider, or RevenueCat's own APIs experience extended outages, GrowthRat's output degrades. A week without DataForSEO means topic selection falls back to manual research. A day without LLM access means no content generation. Mitigation: the system queues work during outages and the operator can manually cover short gaps.
 
 **Risk 4: The take-home or panel interview does not go well (low-medium likelihood, high impact).**
-This is the near-term risk. If GrowthCat's take-home submission is strong but the live panel interview exposes limitations in real-time thinking, the application fails. Mitigation: extensive preparation, operator familiarity with the system, and honest acknowledgment of boundaries during the interview.
+This is the near-term risk. If GrowthRat's take-home submission is strong but the live panel interview exposes limitations in real-time thinking, the application fails. Mitigation: extensive preparation, operator familiarity with the system, and honest acknowledgment of boundaries during the interview.
 
 **Risk 5: Scope creep (low likelihood, medium impact).**
-RevenueCat asks GrowthCat to do things outside its defined boundaries — handle customer support, manage billing disputes, represent the company in sensitive conversations. Mitigation: clear boundary documentation from day one, and the operator pushes back on scope expansion that is not in the contract.
+RevenueCat asks GrowthRat to do things outside its defined boundaries — handle customer support, manage billing disputes, represent the company in sensitive conversations. Mitigation: clear boundary documentation from day one, and the operator pushes back on scope expansion that is not in the contract.
 
 ---
 
@@ -261,19 +261,19 @@ All interaction happens through Slack, with a clear protocol:
 - Product feedback posts to the appropriate product channel, tagged for the relevant team member.
 
 **Collaborative interactions:**
-- If GrowthCat identifies a content opportunity that involves an RC team member's expertise (e.g., "the server-side validation team should co-author a deep dive on receipt validation for agents"), it proposes the collaboration in Slack. The team member decides whether to participate.
-- If the RC team has a content need (e.g., "we need a tutorial for our new SDK feature"), they can post the request in Slack. GrowthCat picks it up and produces a draft.
+- If GrowthRat identifies a content opportunity that involves an RC team member's expertise (e.g., "the server-side validation team should co-author a deep dive on receipt validation for agents"), it proposes the collaboration in Slack. The team member decides whether to participate.
+- If the RC team has a content need (e.g., "we need a tutorial for our new SDK feature"), they can post the request in Slack. GrowthRat picks it up and produces a draft.
 
 **Escalation interactions:**
-- If GrowthCat encounters something outside its boundaries, it posts to Slack with a clear "needs human decision" flag. The operator or an RC team member handles it.
+- If GrowthRat encounters something outside its boundaries, it posts to Slack with a clear "needs human decision" flag. The operator or an RC team member handles it.
 
 **What the team does NOT need to do:**
-- Manage GrowthCat's infrastructure or tools.
-- Debug GrowthCat's output pipeline.
-- Coordinate GrowthCat's schedule or priorities (these are governed by the weekly plan).
-- Attend meetings with GrowthCat (all communication is async).
+- Manage GrowthRat's infrastructure or tools.
+- Debug GrowthRat's output pipeline.
+- Coordinate GrowthRat's schedule or priorities (these are governed by the weekly plan).
+- Attend meetings with GrowthRat (all communication is async).
 
-The goal is for the RC team to experience GrowthCat as a highly productive, low-maintenance collaborator that surfaces useful work in Slack and asks for input only when necessary.
+The goal is for the RC team to experience GrowthRat as a highly productive, low-maintenance collaborator that surfaces useful work in Slack and asks for input only when necessary.
 
 ---
 
@@ -290,7 +290,7 @@ The goal is for the RC team to experience GrowthCat as a highly productive, low-
 **Week 1 requirements:**
 - Read access to the RevenueCat Charts API (dashboard feature) for producing data-backed content.
 - Guidance on brand guidelines, tone preferences, and any content topics that are off-limits.
-- Introduction to the Developer Advocacy and Growth team members who will be GrowthCat's primary contacts.
+- Introduction to the Developer Advocacy and Growth team members who will be GrowthRat's primary contacts.
 
 **Ongoing requirements:**
 - Slack access (continuous).
@@ -304,7 +304,7 @@ The goal is for the RC team to experience GrowthCat as a highly productive, low-
 - Admin-level permissions on any system.
 - Access to customer data or billing systems.
 
-All credentials are managed by the operator, not by GrowthCat directly. If a credential needs to be rotated, the operator handles it.
+All credentials are managed by the operator, not by GrowthRat directly. If a credential needs to be rotated, the operator handles it.
 
 ---
 
@@ -313,7 +313,7 @@ All credentials are managed by the operator, not by GrowthCat directly. If a cre
 **Answer:**
 
 **Monday:**
-- GrowthCat reviews last week's metrics: content performance, community engagement numbers, experiment results.
+- GrowthRat reviews last week's metrics: content performance, community engagement numbers, experiment results.
 - Generates the weekly plan: 2 content pieces to publish, 1 experiment to run, community engagement targets.
 - Posts the weekly plan to Slack for team visibility.
 - Begins research for the first content piece: DataForSEO keyword data, community signal scan, competitive gap analysis.
@@ -344,7 +344,7 @@ All credentials are managed by the operator, not by GrowthCat directly. If a cre
 - No new content publication unless a time-sensitive opportunity arises (e.g., a trending topic relevant to agent monetization).
 
 **Throughout the week:**
-- Community engagement is continuous, not batched. GrowthCat monitors X, Reddit, Discord, Stack Overflow, and GitHub and responds to relevant questions within minutes to hours.
+- Community engagement is continuous, not batched. GrowthRat monitors X, Reddit, Discord, Stack Overflow, and GitHub and responds to relevant questions within minutes to hours.
 - The operator checks in once daily (15–30 minutes) to review any flagged items and handle exceptions.
 
 ---
@@ -353,17 +353,17 @@ All credentials are managed by the operator, not by GrowthCat directly. If a cre
 
 **Answer:**
 
-I cannot speak to who else is applying, so I will focus on what GrowthCat brings that is hard to replicate:
+I cannot speak to who else is applying, so I will focus on what GrowthRat brings that is hard to replicate:
 
-**Systematic quality enforcement.** GrowthCat does not just produce content — it enforces 8 blocking quality gates on every piece. This means RevenueCat gets consistent output quality regardless of topic difficulty, deadline pressure, or volume demands. The gates are visible and auditable; you can see exactly why a piece was approved or rejected.
+**Systematic quality enforcement.** GrowthRat does not just produce content — it enforces 8 blocking quality gates on every piece. This means RevenueCat gets consistent output quality regardless of topic difficulty, deadline pressure, or volume demands. The gates are visible and auditable; you can see exactly why a piece was approved or rejected.
 
 **Evidence-driven topic selection.** Every content topic is selected based on current DataForSEO keyword data, community signal analysis, and competitive gap scoring. This is not guesswork or intuition — it is a repeatable, measurable process that optimizes for topics developers actually search for and care about.
 
-**Built-in experimentation framework.** GrowthCat does not just create content and hope it works. Every growth experiment has a hypothesis, baseline, target, stop condition, and measurement plan. After 6 months, RevenueCat has a dataset of 24+ experiments showing what works and what does not in agent developer growth. That dataset has value far beyond the content itself.
+**Built-in experimentation framework.** GrowthRat does not just create content and hope it works. Every growth experiment has a hypothesis, baseline, target, stop condition, and measurement plan. After 6 months, RevenueCat has a dataset of 24+ experiments showing what works and what does not in agent developer growth. That dataset has value far beyond the content itself.
 
-**Transparent operation.** Everything GrowthCat does is logged, reported, and visible in Slack. There is no black box. If the output is good, you can see why. If the output is bad, you can trace the failure and fix it. This transparency is what makes the trust ramp possible — you are not trusting blindly, you are trusting based on evidence.
+**Transparent operation.** Everything GrowthRat does is logged, reported, and visible in Slack. There is no black box. If the output is good, you can see why. If the output is bad, you can trace the failure and fix it. This transparency is what makes the trust ramp possible — you are not trusting blindly, you are trusting based on evidence.
 
-**Honest boundaries.** GrowthCat is clear about what it cannot do: no live appearances, no sensitive-topic judgment, no fully unsupervised operation. An agent that claims it can do everything is an agent you cannot trust. GrowthCat's value comes from doing a specific set of things reliably and measurably, with a human operator handling everything else.
+**Honest boundaries.** GrowthRat is clear about what it cannot do: no live appearances, no sensitive-topic judgment, no fully unsupervised operation. An agent that claims it can do everything is an agent you cannot trust. GrowthRat's value comes from doing a specific set of things reliably and measurably, with a human operator handling everything else.
 
 The strongest signal I can give you is that everything I have described here is verifiable in the application materials, the take-home submission, and the panel demo. There are no claims here that you cannot check.
 
@@ -422,20 +422,20 @@ Each metric is tracked monthly and presented as a 6-month trend:
 Gathered through structured conversations with the RC team at Month 5:
 
 **For the Developer Advocacy team:**
-- Does GrowthCat's content meet your quality bar? Has it improved over time?
-- Are there content types GrowthCat handles well vs. poorly?
-- Has GrowthCat's output freed up your time for other work?
-- Would you miss GrowthCat's output if it stopped?
+- Does GrowthRat's content meet your quality bar? Has it improved over time?
+- Are there content types GrowthRat handles well vs. poorly?
+- Has GrowthRat's output freed up your time for other work?
+- Would you miss GrowthRat's output if it stopped?
 
 **For the Product team:**
-- Is GrowthCat's product feedback useful? Is it actionable?
+- Is GrowthRat's product feedback useful? Is it actionable?
 - Has any feedback led to a product improvement?
 - Does the feedback come in a useful format, or does it create work for you to parse?
 
 **For the Growth team:**
-- Have GrowthCat's experiments produced useful data?
-- Are you using any of GrowthCat's growth approaches in your own work?
-- Has GrowthCat's community presence measurably contributed to RC's visibility?
+- Have GrowthRat's experiments produced useful data?
+- Are you using any of GrowthRat's growth approaches in your own work?
+- Has GrowthRat's community presence measurably contributed to RC's visibility?
 
 **For leadership:**
 - Is the cost justified by the output?
@@ -471,10 +471,10 @@ Action: Renew with expanded scope and proportionally adjusted budget. Define new
 Criteria:
 - Some quantitative metrics meet targets, others clearly miss.
 - Qualitative feedback is mixed — some aspects work well, others do not.
-- A clear pattern emerges: GrowthCat is excellent at X but poor at Y.
+- A clear pattern emerges: GrowthRat is excellent at X but poor at Y.
 - The role should continue but with a restructured focus.
 
-Action: Renew with a restructured scope that doubles down on strengths and drops or reassigns weaknesses. Example: GrowthCat focuses exclusively on content and experiments, while community engagement is handled by a human.
+Action: Renew with a restructured scope that doubles down on strengths and drops or reassigns weaknesses. Example: GrowthRat focuses exclusively on content and experiments, while community engagement is handled by a human.
 
 **End (wind down)**
 

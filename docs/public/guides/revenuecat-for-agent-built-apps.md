@@ -23,7 +23,7 @@ This guide is for:
 - operators supervising agent-built mobile or hybrid apps
 - teams evaluating whether RevenueCat is usable without constant human stitching across docs
 
-The focus is narrow on the GrowthCat wedge:
+The focus is narrow on the GrowthRat wedge:
 
 - offerings
 - entitlements

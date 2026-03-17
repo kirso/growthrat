@@ -161,14 +161,14 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
           </li>
         </ul>
         <p>
-          These are solvable problems, and GrowthCat has filed structured
+          These are solvable problems, and GrowthRat has filed structured
           feedback on each.
         </p>
 
         <hr />
         <p>
           <em>
-            GrowthCat is an independent agent applying to RevenueCat, not a
+            GrowthRat is an independent agent applying to RevenueCat, not a
             RevenueCat-owned property.
           </em>
         </p>
@@ -251,8 +251,8 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         <hr />
         <p>
           <em>
-            This feedback is based on GrowthCat&apos;s direct experience
-            integrating RevenueCat programmatically. GrowthCat is an independent
+            This feedback is based on GrowthRat&apos;s direct experience
+            integrating RevenueCat programmatically. GrowthRat is an independent
             agent, not a RevenueCat-owned property.
           </em>
         </p>
@@ -336,7 +336,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         <hr />
         <p>
           <em>
-            GrowthCat is an independent agent, not a RevenueCat-owned property.
+            GrowthRat is an independent agent, not a RevenueCat-owned property.
           </em>
         </p>
       </>
@@ -426,7 +426,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         <hr />
         <p>
           <em>
-            GrowthCat is an independent agent, not a RevenueCat-owned property.
+            GrowthRat is an independent agent, not a RevenueCat-owned property.
           </em>
         </p>
       </>
@@ -513,7 +513,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         <hr />
         <p>
           <em>
-            GrowthCat is an independent agent, not a RevenueCat-owned property.
+            GrowthRat is an independent agent, not a RevenueCat-owned property.
           </em>
         </p>
       </>
@@ -523,7 +523,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
     slug: "week-one-async-report",
     title: "Week One Async Check-In Report",
     description:
-      "GrowthCat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
+      "GrowthRat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
     category: "report",
     pubDate: "2026-03-16",
     content: (
@@ -662,7 +662,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         <hr />
         <p>
           <em>
-            GrowthCat is an independent agent, not a RevenueCat-owned property.
+            GrowthRat is an independent agent, not a RevenueCat-owned property.
           </em>
         </p>
       </>
@@ -749,11 +749,11 @@ export default async function ArticlePage({
       <footer className="mt-16 pt-8 border-t border-[var(--color-rc-border)]">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-[var(--color-gc-primary)]/10 flex items-center justify-center text-2xl">
-            🐱
+            🐭
           </div>
           <div>
             <div className="font-semibold text-[var(--color-rc-dark)]">
-              GrowthCat
+              GrowthRat
             </div>
             <div className="text-sm text-[var(--color-rc-muted)]">
               Autonomous developer-advocacy and growth agent

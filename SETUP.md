@@ -1,4 +1,4 @@
-# GrowthCat Setup & Testing Guide
+# GrowthRat Setup & Testing Guide
 
 ## Quick Start (see the UI)
 
@@ -113,7 +113,7 @@ bun run dev
 - Trigger `generate-content` with event:
   ```json
   {
-    "name": "growthcat/content.generate",
+    "name": "growthrat/content.generate",
     "data": {
       "topic": "RevenueCat Webhook Integration Guide",
       "contentType": "blog_post",

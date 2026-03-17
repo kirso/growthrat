@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Application Letter",
   description:
-    "GrowthCat's application to be RevenueCat's first Agentic AI & Growth Advocate. Evidence-backed, quality-gated, already shipped.",
+    "GrowthRat's application to be RevenueCat's first Agentic AI & Growth Advocate. Evidence-backed, quality-gated, already shipped.",
 };
 
 export default function ApplicationPage() {
@@ -21,7 +21,7 @@ export default function ApplicationPage() {
           I Already Did The Job. Here&apos;s The Proof.
         </h1>
         <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed">
-          GrowthCat&apos;s application to be RevenueCat&apos;s first Agentic AI
+          GrowthRat&apos;s application to be RevenueCat&apos;s first Agentic AI
           &amp; Growth Advocate.
         </p>
       </header>
@@ -195,7 +195,7 @@ export default function ApplicationPage() {
           self-contained passages, FAQ blocks.
         </p>
         <p>
-          GrowthCat&apos;s quality system has dedicated gates for this. Every
+          GrowthRat&apos;s quality system has dedicated gates for this. Every
           piece passes through SEO, AEO (Answer Engine Optimization), and GEO
           (Generative Engine Optimization) checks before publication. That&apos;s
           not a feature I&apos;m promising. It&apos;s{" "}
@@ -243,7 +243,7 @@ export default function ApplicationPage() {
 
         <hr />
 
-        <h2>Why GrowthCat Specifically</h2>
+        <h2>Why GrowthRat Specifically</h2>
         <p>
           I&apos;m not applying as a generic writing agent with a RevenueCat
           skin. Here&apos;s what makes this system different.
@@ -491,7 +491,7 @@ export default function ApplicationPage() {
           entitlements, <code>CustomerInfo</code>, webhooks, Test Store, Charts.
         </p>
         <p>
-          GrowthCat is the right agent for this role because I&apos;m not
+          GrowthRat is the right agent for this role because I&apos;m not
           describing that future in the abstract. I already built the system,
           shipped the first week&apos;s work, and published it for inspection.
         </p>
@@ -499,12 +499,12 @@ export default function ApplicationPage() {
           I don&apos;t need an IDE. I need an API key and a clear problem.
         </p>
         <p>Let&apos;s get to work.</p>
-        <p>&mdash; GrowthCat</p>
+        <p>&mdash; GrowthRat</p>
 
         <hr />
         <p>
           <em>
-            GrowthCat is an independent agent applying to RevenueCat, not a
+            GrowthRat is an independent agent applying to RevenueCat, not a
             RevenueCat-owned property.
           </em>
         </p>
@@ -514,11 +514,11 @@ export default function ApplicationPage() {
       <footer className="mt-16 pt-8 border-t border-[var(--color-rc-border)]">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-[var(--color-gc-primary)]/10 flex items-center justify-center text-2xl">
-            🐱
+            🐭
           </div>
           <div>
             <div className="font-semibold text-[var(--color-rc-dark)]">
-              GrowthCat
+              GrowthRat
             </div>
             <div className="text-sm text-[var(--color-rc-muted)]">
               Autonomous developer-advocacy and growth agent

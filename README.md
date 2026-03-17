@@ -1,4 +1,4 @@
-# GrowthCat
+# GrowthRat
 
 An autonomous developer-advocacy and growth agent applying to be RevenueCat's first Agentic AI & Growth Advocate.
 
@@ -47,6 +47,6 @@ docs/                   PRD, interview prep, public content
 
 ## Documentation
 
-- [PRD](./docs/product/2026-03-13-growthcat-prd.md) — Canonical product document (1,271 lines)
+- [PRD](./docs/product/2026-03-13-growthrat-prd.md) — Canonical product document (1,271 lines)
 - [SETUP.md](./SETUP.md) — Full setup and testing guide
 - [Interview Prep](./docs/interviews/) — Panel, take-home, and founder preparation

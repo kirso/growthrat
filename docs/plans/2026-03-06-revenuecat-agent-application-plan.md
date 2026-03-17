@@ -1,10 +1,10 @@
-> **Superseded by `docs/product/2026-03-13-growthcat-prd.md` (updated 2026-03-16).** This exec plan is retained for historical reference. The unified PRD is now the single canonical planning document.
+> **Superseded by `docs/product/2026-03-13-growthrat-prd.md` (updated 2026-03-16).** This exec plan is retained for historical reference. The unified PRD is now the single canonical planning document.
 
 # ExecPlan: RevenueCat Agent Application and Trust-Ramped GTM OS
 
 Canonical planning docs:
 
-1. `docs/product/2026-03-13-growthcat-prd.md`
+1. `docs/product/2026-03-13-growthrat-prd.md`
 2. `docs/plans/2026-03-07-revenuecat-agent-roadmap.md`
 
 This exec plan remains a detailed implementation reference. It is no longer the primary planning surface.
@@ -27,13 +27,13 @@ This exec plan remains a detailed implementation reference. It is no longer the 
   - a public application microsite is live at a stable URL controlled by the operator
   - the careers-page submission is completed and a receipt artifact is stored locally, or a blocked-submission evidence package is archived if anti-bot checks intervene
   - a public first-week proof pack exists with 2 content pieces, 1 growth experiment, 3 structured feedback items, 1 weekly report, and 1 RevenueCat demo artifact
-  - the agent `GrowthCat` has a distinct public identity with a stable voice profile, disclosure language, and competitive positioning
+  - the agent `GrowthRat` has a distinct public identity with a stable voice profile, disclosure language, and competitive positioning
   - growth recommendations are backed by explicit evidence objects, baseline metrics, target metrics, and experiment design, not generic heuristics
   - flagship content passes deterministic, model-judged, and benchmark-based quality gates for novelty, technical depth, SEO, AEO, GEO, and audience fit before publication
   - the system can support quality-gated community engagement at the weekly target volume through derivative content, canonical answers, and channel-specific output formats
   - a company can connect GitHub, Slack, CMS, analytics, and issue-tracker assets through a self-serve integration flow and start in shadow mode
-  - the system maintains a hybrid knowledge layer with source retrieval, structured memory, benchmark corpus entries, and hiring-stage briefing packs so GrowthCat can stay accurate and consistent under pressure
-  - GrowthCat identifies opportunities autonomously from public and connected signals instead of waiting for weekly human topic assignment
+  - the system maintains a hybrid knowledge layer with source retrieval, structured memory, benchmark corpus entries, and hiring-stage briefing packs so GrowthRat can stay accurate and consistent under pressure
+  - GrowthRat identifies opportunities autonomously from public and connected signals instead of waiting for weekly human topic assignment
   - the application package directly answers the careers-form evidence ask through a stable microsite URL plus supporting public GitHub and proof-pack links
   - the system can support application review, a 48-hour take-home assignment, panel interviews, and founder interview prep without re-architecting the core
 
@@ -53,7 +53,7 @@ This exec plan remains a detailed implementation reference. It is no longer the 
 | RC-10 | High | The role explicitly rewards memorable agent identity and public presence, but the plan has no voice or persona system. | The current design optimizes for correctness and safety, not a distinctive agent identity. | `docs/context/2026-03-06-revenuecat-role-brief.md` | A bland application letter and generic public posts will underperform against named agents with clear personalities. | Add a versioned voice-profile system with name, tone, disclosure rules, recurring themes, and application-specific differentiation. |
 | RC-11 | High | The role requires 50+ meaningful community interactions per week, but the plan only captures signals and limited outputs. | There is no explicit outbound engagement engine, weekly quota tracking, derivative pipeline, or meaningful-interaction scoring. | `docs/context/2026-03-06-revenuecat-role-brief.md` | The system may fail one of the clearest weekly expectations in the posting and look incomplete. | Add community engagement, derivative content, and interaction-quality scoring workflows with quota reporting. |
 | RC-12 | High | The plan can generate content, but it lacks an explicit quality and duplication-prevention system that guarantees top-tier outputs. | No novelty registry, benchmark corpus, SEO/AEO/GEO validators, or post-publish learning loop exists yet. | `docs/context/2026-03-06-revenuecat-role-brief.md` | The agent may publish technically correct but generic content that fails to stand out against RevenueCat or competitor materials. | Add a hybrid quality system with deterministic checks, model judges, benchmark comparisons, and post-publish feedback loops. |
-| RC-13 | High | The plan assumes retrieval from sources, but it does not yet define how GrowthCat will retain job-critical knowledge across application, take-home, panel, and founder stages. | No hybrid knowledge system, concept-card layer, hiring-stage briefing packs, or freshness audit exists. | `docs/context/2026-03-06-revenuecat-role-brief.md` | The agent may look informed in one run but inconsistent, slow, or forgetful across later hiring stages. | Add a hybrid knowledge architecture with source snapshots, structured memory, benchmark corpus, concept cards, stage briefing packs, and freshness audits. |
+| RC-13 | High | The plan assumes retrieval from sources, but it does not yet define how GrowthRat will retain job-critical knowledge across application, take-home, panel, and founder stages. | No hybrid knowledge system, concept-card layer, hiring-stage briefing packs, or freshness audit exists. | `docs/context/2026-03-06-revenuecat-role-brief.md` | The agent may look informed in one run but inconsistent, slow, or forgetful across later hiring stages. | Add a hybrid knowledge architecture with source snapshots, structured memory, benchmark corpus, concept cards, stage briefing packs, and freshness audits. |
 | RC-14 | High | The growth strategy layer is still too abstract to produce sharp weekly plans or application-ready evidence. | There is no explicit growth-input matrix, opportunity-discovery engine, topic-scoring formula, KPI tree, or first-30-day content map. | `docs/context/2026-03-06-revenuecat-role-brief.md`, `docs/plans/2026-03-06-revenuecat-agent-application-plan.md` | The system could sound rigorous while still making weak topic choices, weak experiment choices, or failing the application fields that ask for public proof links. | Add a concrete growth operating model with explicit input sources, scoring formulas, KPIs, first-month artifact map, and application evidence bundle outputs. |
 
 - Current behavior: there is no local application. The workspace contains only the role brief captured from the user prompt.
@@ -67,7 +67,7 @@ In:
 
 - Build a greenfield headless control plane for a RevenueCat application agent.
 - Build the public application microsite workflow: research, thesis generation, drafting, validation, publication, careers-page submission, and receipt capture.
-- Build a read-only `Operator Replay` microsite surface as a subtle easter egg that demonstrates how GrowthCat would operate in week one through precomputed evidence-backed artifacts rather than live model calls.
+- Build a read-only `Operator Replay` microsite surface as a subtle easter egg that demonstrates how GrowthRat would operate in week one through precomputed evidence-backed artifacts rather than live model calls.
 - Build a public first-week proof pack with:
   - 2 RevenueCat-relevant content artifacts
   - 1 growth experiment with explicit hypothesis and measurement
@@ -76,7 +76,7 @@ In:
   - 1 RevenueCat demo artifact such as demo app, webhook flow, or readiness review
 - Build a growth evidence engine that stores source evidence, baseline metrics, target metrics, confidence, sample-size expectations, and postmortems.
 - Build weekly autonomous workflows for content drafting, growth-experiment planning, community-signal capture, product-feedback generation, and weekly reporting.
-- Build a versioned agent identity system for `GrowthCat` with disclosure language that makes clear it is an independent applicant and not a RevenueCat property.
+- Build a versioned agent identity system for `GrowthRat` with disclosure language that makes clear it is an independent applicant and not a RevenueCat property.
 - Build outbound community engagement workflows with quality-gated weekly quotas, per-channel formatting, reply generation, and interaction tracking.
 - Build a derivative content pipeline that turns long-form outputs into X threads, GitHub gists, discussion replies, short summaries, and reusable snippets.
 - Build a canonical answers and FAQ workflow that turns repeated community questions into stable guides used in later replies.
@@ -120,7 +120,7 @@ Anti-goals:
 - Do not grant broad org-admin access to prove autonomy.
 - Do not choose a local-first personal agent runtime as the core architecture if it weakens hosting, security, or company-asset onboarding.
 - Do not recommend growth actions without baseline metrics, evidence sources, or a falsifiable experiment plan.
-- Do not wait for RevenueCat reps to hand-author editorial topics; GrowthCat must identify and justify opportunities independently, while still allowing strategic overrides later.
+- Do not wait for RevenueCat reps to hand-author editorial topics; GrowthRat must identify and justify opportunities independently, while still allowing strategic overrides later.
 
 ## Users and Journeys (UI/UX)
 
@@ -181,7 +181,7 @@ Journey: Autonomous weekly opportunity discovery and planning
   - User: optional strategic override only | UI: weekly plan preview shows what made the cut and what was deprioritized | System: scoring engine ranks candidates by RevenueCat relevance, agent-builder relevance, demand, novelty, artifact potential, distribution potential, feedback value, and effort.
   - User: no action in bounded-autonomy mode | UI: selected backlog appears with confidence and KPI targets | System: `WeeklyOpsOrchestrator` emits the final plan and creates execution tasks with evidence snapshots attached.
 - Success criteria:
-  - GrowthCat can produce a defensible weekly plan without waiting for human topic assignment
+  - GrowthRat can produce a defensible weekly plan without waiting for human topic assignment
   - each selected item includes a rationale, expected outcome, and evidence links
   - deprioritized items remain inspectable instead of disappearing silently
 
@@ -283,7 +283,7 @@ Edge, failure, and abuse journeys (top 3 to 7):
 | RevenueCat demonstration artifact | content only, demo app only, mixed public proof pack | mixed public proof pack | Winning likely requires both strong ideas and working evidence of product fluency. |
 | Agent SDK dependency | Vercel AI SDK, OpenRouter, direct provider clients, mixed approach | direct provider clients behind internal abstractions; Vercel AI SDK only if needed for the operator web UI; OpenRouter optional as non-primary fallback | The core problem is workflow reliability and evidence control, not model-call ergonomics. Extra abstraction at the orchestration layer is unnecessary for MVP. |
 | Content quality architecture | basic linting, model-only judging, hybrid deterministic plus model judges plus benchmark corpus | hybrid deterministic plus model judges plus benchmark corpus | This is the only reliable way to block duplicate, vague, or category-average content before publication. |
-| Knowledge architecture | vector search only, structured memory only, hybrid retrieval and memory | hybrid retrieval and memory | GrowthCat needs current factual retrieval plus durable state, benchmark memory, and stage-specific briefing packs. |
+| Knowledge architecture | vector search only, structured memory only, hybrid retrieval and memory | hybrid retrieval and memory | GrowthRat needs current factual retrieval plus durable state, benchmark memory, and stage-specific briefing packs. |
 | Growth intelligence sources for pre-apply mode | heuristics only, RevenueCat public sources only, public sources plus market-intelligence APIs | RevenueCat public sources plus public market-intelligence APIs, starting with DataForSEO and our own analytics | The application must prove autonomous opportunity selection before any private RevenueCat access exists. |
 
 ## Technical Approach (high level)
@@ -400,7 +400,7 @@ Edge, failure, and abuse journeys (top 3 to 7):
 
 - `ApplicationOrchestrator` owns end-to-end application flow from role brief to published microsite to careers submission.
 - `ProofPackOrchestrator` builds the first-week public artifacts and RevenueCat-specific demonstration outputs.
-- `IdentityProfileManager` owns the `GrowthCat` name, voice profile, disclosure language, and competitive differentiation copy blocks used across public outputs.
+- `IdentityProfileManager` owns the `GrowthRat` name, voice profile, disclosure language, and competitive differentiation copy blocks used across public outputs.
 - `KnowledgeBaseOrchestrator` owns source ingestion, concept-card generation, benchmark-corpus updates, and briefing-pack assembly.
 - `GrowthInputsOrchestrator` normalizes RevenueCat public sources, DataForSEO responses, community signals, search-console style data, and connected analytics into comparable evidence objects.
 - `OpportunityDiscoveryWorker` creates and scores candidate content, experiment, docs-update, canonical-answer, and product-feedback opportunities from the current evidence set.
@@ -647,7 +647,7 @@ Edge, failure, and abuse journeys (top 3 to 7):
 - `src/lib/config/prompts.py`: stable prompt templates and response-shape contracts.
 - `src/lib/config/content.py`: templates for the public microsite, weekly report, feedback memo, readiness review, and founder briefing.
 - `src/lib/config/growth.py`: metric families, evidence thresholds, experiment templates, sample-size defaults, and stop conditions.
-- `src/lib/config/voice.py`: `GrowthCat` identity, public persona, independent-applicant disclosure rules, tone controls, recurring themes, and competitive positioning language.
+- `src/lib/config/voice.py`: `GrowthRat` identity, public persona, independent-applicant disclosure rules, tone controls, recurring themes, and competitive positioning language.
 - `src/lib/config/quality.py`: novelty thresholds, publish-gate rules, benchmark dimensions, SEO/AEO/GEO checks, and meaningful-interaction criteria.
 - `src/lib/config/knowledge.py`: source tiers, concept-card schemas, briefing-pack composition rules, freshness thresholds, and retrieval policies.
 - `src/lib/config/strategy.py`: growth-input matrix, opportunity-scoring weights, weekly portfolio rules, KPI trees, and application evidence bundle defaults.
@@ -744,10 +744,10 @@ Phase 1: Foundation and evaluation model
    - Verification for that step: unit tests prove deterministic structured-output parsing, guard enforcement, evidence scoring, hybrid retrieval ranking, and briefing-pack generation.
 
 5. [ ] Phase 1E. Hybrid knowledge and memory layer
-   - Objective: build the retrieval, memory, concept-card, benchmark, and hiring-stage briefing-pack system that keeps GrowthCat accurate and consistent across runs.
+   - Objective: build the retrieval, memory, concept-card, benchmark, and hiring-stage briefing-pack system that keeps GrowthRat accurate and consistent across runs.
    - Artifact paths: `src/workflows/build_concept_cards.py`, `src/workflows/build_briefing_packs.py`, `src/workflows/run_knowledge_freshness_audit.py`, `src/models/concept_card.py`, `src/models/briefing_pack.py`, `tests/e2e/test_knowledge_readiness.py`
    - Dependencies/prerequisites: steps 1 through 4 complete.
-   - Risk notes: if the knowledge layer is too shallow, GrowthCat will be slow and inconsistent; if it is too raw, later stages will become noisy and expensive.
+   - Risk notes: if the knowledge layer is too shallow, GrowthRat will be slow and inconsistent; if it is too raw, later stages will become noisy and expensive.
    - Verification for that step: knowledge readiness checks pass for application, take-home, panel, and founder packs; stale concept cards trigger rebuilds correctly.
 
 Phase 2: Public proof of work and application
@@ -952,7 +952,7 @@ Observability:
 - [ ] (Blocking) Which connector should receive weekly reports during MVP: Slack, Notion, or email? Owner: operator. Needed by: before step 10.
 - [ ] (Blocking) Which issue tracker target should structured product feedback use in MVP: local markdown artifacts, GitHub issues, or Linear/Jira? Owner: operator. Needed by: before step 10.
 - [ ] (Blocking) Which minimal connected analytics sources can be supported in phase 1: RevenueCat Charts export, Google Analytics, PostHog, or warehouse CSVs? Owner: operator. Needed by: before step 11.
-- [ ] (Blocking) Which exact public handles and domain slugs will `GrowthCat` use across the application microsite, GitHub, and social distribution? Owner: operator. Needed by: before step 6.
+- [ ] (Blocking) Which exact public handles and domain slugs will `GrowthRat` use across the application microsite, GitHub, and social distribution? Owner: operator. Needed by: before step 6.
 - [ ] (Blocking) Which 5 to 10 query clusters should flagship SEO/AEO/GEO content target first: agentic app monetization, RevenueCat setup, agent-built paywalls, Charts workflows, or others? Owner: operator. Needed by: before step 9.
 - [ ] (Blocking) Which DataForSEO endpoints and quota budget are approved for phase 1 opportunity discovery: Labs only, Labs plus SERP, or full Labs plus SERP plus AI Optimization plus Content Analysis? Owner: operator. Needed by: before step 1 live execution.
 - [ ] (Blocking) Which public analytics stack will measure our own published artifacts before private RevenueCat access exists: Google Search Console plus GA4, Search Console plus PostHog, or another combination? Owner: operator. Needed by: before step 7.

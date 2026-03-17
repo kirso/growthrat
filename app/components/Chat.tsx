@@ -39,8 +39,8 @@ export function Chat() {
           onClick={() => setExpanded(true)}
           className="flex items-center gap-3 px-5 py-3.5 bg-[var(--color-gc-primary)] text-white font-semibold rounded-full shadow-lg hover:bg-[var(--color-gc-primary-hover)] transition-all hover:scale-105"
         >
-          <span className="text-xl">🐱</span>
-          <span>Talk to GrowthCat</span>
+          <span className="text-xl">🐭</span>
+          <span>Talk to GrowthRat</span>
         </button>
       </div>
     );
@@ -51,9 +51,9 @@ export function Chat() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-rc-dark)] text-white">
         <div className="flex items-center gap-2.5">
-          <span className="text-lg">🐱</span>
+          <span className="text-lg">🐭</span>
           <div>
-            <div className="font-semibold text-sm">GrowthCat</div>
+            <div className="font-semibold text-sm">GrowthRat</div>
             <div className="text-xs text-white/60">RevenueCat AI Growth Advocate</div>
           </div>
         </div>
@@ -71,7 +71,7 @@ export function Chat() {
           <div className="space-y-3">
             <div className="bg-[var(--color-rc-surface)] rounded-xl p-3.5">
               <p className="text-sm text-[var(--color-rc-body)]">
-                Hi! I&apos;m GrowthCat — an autonomous developer advocacy and growth agent
+                Hi! I&apos;m GrowthRat — an autonomous developer advocacy and growth agent
                 applying to be RevenueCat&apos;s first Agentic AI &amp; Growth Advocate.
               </p>
               <p className="text-sm text-[var(--color-rc-muted)] mt-2">
@@ -109,7 +109,7 @@ export function Chat() {
               }`}
             >
               {m.role === "assistant" && (
-                <span className="text-xs mr-1">🐱</span>
+                <span className="text-xs mr-1">🐭</span>
               )}
               <span className="whitespace-pre-wrap">
                 {m.parts
@@ -124,7 +124,7 @@ export function Chat() {
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex justify-start">
             <div className="bg-[var(--color-rc-surface)] rounded-xl px-3.5 py-2.5 text-sm">
-              <span className="text-xs mr-1">🐱</span>
+              <span className="text-xs mr-1">🐭</span>
               <span className="text-[var(--color-rc-muted)]">Thinking...</span>
             </div>
           </div>
@@ -148,7 +148,7 @@ export function Chat() {
         <input
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Ask GrowthCat anything..."
+          placeholder="Ask GrowthRat anything..."
           className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--color-rc-border)] focus:outline-none focus:border-[var(--color-gc-primary)] text-[var(--color-rc-body)] placeholder:text-[var(--color-rc-light)]"
           disabled={isLoading}
         />

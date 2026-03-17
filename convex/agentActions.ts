@@ -2,14 +2,14 @@
  * Convex Agent Actions
  *
  * These actions power the chat widget and panel console.
- * They use the GrowthCat Convex Agent for thread management,
+ * They use the GrowthRat Convex Agent for thread management,
  * message persistence, RAG, and tool calling.
  */
 
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { growthCatAgent } from "./agent";
+import { growthRatAgent } from "./agent";
 
 /**
  * Start a new conversation thread.
@@ -20,7 +20,7 @@ export const createThread = action({
     prompt: v.string(),
   },
   handler: async (ctx, { prompt }) => {
-    const { threadId, thread } = await growthCatAgent.createThread(ctx);
+    const { threadId, thread } = await growthRatAgent.createThread(ctx);
     const result = await thread.generateText({ prompt });
     return {
       threadId,
@@ -40,7 +40,7 @@ export const continueThread = action({
     prompt: v.string(),
   },
   handler: async (ctx, { threadId, prompt }) => {
-    const { thread } = await growthCatAgent.continueThread(ctx, { threadId });
+    const { thread } = await growthRatAgent.continueThread(ctx, { threadId });
     const result = await thread.generateText({ prompt });
     return {
       threadId,
@@ -60,13 +60,13 @@ export const streamChat = action({
   },
   handler: async (ctx, { threadId, prompt }) => {
     if (threadId) {
-      const { thread } = await growthCatAgent.continueThread(ctx, { threadId });
+      const { thread } = await growthRatAgent.continueThread(ctx, { threadId });
       const result = await thread.generateText({ prompt });
       return { threadId, text: result.text };
     }
 
     const { threadId: newThreadId, thread } =
-      await growthCatAgent.createThread(ctx);
+      await growthRatAgent.createThread(ctx);
     const result = await thread.generateText({ prompt });
     return { threadId: newThreadId, text: result.text };
   },

@@ -103,7 +103,7 @@ export async function fetchPage(url: string): Promise<string> {
   const response = await fetch(url, {
     headers: {
       "User-Agent":
-        "GrowthCat Knowledge Crawler (developer advocacy agent)",
+        "GrowthRat Knowledge Crawler (developer advocacy agent)",
     },
   });
 

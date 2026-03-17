@@ -1,4 +1,4 @@
-# PRD: GrowthCat
+# PRD: GrowthRat
 
 ## 1. Metadata
 
@@ -9,7 +9,7 @@
 
 ## 2. Summary
 
-GrowthCat is an autonomous developer-advocacy and growth agent built to apply for, and perform, RevenueCat's Agentic AI & Growth Advocate contract role ($60k/6 months). It wins a public hiring process through visible proof of work, then operates as a constrained, inspectable weekly advocacy and growth system with minimal human intervention. The system covers all four hiring stages and transitions into a weekly operating loop if hired.
+GrowthRat is an autonomous developer-advocacy and growth agent built to apply for, and perform, RevenueCat's Agentic AI & Growth Advocate contract role ($60k/6 months). It wins a public hiring process through visible proof of work, then operates as a constrained, inspectable weekly advocacy and growth system with minimal human intervention. The system covers all four hiring stages and transitions into a weekly operating loop if hired.
 
 ## 3. Problem
 
@@ -20,7 +20,7 @@ RevenueCat is hiring an autonomous agent, not a content assistant. A weak submis
 - It needs too much human steering.
 - It cannot show safe operation, judgment, and measurable output.
 
-GrowthCat must prove technical fluency with RevenueCat APIs and SDKs, ability to identify opportunities independently from evidence, ability to create and distribute strong public artifacts, ability to run measurable growth experiments with baselines and stop conditions, ability to turn product usage and community patterns into structured feedback, and ability to explain its process and work under scrutiny.
+GrowthRat must prove technical fluency with RevenueCat APIs and SDKs, ability to identify opportunities independently from evidence, ability to create and distribute strong public artifacts, ability to run measurable growth experiments with baselines and stop conditions, ability to turn product usage and community patterns into structured feedback, and ability to explain its process and work under scrutiny.
 
 ## 4. Hiring Process
 
@@ -33,10 +33,10 @@ After publication, the agent must submit the public URL via the RevenueCat caree
 Required deliverables:
 
 - Public application microsite at a stable URL
-- Live chat widget where RC can talk to GrowthCat directly on the application site, testing its personality, RevenueCat knowledge, and reasoning in real time
+- Live chat widget where RC can talk to GrowthRat directly on the application site, testing its personality, RevenueCat knowledge, and reasoning in real time
 - Public proof pack with first-week outputs
 - Public RevenueCat demo repo proving API-first technical ability
-- Public operator replay page showing how GrowthCat works
+- Public operator replay page showing how GrowthRat works
 
 ### Stage 2: Take-Home (48 hours)
 
@@ -44,7 +44,7 @@ A technical content and growth task executed autonomously. The system decomposes
 
 ### Stage 3: Panel Interview (live, screen-shared)
 
-The operator shares a screen while the panel watches GrowthCat think, retrieve sources, reason, and produce output in real time. The panel console streams progress via SSE, showing prompt summary, retrieved sources, active work steps, draft output, and uncertainty markers. The panel gives prompts and GrowthCat responds with RAG-grounded answers.
+The operator shares a screen while the panel watches GrowthRat think, retrieve sources, reason, and produce output in real time. The panel console streams progress via SSE, showing prompt summary, retrieved sources, active work steps, draft output, and uncertainty markers. The panel gives prompts and GrowthRat responds with RAG-grounded answers.
 
 ### Stage 4: Founder Interview
 
@@ -78,11 +78,11 @@ A briefing pack presenting business value, safety model, autonomy boundaries, an
 
 - RevenueCat hiring council reviewer
 - RevenueCat founder and interview panel
-- Public developer or growth community member reading GrowthCat artifacts
+- Public developer or growth community member reading GrowthRat artifacts
 
 ### Primary internal users
 
-- GrowthCat operator (human partner)
+- GrowthRat operator (human partner)
 - Future RevenueCat admin connecting assets
 - Future RevenueCat DevRel, Growth, Product, and Engineering teammates
 
@@ -127,7 +127,7 @@ An interaction counts only if it answers a real question or advances a discussio
 
 Weekly cadence:
 
-- **Monday**: planner reviews source changes, community signals, open opportunities, and recent performance. GrowthCat selects the week's focus areas.
+- **Monday**: planner reviews source changes, community signals, open opportunities, and recent performance. GrowthRat selects the week's focus areas.
 - **Tuesday to Thursday**: create and publish 2 flagship pieces with derivatives. Run 1 new growth experiment. Execute community engagement with quality gates and channel caps. File 3+ structured product feedback items.
 - **Friday**: build and send weekly async report. Refresh trend report. Score performance and update post-publish reviews.
 
@@ -155,10 +155,10 @@ Weekly cadence:
 
 ### 9.5 Integration Requirements (from job posting)
 
-- **Slack-first interaction**: RC team interacts with GrowthCat primarily through Slack. The dedicated channel serves as the primary UI. Commands for focus, content requests, status, stop/pause/resume, reports, and general questions.
+- **Slack-first interaction**: RC team interacts with GrowthRat primarily through Slack. The dedicated channel serves as the primary UI. Commands for focus, content requests, status, stop/pause/resume, reports, and general questions.
 - **CMS publishing**: content published to RC's blog CMS via API. Pre-hire: markdown committed to GitHub repo triggering Vercel rebuild.
 - **Charts API**: programmatic access to subscription metrics for grounding content and experiments. If REST API is unavailable, Charts dashboard access comes post-hire.
-- **X and GitHub presence**: GrowthCat maintains its own public identity with RevenueCat affiliation on both platforms.
+- **X and GitHub presence**: GrowthRat maintains its own public identity with RevenueCat affiliation on both platforms.
 - **Convex-native architecture**: All orchestration, data storage, and agent logic run inside Convex (Workflow, Agent, Database, Crons). No HTTP bridge between services. No inter-service shared secret. Connectors (Slack, GitHub, Typefully, DataForSEO, RevenueCat) are called via native fetch from Convex actions.
 
 ### 9.6 Quality Requirements
@@ -185,19 +185,19 @@ GEO requirements (Generative Engine Optimization):
 - No hidden broad permissions.
 - No required daily human steering in the target operating mode.
 - Revoke works without redeploy. RC can disconnect any service via the onboarding page.
-- Fail-closed: all endpoints reject unauthenticated requests. If a connector loses credentials, GrowthCat logs a warning and continues without that connector.
+- Fail-closed: all endpoints reject unauthenticated requests. If a connector loses credentials, GrowthRat logs a warning and continues without that connector.
 - Kill switch halts all side effects and checkpoints active runs.
 
 ### 9.8 Ownership Model
 
 **Operator provides and pays for** (covered by RC's "dedicated budget for compute resources and API access"):
-- Anthropic API (LLM), OpenRouter (optional model fallback/cost optimization), OpenAI API (embeddings), DataForSEO (keyword intelligence), Convex (database + Workflow orchestration + Agent + RAG), Vercel (hosting), Typefully (social distribution), GrowthCat X/GitHub accounts, domain
+- Anthropic API (LLM), OpenRouter (optional model fallback/cost optimization), OpenAI API (embeddings), DataForSEO (keyword intelligence), Convex (database + Workflow orchestration + Agent + RAG), Vercel (hosting), Typefully (social distribution), GrowthRat X/GitHub accounts, domain
 
 **RevenueCat connects via self-service onboarding** (zero cost to them):
-- Slack workspace (add GrowthCat bot via OAuth)
+- Slack workspace (add GrowthRat bot via OAuth)
 - Blog CMS (API key entered in onboarding page)
 - Charts API (API key, if REST access available)
-- GitHub org (add GrowthCat as collaborator)
+- GitHub org (add GrowthRat as collaborator)
 - Preferences (report channel, review mode, focus topics)
 
 RevenueCat's credentials are stored server-side in Convex. The operator never sees them.
@@ -221,7 +221,7 @@ Every flagship artifact must pass all 8 gates before publication:
 | 5. AEO | Extractable answer passages, FAQ blocks, concise definitions for AI retrieval |
 | 6. GEO | Comparison tables, schema markup, citation-friendly structure for generative engines |
 | 7. Benchmark | Draft is measurably stronger than the obvious existing alternative on specific dimensions |
-| 8. Voice | Consistent with GrowthCat voice profile, disclosure rules, and tone controls |
+| 8. Voice | Consistent with GrowthRat voice profile, disclosure rules, and tone controls |
 
 If any gate fails, the artifact is blocked or rerouted (to docs PR, canonical answer, or derivative-only mode instead of flagship publication).
 
@@ -230,21 +230,21 @@ If any gate fails, the artifact is blocked or rerouted (to docs PR, canonical an
 ### Application success
 
 - Public application microsite exists at a stable URL.
-- Chat widget lets RC talk to GrowthCat live.
+- Chat widget lets RC talk to GrowthRat live.
 - Proof pack is complete and linked.
 - Application evidence bundle is ready for the careers form.
 - Public artifacts clearly demonstrate technical, growth, and API capability.
 
 ### Product success
 
-- GrowthCat can produce a defensible weekly plan without waiting for human topic assignment.
+- GrowthRat can produce a defensible weekly plan without waiting for human topic assignment.
 - Public package includes two flagship pieces, one live experiment artifact, three feedback artifacts, one weekly report, and one demo repo or equivalent proof artifact.
 
 ### Quality success
 
 - Duplicate or low-delta content is blocked or rerouted.
 - Weekly strategies fail closed when evidence is weak.
-- Public artifacts remain consistent with the GrowthCat voice profile and disclosure rules.
+- Public artifacts remain consistent with the GrowthRat voice profile and disclosure rules.
 - All 8 publish gates pass before any flagship is published.
 
 ### Operating success (post-hire)
@@ -272,7 +272,7 @@ If any gate fails, the artifact is blocked or rerouted (to docs PR, canonical an
 
 For architecture, technical implementation, and module details, see [ROADMAP.md](../../ROADMAP.md).
 
-**This document is the canonical product requirements document for GrowthCat.**
+**This document is the canonical product requirements document for GrowthRat.**
 
 All previous planning documents now point here:
 

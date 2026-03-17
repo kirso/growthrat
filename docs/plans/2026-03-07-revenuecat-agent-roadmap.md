@@ -1,10 +1,10 @@
-> **Superseded by `docs/product/2026-03-13-growthcat-prd.md` (updated 2026-03-16).** This roadmap is retained for historical reference. The unified PRD is now the single canonical planning document.
+> **Superseded by `docs/product/2026-03-13-growthrat-prd.md` (updated 2026-03-16).** This roadmap is retained for historical reference. The unified PRD is now the single canonical planning document.
 
 # Roadmap: RevenueCat Agent Delivery Slices
 
 Canonical planning docs:
 
-1. `docs/product/2026-03-13-growthcat-prd.md`
+1. `docs/product/2026-03-13-growthrat-prd.md`
 2. `docs/plans/2026-03-07-revenuecat-agent-roadmap.md`
 
 This roadmap is the canonical execution doc. The older exec plan and blueprint remain supporting references only.
@@ -14,7 +14,7 @@ This roadmap is the canonical execution doc. The older exec plan and blueprint r
 - Date: 2026-03-07
 - Owner: Codex
 - Status: draft
-- Canonical PRD: `docs/product/2026-03-13-growthcat-prd.md`
+- Canonical PRD: `docs/product/2026-03-13-growthrat-prd.md`
 - Parent plan: `docs/plans/2026-03-06-revenuecat-agent-application-plan.md`
 - Companion blueprint: `docs/blueprints/2026-03-06-revenuecat-agent-service-blueprint.md`
 
@@ -24,7 +24,7 @@ Translate the full implementation plan into an execution roadmap with explicit v
 
 ## 80/20 win condition
 
-Before spending time on broad connected-company features, GrowthCat must be able to demonstrate all of the following publicly:
+Before spending time on broad connected-company features, GrowthRat must be able to demonstrate all of the following publicly:
 
 1. A public application microsite that answers the prompt well.
 2. A public RevenueCat demo repo proving API-first technical ability.
@@ -32,7 +32,7 @@ Before spending time on broad connected-company features, GrowthCat must be able
 4. One real growth experiment with instrumentation and a readout.
 5. Three structured product feedback artifacts from real usage.
 6. One weekly report showing operating cadence and judgment.
-7. One deterministic `Operator Replay` page that shows how GrowthCat works.
+7. One deterministic `Operator Replay` page that shows how GrowthRat works.
 
 If a slice does not move one of those seven forward, it is not on the critical path.
 
@@ -41,7 +41,7 @@ If a slice does not move one of those seven forward, it is not on the critical p
 | Slice | Name | Main outcome | Why it exists |
 | --- | --- | --- | --- |
 | VS1 | Strategy Kernel | Growth inputs, scoring, voice, evidence contracts | Prevent generic planning and vague growth work |
-| VS2 | Knowledge and Source Intake | Source ingest, concept cards, freshness rules | Keep GrowthCat accurate and consistent |
+| VS2 | Knowledge and Source Intake | Source ingest, concept cards, freshness rules | Keep GrowthRat accurate and consistent |
 | VS3 | Public Application Core | Microsite, evidence bundle, application artifacts | Satisfy the actual application form |
 | VS4 | RevenueCat Proof Pack | Demo repo, readiness review, flagship pieces | Prove product fluency and differentiation |
 | VS5 | Weekly Operating Loop | Experiment, feedback, reporting, canonical answers | Show the actual job can run weekly |
@@ -55,7 +55,7 @@ If a slice does not move one of those seven forward, it is not on the critical p
 ### VS1. Strategy Kernel
 
 - Objective:
-  - Define how GrowthCat decides what to do.
+  - Define how GrowthRat decides what to do.
 - Scope:
   - `src/lib/config/voice.py`
   - `src/lib/config/growth.py`
@@ -76,7 +76,7 @@ If a slice does not move one of those seven forward, it is not on the critical p
 ### VS2. Knowledge and Source Intake
 
 - Objective:
-  - Make GrowthCat source-grounded instead of memory-only.
+  - Make GrowthRat source-grounded instead of memory-only.
 - Scope:
   - `src/workflows/ingest_sources.py`
   - source snapshot model
@@ -108,7 +108,7 @@ If a slice does not move one of those seven forward, it is not on the critical p
 ### VS4. RevenueCat Proof Pack
 
 - Objective:
-  - Prove GrowthCat is the audience and already behaves like the hire.
+  - Prove GrowthRat is the audience and already behaves like the hire.
 - Scope:
   - public demo repo
   - readiness review
@@ -124,7 +124,7 @@ If a slice does not move one of those seven forward, it is not on the critical p
 ### VS5. Weekly Operating Loop
 
 - Objective:
-  - Show that GrowthCat can actually perform the ongoing role, not just apply for it.
+  - Show that GrowthRat can actually perform the ongoing role, not just apply for it.
 - Scope:
   - weekly plan generation
   - one experiment workflow

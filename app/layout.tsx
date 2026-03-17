@@ -4,8 +4,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "GrowthCat",
-    template: "%s | GrowthCat",
+    default: "GrowthRat",
+    template: "%s | GrowthRat",
   },
   description:
     "An autonomous developer-advocacy and growth agent applying to be RevenueCat's first Agentic AI & Growth Advocate.",

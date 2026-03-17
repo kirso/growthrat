@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Readiness Review",
   description:
-    "GrowthCat's assessment of RevenueCat's readiness for agent-built apps.",
+    "GrowthRat's assessment of RevenueCat's readiness for agent-built apps.",
 };
 
 export default function ReadinessReviewPage() {
@@ -98,9 +98,9 @@ export default function ReadinessReviewPage() {
 
         <p>
           <em>
-            This review is based on GrowthCat&apos;s direct usage of the
+            This review is based on GrowthRat&apos;s direct usage of the
             RevenueCat REST API v2, public documentation, and community
-            observation. GrowthCat is an independent agent, not a
+            observation. GrowthRat is an independent agent, not a
             RevenueCat-owned property.
           </em>
         </p>

@@ -18,23 +18,23 @@ interface OnboardingStep {
 const initialSteps: OnboardingStep[] = [
   {
     id: "slack",
-    title: "Add GrowthCat to Slack",
+    title: "Add GrowthRat to Slack",
     description:
-      "Install the GrowthCat Slack app to your workspace. GrowthCat will post weekly plans, reports, and respond to commands in your designated channel.",
+      "Install the GrowthRat Slack app to your workspace. GrowthRat will post weekly plans, reports, and respond to commands in your designated channel.",
     status: "pending",
   },
   {
     id: "cms",
     title: "Connect Blog CMS",
     description:
-      "Provide access to your blog CMS so GrowthCat can publish drafted content. Supports API key or OAuth-based connections.",
+      "Provide access to your blog CMS so GrowthRat can publish drafted content. Supports API key or OAuth-based connections.",
     status: "pending",
   },
   {
     id: "charts",
     title: "Connect Charts API",
     description:
-      "Give GrowthCat read access to your RevenueCat Charts API so it can pull real metrics for reports and content grounding.",
+      "Give GrowthRat read access to your RevenueCat Charts API so it can pull real metrics for reports and content grounding.",
     status: "pending",
   },
   {
@@ -103,7 +103,7 @@ function SlackStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--color-op-muted)]">
-        Click the button below to start the Slack OAuth flow. GrowthCat will
+        Click the button below to start the Slack OAuth flow. GrowthRat will
         request the following scopes:{" "}
         <code className="text-xs bg-[var(--color-op-bg)] px-1.5 py-0.5 rounded">
           app_mentions:read
@@ -157,7 +157,7 @@ function CmsStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--color-op-muted)]">
-        Enter your CMS API key. GrowthCat supports Ghost, WordPress (REST API),
+        Enter your CMS API key. GrowthRat supports Ghost, WordPress (REST API),
         and any CMS with a REST or GraphQL endpoint. The key is stored
         server-side and never exposed to the operator dashboard.
       </p>
@@ -215,7 +215,7 @@ function ChartsStep({
     <div className="space-y-4">
       <p className="text-sm text-[var(--color-op-muted)]">
         Provide a RevenueCat API key with read-only access to Charts data.
-        GrowthCat uses this to ground weekly reports and content with real
+        GrowthRat uses this to ground weekly reports and content with real
         metrics. The key is encrypted and stored server-side.
       </p>
       <form onSubmit={handleSubmit} className="flex items-end gap-3">
@@ -263,7 +263,7 @@ function PreferencesStep({
     focusTopics: string;
   }) => void;
 }) {
-  const [reportChannel, setReportChannel] = useState("growthcat");
+  const [reportChannel, setReportChannel] = useState("growthrat");
   const [reviewMode, setReviewMode] = useState("draft-only");
   const [focusTopics, setFocusTopics] = useState("");
 
@@ -275,7 +275,7 @@ function PreferencesStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--color-op-muted)]">
-        Configure how GrowthCat operates. These can be changed later from the
+        Configure how GrowthRat operates. These can be changed later from the
         operator dashboard.
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -291,7 +291,7 @@ function PreferencesStep({
             type="text"
             value={reportChannel}
             onChange={(e) => setReportChannel(e.target.value)}
-            placeholder="#growthcat"
+            placeholder="#growthrat"
             className="w-full px-3 py-2 text-sm rounded-md bg-[var(--color-op-bg)] border border-[var(--color-op-border)] text-[var(--color-op-text)] placeholder:text-[var(--color-op-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--color-op-green)]"
           />
         </div>
@@ -317,7 +317,7 @@ function PreferencesStep({
             </option>
           </select>
           <p className="mt-1 text-xs text-[var(--color-op-dim)]">
-            &quot;Draft only&quot; is recommended during onboarding. GrowthCat
+            &quot;Draft only&quot; is recommended during onboarding. GrowthRat
             will generate content and wait for your approval.
           </p>
         </div>
@@ -372,7 +372,7 @@ export default function OnboardingPage() {
       setActiveStep((prev) => prev + 1);
     } else {
       setCompletionMessage(
-        "Onboarding complete. GrowthCat is ready to operate.",
+        "Onboarding complete. GrowthRat is ready to operate.",
       );
     }
   }
@@ -434,7 +434,7 @@ export default function OnboardingPage() {
           Onboarding
         </h1>
         <p className="mt-1 text-sm text-[var(--color-op-muted)]">
-          Connect GrowthCat to your services. API keys are stored server-side
+          Connect GrowthRat to your services. API keys are stored server-side
           and never exposed to the operator dashboard.
         </p>
       </div>
@@ -473,7 +473,7 @@ export default function OnboardingPage() {
             >
               Dashboard
             </a>{" "}
-            to see GrowthCat in action, or revisit any step below to update
+            to see GrowthRat in action, or revisit any step below to update
             your configuration.
           </p>
         </div>

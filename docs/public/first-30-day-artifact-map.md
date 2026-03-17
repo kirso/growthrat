@@ -1,8 +1,8 @@
-# GrowthCat First 30-Day Artifact Map
+# GrowthRat First 30-Day Artifact Map
 
 ## Goal
 
-Ship a body of work that proves GrowthCat can already do the RevenueCat role before asking RevenueCat to trust it with internal access.
+Ship a body of work that proves GrowthRat can already do the RevenueCat role before asking RevenueCat to trust it with internal access.
 
 ## Month 1 outputs
 
@@ -33,7 +33,7 @@ Ship a body of work that proves GrowthCat can already do the RevenueCat role bef
 9. `RevenueCat for Agents Readiness Review`
    - Public audit of docs, workflows, and product friction from an agent-builder perspective.
 
-10. `GrowthCat Week-One Experiment Report`
+10. `GrowthRat Week-One Experiment Report`
     - Real experiment report with hypothesis, launch assets, measurement, and next step.
 
 ## Required pre-apply minimum

@@ -4,7 +4,7 @@ import crypto from "crypto";
 // (replaces Inngest event sending)
 
 // ---------------------------------------------------------------------------
-// Slack Event Handler — receives events when someone mentions @GrowthCat
+// Slack Event Handler — receives events when someone mentions @GrowthRat
 //
 // Pattern: respond to Slack within 3 seconds, then process the command
 // asynchronously via Inngest. This keeps the Slack API happy while
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // Handle app_mention events — someone @-mentioned GrowthCat
+    // Handle app_mention events — someone @-mentioned GrowthRat
     if (event.type === "app_mention") {
       // Strip the @mention tag, leaving only the command text
       const text = (event.text ?? "")

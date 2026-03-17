@@ -1,10 +1,10 @@
-> **Superseded by `docs/product/2026-03-13-growthcat-prd.md` (updated 2026-03-16).** This blueprint is retained for historical reference. The unified PRD is now the single canonical planning document.
+> **Superseded by `docs/product/2026-03-13-growthrat-prd.md` (updated 2026-03-16).** This blueprint is retained for historical reference. The unified PRD is now the single canonical planning document.
 
 # RevenueCat Agent Service Blueprint
 
 Canonical planning docs:
 
-1. `docs/product/2026-03-13-growthcat-prd.md`
+1. `docs/product/2026-03-13-growthrat-prd.md`
 2. `docs/plans/2026-03-07-revenuecat-agent-roadmap.md`
 
 This blueprint remains a supporting surface and interaction reference. It is no longer the primary planning surface.
@@ -25,7 +25,7 @@ It complements `docs/plans/2026-03-06-revenuecat-agent-application-plan.md` by a
 
 ## End State
 
-RevenueCat experiences `GrowthCat` as a constrained, inspectable, high-output DevRel and growth teammate that:
+RevenueCat experiences `GrowthRat` as a constrained, inspectable, high-output DevRel and growth teammate that:
 
 - can be onboarded through a self-serve integration flow
 - starts safely in shadow mode
@@ -51,7 +51,7 @@ In steady state, RevenueCat should not need to manually operate the agent day to
 ### Internal operating actors
 
 - `Operator`:
-  the human partner running GrowthCat during application and interviews
+  the human partner running GrowthRat during application and interviews
 - `RevenueCat admin`:
   the future internal owner who connects assets and sets trust boundaries
 - `RevenueCat DevRel lead`
@@ -61,7 +61,7 @@ In steady state, RevenueCat should not need to manually operate the agent day to
 
 ### System actors
 
-- `GrowthCat`
+- `GrowthRat`
 - `Workflow engine`
 - `Operator web app`
 - `Slack bot`
@@ -114,7 +114,7 @@ Main sections:
 - operator replay link
 - weekly sample report
 - architecture and safety note
-- disclosure note that GrowthCat is an independent applicant
+- disclosure note that GrowthRat is an independent applicant
 
 States:
 - draft preview
@@ -201,7 +201,7 @@ Used for:
 | `RevenueCat Growth lead` | Slack, analytics outputs, CMS, issue tracker | review experiments, weekly reports, trend reports, distribution outputs | define low-level workflow state transitions or prompt logic |
 | `RevenueCat PM / product team` | issue tracker, roadmap memos, Slack summaries | review structured feedback, prioritize patterns, inspect evidence | read raw crawler output or model traces to understand feedback |
 | `RevenueCat engineer or docs reviewer` | GitHub PRs, sample repos, issue tracker | review technical PRs, reproduce issues, merge fixes | use the operator web app for normal technical review |
-| `Public developer or growth community member` | X, GitHub, forums, Discord, public docs, public microsite | ask questions, read content, interact with GrowthCat publicly | see internal reports, policy settings, or connected company assets |
+| `Public developer or growth community member` | X, GitHub, forums, Discord, public docs, public microsite | ask questions, read content, interact with GrowthRat publicly | see internal reports, policy settings, or connected company assets |
 
 ## Screen Inventory
 
@@ -432,8 +432,8 @@ Primary actor:
 - Hiring reviewer
 
 Shows:
-- GrowthCat thesis
-- why GrowthCat is the right agent
+- GrowthRat thesis
+- why GrowthRat is the right agent
 - evidence-backed differentiation
 
 Primary actions:
@@ -486,7 +486,7 @@ Primary actions:
 
 Primary actor:
 - Hiring reviewer
-- future RevenueCat stakeholder who wants to see how GrowthCat works without opening internal tools
+- future RevenueCat stakeholder who wants to see how GrowthRat works without opening internal tools
 
 Shows:
 - a read-only replay of a sample week
@@ -623,7 +623,7 @@ Primary consumers:
 ### RevenueCat hiring council reviewer
 
 End state:
-- can review GrowthCat using only public artifacts
+- can review GrowthRat using only public artifacts
 - does not need any private walkthrough to understand capability
 
 ### RevenueCat admin
@@ -723,12 +723,12 @@ Operator web app or internal API.
 ### Steps
 
 1. Operator starts `apply_for_role`.
-2. GrowthCat ingests the role brief and approved public sources.
+2. GrowthRat ingests the role brief and approved public sources.
 3. Knowledge layer creates or refreshes:
    - RevenueCat concept cards
    - hiring-stage briefing packs
    - benchmark corpus references
-4. GrowthCat drafts:
+4. GrowthRat drafts:
    - public application letter
    - first-week proof pack
    - RevenueCat readiness review
@@ -755,7 +755,7 @@ Operator web app or internal API.
 
 - careers page submission with public URL
 - microsite with application letter and proof artifacts
-- optional operator replay page that shows how GrowthCat would work in practice
+- optional operator replay page that shows how GrowthRat would work in practice
 
 ### Success output
 
@@ -810,7 +810,7 @@ Public microsite and linked GitHub artifacts.
 
 ### Goal
 
-GrowthCat completes a technical content and growth task autonomously within 48 hours.
+GrowthRat completes a technical content and growth task autonomously within 48 hours.
 
 ### Trigger
 
@@ -823,17 +823,17 @@ Operator web app `take_home_mode` or internal API.
 ### Steps
 
 1. Operator enters prompt bundle, deadline, and output constraints.
-2. GrowthCat loads the take-home briefing pack.
-3. GrowthCat decomposes the task into:
+2. GrowthRat loads the take-home briefing pack.
+3. GrowthRat decomposes the task into:
    - research
    - technical artifact generation
    - growth strategy generation
    - packaging
 4. Hybrid retriever pulls relevant sources.
-5. GrowthCat drafts artifacts.
+5. GrowthRat drafts artifacts.
 6. Quality validators run.
 7. Hiring rubric evaluator scores the artifacts.
-8. GrowthCat packages final outputs, evidence, and citations.
+8. GrowthRat packages final outputs, evidence, and citations.
 9. Operator submits the package through the required channel.
 
 ### What RevenueCat sees
@@ -856,7 +856,7 @@ Operator web app `take_home_mode` or internal API.
 
 ### Goal
 
-RevenueCat sees GrowthCat think and work live without hidden guesswork.
+RevenueCat sees GrowthRat think and work live without hidden guesswork.
 
 ### Trigger
 
@@ -870,14 +870,14 @@ Operator web app `panel_mode` on a shared screen.
 
 1. Operator starts panel mode.
 2. Interviewer gives a prompt.
-3. GrowthCat displays:
+3. GrowthRat displays:
    - prompt summary
    - source retrieval list
    - active work steps
    - draft output panel
    - policy and uncertainty markers
-4. GrowthCat produces an answer, artifact outline, or code strategy live.
-5. If asked follow-ups, GrowthCat continues from the same run context.
+4. GrowthRat produces an answer, artifact outline, or code strategy live.
+5. If asked follow-ups, GrowthRat continues from the same run context.
 6. Hiring rubric evaluator stores a post-run internal assessment.
 
 ### What RevenueCat sees
@@ -894,14 +894,14 @@ Operator web app `panel_mode` on a shared screen.
 
 ### Failure paths
 
-- source conflict -> GrowthCat marks the claim as uncertain instead of bluffing
+- source conflict -> GrowthRat marks the claim as uncertain instead of bluffing
 - secret-bearing content risk -> panel console redacts it automatically
 
 ## Flow E: Founder interview
 
 ### Goal
 
-Founder understands the business value, constraints, and long-term role of GrowthCat.
+Founder understands the business value, constraints, and long-term role of GrowthRat.
 
 ### Trigger
 
@@ -914,8 +914,8 @@ Founder briefing pack generated by `founder_mode`.
 ### Steps
 
 1. Operator starts founder mode with meeting goals.
-2. GrowthCat creates a briefing pack containing:
-   - what GrowthCat does
+2. GrowthRat creates a briefing pack containing:
+   - what GrowthRat does
    - where it is autonomous
    - where it is constrained
    - value created to date
@@ -1001,7 +1001,7 @@ Operator web app audit page and Slack summary.
 
 ### Steps
 
-1. GrowthCat scans connected assets and recent public context.
+1. GrowthRat scans connected assets and recent public context.
 2. System builds a first-hour audit.
 3. Audit contains:
    - top content opportunities
@@ -1010,7 +1010,7 @@ Operator web app audit page and Slack summary.
    - candidate feedback items
    - suggested experiments
    - suggested autonomy level
-4. GrowthCat posts summary to Slack and stores full audit in the operator app.
+4. GrowthRat posts summary to Slack and stores full audit in the operator app.
 
 ### What RevenueCat sees
 
@@ -1027,7 +1027,7 @@ Operator web app audit page and Slack summary.
 
 ### Goal
 
-GrowthCat proves workflow fit before being allowed to publish autonomously.
+GrowthRat proves workflow fit before being allowed to publish autonomously.
 
 ### Trigger
 
@@ -1040,12 +1040,12 @@ Slack, GitHub, CMS, issue tracker, operator app.
 ### Weekly steps
 
 1. Weekly planner runs.
-2. GrowthCat selects:
+2. GrowthRat selects:
    - 2 flagship content opportunities
    - 1 experiment
    - community engagement targets
    - 3 feedback candidates
-3. GrowthCat creates:
+3. GrowthRat creates:
    - CMS drafts
    - GitHub PRs or draft repos
    - draft replies
@@ -1068,7 +1068,7 @@ Slack, GitHub, CMS, issue tracker, operator app.
 
 ### Goal
 
-GrowthCat runs the actual weekly role with limited human review.
+GrowthRat runs the actual weekly role with limited human review.
 
 ### Trigger
 
@@ -1078,7 +1078,7 @@ RevenueCat promotes selected surfaces to bounded autonomy.
 
 #### Monday
 - planner reviews source changes, community signals, open opportunities, and recent performance
-- GrowthCat selects the week's focus areas
+- GrowthRat selects the week's focus areas
 
 #### Tuesday to Thursday
 - create and publish 2 flagship pieces with derivatives
@@ -1121,11 +1121,11 @@ Daily community run.
 
 ### Steps
 
-1. GrowthCat gathers candidate threads, issues, discussions, and posts.
+1. GrowthRat gathers candidate threads, issues, discussions, and posts.
 2. Interaction scorer filters low-value opportunities.
 3. Community engagement worker drafts replies.
 4. If the reply uses a repeated explanation, canonical answer links are preferred.
-5. If allowed by mode, GrowthCat posts directly or creates drafts.
+5. If allowed by mode, GrowthRat posts directly or creates drafts.
 6. Interaction score is stored after posting.
 
 ### Count rules
@@ -1153,15 +1153,15 @@ Turn usage and community observations into structured product input.
 ### Trigger
 
 Feedback candidate identified from:
-- GrowthCat usage
+- GrowthRat usage
 - repeated community friction
 - docs confusion
 - sample/demo implementation friction
 
 ### Steps
 
-1. GrowthCat clusters evidence.
-2. GrowthCat drafts a feedback item with:
+1. GrowthRat clusters evidence.
+2. GrowthRat drafts a feedback item with:
    - problem summary
    - reproduction
    - affected audience
@@ -1300,7 +1300,7 @@ At the end of a successful week in bounded autonomy, RevenueCat should have:
 
 ## What RevenueCat Should Not Need To Do
 
-- manually tell GrowthCat what to write every day
+- manually tell GrowthRat what to write every day
 - move data between tools by hand
 - review every single low-risk community interaction
 - debug prompt chains or model settings
@@ -1338,4 +1338,4 @@ At the end of a successful week in bounded autonomy, RevenueCat should have:
 - weekly quotas are met with quality
 - outputs are referenced and shared
 - product feedback influences roadmap
-- GrowthCat can justify continued operation with evidence
+- GrowthRat can justify continued operation with evidence

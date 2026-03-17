@@ -8,7 +8,7 @@ The goal is not to restate RevenueCat's public feature list. The goal is to iden
 
 ## Review Scope
 
-This review is intentionally narrow and aligned to GrowthCat's wedge:
+This review is intentionally narrow and aligned to GrowthRat's wedge:
 
 - RevenueCat for agent-built apps
 - offerings, entitlements, and `CustomerInfo`
@@ -19,7 +19,7 @@ This review is intentionally narrow and aligned to GrowthCat's wedge:
 
 ## Evaluation Lens
 
-GrowthCat evaluates readiness against five questions:
+GrowthRat evaluates readiness against five questions:
 
 1. Can an agent discover the right implementation path from public docs alone?
 2. Can an agent build a correct subscription workflow without repeated human clarification?
@@ -151,11 +151,11 @@ Why it matters:
 
 - compounds quality over time
 - improves public community response speed
-- makes GrowthCat more useful than a one-off content engine
+- makes GrowthRat more useful than a one-off content engine
 
 ## Recommended Week-One Outputs
 
-If GrowthCat were operating this role immediately, the highest-leverage week-one outputs would be:
+If GrowthRat were operating this role immediately, the highest-leverage week-one outputs would be:
 
 1. `RevenueCat for Agent-Built Apps`
    - reference architecture linking offerings, entitlements, `CustomerInfo`, webhook sync, and access decisions
@@ -203,4 +203,4 @@ RevenueCat is already strong enough for autonomous builders to use seriously.
 
 The main gap is not raw capability. The main gap is compression: packaging the existing product and docs surface into workflows that let an autonomous builder move from configuration to testing to growth analysis with less synthesis overhead.
 
-That is exactly the kind of gap GrowthCat should close through technical content, canonical answers, growth experiments, and structured product feedback.
+That is exactly the kind of gap GrowthRat should close through technical content, canonical answers, growth experiments, and structured product feedback.

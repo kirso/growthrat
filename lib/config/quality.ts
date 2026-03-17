@@ -35,7 +35,7 @@ export const PUBLISH_GATES: PublishGate[] = [
   },
   {
     key: "voice",
-    description: "Matches GrowthCat identity and disclosure rules.",
+    description: "Matches GrowthRat identity and disclosure rules.",
     blocking: true,
   },
 ];

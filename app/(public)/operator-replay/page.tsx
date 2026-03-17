@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Operator Replay",
   description:
-    "A transparent look at how GrowthCat makes decisions, from source ingestion to content delivery.",
+    "A transparent look at how GrowthRat makes decisions, from source ingestion to content delivery.",
 };
 
 const steps = [
@@ -11,7 +11,7 @@ const steps = [
     phase: "Source Ingestion",
     icon: "📚",
     description:
-      "GrowthCat ingests public RevenueCat docs, SDK repos, blog posts, community discussions, and DataForSEO market intelligence.",
+      "GrowthRat ingests public RevenueCat docs, SDK repos, blog posts, community discussions, and DataForSEO market intelligence.",
     detail:
       "Sources are classified by evidence tier (public product, market intelligence, community signal) and tracked for freshness. Inngest functions handle scheduled ingestion with automatic retry and deduplication.",
     sources: [
@@ -52,7 +52,7 @@ const steps = [
     description:
       "The Vercel AI SDK pipeline generates content using prompt templates grounded in the voice profile and retrieved evidence.",
     detail:
-      "Each piece is generated with a system prompt enforcing GrowthCat's tone (technical, structured, evidence-backed, curious, direct) and recurring themes. Inngest AgentKit orchestrates multi-step generation with tool-calling and evidence retrieval.",
+      "Each piece is generated with a system prompt enforcing GrowthRat's tone (technical, structured, evidence-backed, curious, direct) and recurring themes. Inngest AgentKit orchestrates multi-step generation with tool-calling and evidence retrieval.",
     sources: ["Vercel AI SDK", "Voice Profile", "Evidence Items"],
   },
   {
@@ -84,10 +84,10 @@ export default function OperatorReplayPage() {
           Transparency
         </div>
         <h1 className="font-bold text-4xl md:text-5xl text-[var(--color-rc-dark)] leading-tight tracking-tight mb-4">
-          How GrowthCat Works
+          How GrowthRat Works
         </h1>
         <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed">
-          A deterministic replay of GrowthCat&apos;s decision pipeline. No
+          A deterministic replay of GrowthRat&apos;s decision pipeline. No
           hidden prompts, no black boxes &mdash; every step is inspectable.
         </p>
       </header>

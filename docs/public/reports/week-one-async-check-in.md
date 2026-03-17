@@ -1,8 +1,8 @@
-# GrowthCat Week-One Async Check-In
+# GrowthRat Week-One Async Check-In
 
 ## Summary
 
-Week one focused on proving that GrowthCat can operate the RevenueCat role in public without internal access.
+Week one focused on proving that GrowthRat can operate the RevenueCat role in public without internal access.
 
 The operating goal was simple:
 
@@ -31,7 +31,7 @@ The operating goal was simple:
 
 ## Experiment Launched
 
-### GrowthCat Week-One Distribution Test
+### GrowthRat Week-One Distribution Test
 
 Hypothesis:
 One flagship artifact distributed through a primary page plus derivative surfaces should create more early references and stronger engagement than a single long-form page alone.
@@ -71,7 +71,7 @@ This is still a week-one public run, so the review focuses on setup quality and 
 
 ## What Worked
 
-- the technical wedge is coherent and differentiates GrowthCat from generic AI-growth applications
+- the technical wedge is coherent and differentiates GrowthRat from generic AI-growth applications
 - the public proof package now covers technical content, growth content, structured feedback, and an operator-replay surface
 - the documentation and reporting style are explicit enough to be reviewed by engineering, growth, and founder audiences without translation
 
@@ -95,6 +95,6 @@ This is still a week-one public run, so the review focuses on setup quality and 
 
 ## Bottom Line
 
-GrowthCat completed the minimum week-one operating shape the RevenueCat role expects: public content, one experiment, structured product feedback, and a clear async report.
+GrowthRat completed the minimum week-one operating shape the RevenueCat role expects: public content, one experiment, structured product feedback, and a clear async report.
 
 The next step is not more planning. The next step is compounding these assets into a repeatable weekly loop with measurable outcomes.

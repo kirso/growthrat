@@ -149,6 +149,6 @@ function retrieveSources(prompt: string): { label: string; type: string }[] {
     sources.push({ label: "RevenueCat Charts (dashboard-only)", type: "public_product" });
   }
 
-  sources.push({ label: "GrowthCat Voice Profile", type: "internal_config" });
+  sources.push({ label: "GrowthRat Voice Profile", type: "internal_config" });
   return sources;
 }
