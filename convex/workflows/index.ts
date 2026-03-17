@@ -11,6 +11,7 @@
 import { WorkflowManager } from "@convex-dev/workflow";
 import { components, internal } from "../_generated/api";
 import { v } from "convex/values";
+import { Id } from "../_generated/dataModel";
 
 export const workflow = new WorkflowManager(components.workflow, {
   workpoolOptions: {
@@ -31,7 +32,7 @@ export const workflow = new WorkflowManager(components.workflow, {
  */
 export const weeklyPlanWorkflow = workflow.define({
   args: { weekNumber: v.number() },
-  handler: async (step, { weekNumber }) => {
+  handler: async (step, { weekNumber }): Promise<{ weekNumber: number; topicsPlanned: number }> => {
     // Step 1: Fetch keyword data from DataForSEO
     const keywords = await step.runAction(
       internal.actions.fetchKeywords,
@@ -79,7 +80,7 @@ export const contentGenWorkflow = workflow.define({
     topic: v.string(),
     targetKeyword: v.string(),
   },
-  handler: async (step, { topic, targetKeyword }) => {
+  handler: async (step, { topic, targetKeyword }): Promise<{ artifactId: string; published: boolean }> => {
     // Step 1: Generate content via LLM
     const draft = await step.runAction(
       internal.actions.generateContent,
@@ -87,41 +88,43 @@ export const contentGenWorkflow = workflow.define({
       { retry: true }
     );
 
+    const artifactId = draft.artifactId as Id<"artifacts">;
+
     // Step 2: Run quality gates
     const validation = await step.runAction(
       internal.actions.validateQuality,
-      { content: draft.content, artifactId: draft.artifactId }
+      { content: draft.content, artifactId }
     );
 
     // Step 3: If validated, publish and distribute
     if (validation.allPassed) {
       await step.runMutation(
         internal.mutations.updateArtifactStatus,
-        { id: draft.artifactId, status: "validated" }
+        { id: artifactId, status: "validated" }
       );
 
       // Publish to CMS
       await step.runAction(
         internal.actions.publishToCMS,
-        { artifactId: draft.artifactId },
+        { artifactId },
         { retry: true }
       );
 
       // Distribute via Typefully
       await step.runAction(
         internal.actions.distributeViaTypefully,
-        { artifactId: draft.artifactId, topic },
+        { artifactId, topic },
         { retry: true }
       );
 
       await step.runMutation(
         internal.mutations.updateArtifactStatus,
-        { id: draft.artifactId, status: "published" }
+        { id: artifactId, status: "published" }
       );
     } else {
       await step.runMutation(
         internal.mutations.updateArtifactStatus,
-        { id: draft.artifactId, status: "rejected" }
+        { id: artifactId, status: "rejected" }
       );
     }
 
@@ -135,7 +138,7 @@ export const contentGenWorkflow = workflow.define({
  */
 export const weeklyReportWorkflow = workflow.define({
   args: { weekNumber: v.number() },
-  handler: async (step, { weekNumber }) => {
+  handler: async (step, { weekNumber }): Promise<{ weekNumber: number; metrics: Record<string, number> }> => {
     // Step 1: Gather real metrics directly from DB
     const metrics = await step.runQuery(
       internal.mutations.gatherWeeklyMetrics,
@@ -172,7 +175,7 @@ export const weeklyReportWorkflow = workflow.define({
  */
 export const knowledgeIngestWorkflow = workflow.define({
   args: {},
-  handler: async (step) => {
+  handler: async (step): Promise<{ totalChunks?: number; signalsFound?: number; engaged?: number }> => {
     const result = await step.runAction(
       internal.actions.ingestKnowledge,
       {},
@@ -189,7 +192,7 @@ export const knowledgeIngestWorkflow = workflow.define({
  */
 export const communityMonitorWorkflow = workflow.define({
   args: {},
-  handler: async (step) => {
+  handler: async (step): Promise<{ totalChunks?: number; signalsFound?: number; engaged?: number }> => {
     // Scan GitHub repos
     const signals = await step.runAction(
       internal.actions.scanGitHubRepos,

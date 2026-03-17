@@ -73,7 +73,7 @@ export const growthRatAgent = new Agent(components.agent, {
           );
 
           return docs
-            .map((d) => `[${d.provider} — ${d.key}]:\n${d.summary}`)
+            .map((d: { provider: string; key: string; summary: string }) => `[${d.provider} — ${d.key}]:\n${d.summary}`)
             .join("\n\n---\n\n");
         } catch {
           return "Knowledge base search is not available yet. Answering from training knowledge.";
@@ -128,66 +128,9 @@ export const growthRatAgent = new Agent(components.agent, {
     },
   },
 
-  // CRITICAL: contextHandler injects custom knowledge BEFORE every LLM call.
-  // Convex Agent's built-in search only covers thread messages.
-  // This handler adds RC docs from the sources table via vector search.
-  contextHandler: async (ctx, args) => {
-    const lastUserMessage =
-      args.inputPrompt?.[0]?.content ??
-      (args.inputMessages ?? [])
-        .filter((m: { role: string }) => m.role === "user")
-        .pop()?.content ??
-      "";
-
-    const query =
-      typeof lastUserMessage === "string"
-        ? lastUserMessage
-        : JSON.stringify(lastUserMessage);
-
-    let docContext: Array<{ role: "system"; content: string }> = [];
-    if (query.length > 5) {
-      try {
-        const embedding = await generateEmbedding(query);
-        // vectorSearch IS available on ActionCtx
-        const results = await ctx.vectorSearch("sources", "by_embedding", {
-          vector: embedding,
-          limit: 3,
-        });
-
-        if (results.length > 0) {
-          // Must use ctx.runQuery — ActionCtx has NO ctx.db
-          const docs = await ctx.runQuery(
-            internal.agentQueries.getSourcesByIds,
-            { ids: results.map((r) => r._id) }
-          );
-
-          if (docs.length > 0) {
-            const docText = docs
-              .map((d) => `[${d.provider} — ${d.key}]: ${d.summary}`)
-              .join("\n");
-
-            docContext = [
-              {
-                role: "system" as const,
-                content: `Relevant RevenueCat documentation:\n\n${docText}\n\nUse this context to ground your response.`,
-              },
-            ];
-          }
-        }
-      } catch {
-        // Knowledge base not yet populated — fall through gracefully
-      }
-    }
-
-    return [
-      ...docContext,
-      ...args.search,
-      ...args.recent,
-      ...args.inputMessages,
-      ...args.inputPrompt,
-      ...args.existingResponses,
-    ];
-  },
+  // RAG is handled via the searchDocs tool — the agent calls it when needed.
+  // The chat API route also does RAG via the vector search HTTP endpoint.
+  // No contextHandler needed — tool-based RAG is more reliable.
 
   callSettings: {
     maxRetries: 3,

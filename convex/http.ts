@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 const http = httpRouter();
 
@@ -123,7 +123,7 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     if (!verifyInternalAuth(request)) return unauthorizedResponse();
     const body = await request.json();
-    const id = await ctx.runMutation(api.sources.upsertWithEmbedding, body);
+    const id = await ctx.runMutation(internal.sources.upsertWithEmbedding, body);
     return new Response(JSON.stringify({ id }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -200,11 +200,11 @@ http.route({
 
     return new Response(
       JSON.stringify({
-        docs: docs.filter(Boolean).map((d) => ({
-          provider: d!.provider,
-          key: d!.key,
-          summary: d!.summary ?? "",
-          score: results.find((r) => r._id === d!._id)?._score ?? 0,
+        docs: docs.filter((d): d is NonNullable<typeof d> => d !== null).map((d) => ({
+          provider: d.provider,
+          key: d.key,
+          summary: d.summary ?? "",
+          score: results.find((r) => r._id === d._id)?._score ?? 0,
         })),
       }),
       {

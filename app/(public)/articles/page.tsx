@@ -105,10 +105,10 @@ export default async function ArticlesPage() {
       () => null
     );
     if (convexArticles && convexArticles.length > 0) {
-      articles = convexArticles.map((a) => ({
+      articles = convexArticles.map((a: { slug: string; title: string; content?: string; artifactType?: string; publishedAt?: number }) => ({
         slug: a.slug,
         title: a.title,
-        description: a.content?.slice(0, 180) + "...",
+        description: (a.content ?? "").slice(0, 180) + "...",
         category: a.artifactType,
         artifactType: a.artifactType,
         publishedAt: a.publishedAt,

@@ -58,7 +58,7 @@ export const fetchKeywords = internalAction({
 
 export const generateContent = internalAction({
   args: { topic: v.string(), targetKeyword: v.string() },
-  handler: async (ctx, { topic, targetKeyword }) => {
+  handler: async (ctx, { topic, targetKeyword }): Promise<{ content: string; artifactId: string }> => {
     const { generateText } = await import("ai");
     const { anthropic } = await import("@ai-sdk/anthropic");
 
@@ -79,8 +79,8 @@ export const generateContent = internalAction({
       status: "draft",
       llmProvider: "anthropic",
       llmModel: "claude-sonnet-4-20250514",
-      inputTokens: result.usage?.promptTokens ?? 0,
-      outputTokens: result.usage?.completionTokens ?? 0,
+      inputTokens: result.usage?.inputTokens ?? 0,
+      outputTokens: result.usage?.outputTokens ?? 0,
     });
 
     return { content: result.text, artifactId };
@@ -301,7 +301,7 @@ export const startContentWorkflow = internalAction({
 
 export const startFeedbackWorkflow = internalAction({
   args: { topics: v.array(v.string()) },
-  handler: async (ctx, { topics }) => {
+  handler: async (ctx, { topics }): Promise<{ triggered: boolean; count: number }> => {
     for (const topic of topics) {
       await ctx.runAction(internal.actions.generateFeedback, { topic, severity: "high" });
     }
@@ -332,7 +332,7 @@ export const generateFeedback = internalAction({
       title: topic,
       problem: result.text,
       status: "draft",
-      metadata: { severity, generatedTokens: result.usage?.completionTokens ?? 0 },
+      metadata: { severity, generatedTokens: result.usage?.outputTokens ?? 0 },
     });
 
     return { title: topic, length: result.text.length };

@@ -43,7 +43,7 @@ export const upsert = mutation({
 });
 
 // VS-A1: Upsert a source chunk WITH embedding (for knowledge ingestion)
-export const upsertWithEmbedding = mutation({
+export const upsertWithEmbedding = internalMutation({
   args: {
     key: v.string(),
     url: v.optional(v.string()),

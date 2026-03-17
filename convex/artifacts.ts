@@ -17,19 +17,16 @@ export const list = query({
         .collect();
     }
 
-    let q = ctx.db.query("artifacts");
+    const results = await ctx.db
+      .query("artifacts")
+      .order("desc")
+      .take(100);
 
-    if (args.artifactType) {
-      q = q.withIndex("by_type_status", (idx) =>
-        idx.eq("artifactType", args.artifactType!)
-      );
-    }
-
-    const results = await q.order("desc").collect();
-
-    if (args.status) {
-      return results.filter((a) => a.status === args.status);
-    }
+    return results.filter((a) => {
+      if (args.artifactType && a.artifactType !== args.artifactType) return false;
+      if (args.status && a.status !== args.status) return false;
+      return true;
+    });
 
     return results;
   },
@@ -38,12 +35,12 @@ export const list = query({
 export const listPublished = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
+    // Can't use filter after withIndex. Query all and filter in JS.
+    const all = await ctx.db
       .query("artifacts")
-      .withIndex("by_type_status")
-      .filter((q) => q.eq(q.field("status"), "published"))
       .order("desc")
-      .take(50);
+      .take(100);
+    return all.filter((a) => a.status === "published");
   },
 });
 
