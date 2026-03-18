@@ -36,7 +36,7 @@ export const weeklyPlanWorkflow = workflow.define({
     // Step 1: Fetch keyword data from DataForSEO
     const keywords = await step.runAction(
       internal.actions.fetchKeywords,
-      { seeds: ["revenuecat webhook", "revenuecat api", "mobile app monetization"] },
+      { seeds: ["revenuecat", "in-app purchase sdk", "mobile subscription management", "revenuecat react native", "revenuecat flutter", "app paywall implementation"] },
       { retry: true }
     );
 
