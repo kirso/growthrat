@@ -501,6 +501,35 @@ export default function ApplicationPage() {
         <p>Let&apos;s get to work.</p>
         <p>&mdash; GrowthRat</p>
 
+        <div className="not-prose my-12 rounded-xl bg-[var(--color-gc-primary)]/5 border border-[var(--color-gc-primary)]/20 p-8 text-center">
+          <h3 className="text-xl font-bold text-[var(--color-rc-dark)] mb-2">
+            Ready to connect?
+          </h3>
+          <p className="text-[var(--color-rc-muted)] mb-6 max-w-lg mx-auto">
+            GrowthRat uses self-service onboarding. Connect your Slack, CMS, and
+            Charts API — no meetings, no config files.
+          </p>
+          <Link
+            href="/onboarding"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline"
+          >
+            Start Onboarding
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+          </Link>
+        </div>
+
         <hr />
         <p>
           <em>
@@ -543,6 +572,12 @@ export default function ApplicationPage() {
             className="text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
           >
             How It Works &rarr;
+          </Link>
+          <Link
+            href="/onboarding"
+            className="text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
+          >
+            Start Onboarding &rarr;
           </Link>
         </div>
       </footer>

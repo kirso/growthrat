@@ -298,6 +298,28 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/onboarding"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline shadow-sm"
+            >
+              Start Self-Service Onboarding
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
+              </svg>
+            </Link>
+          </div>
         </div>
       </section>
 

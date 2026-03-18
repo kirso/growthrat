@@ -55,6 +55,12 @@ export default function PublicLayout({
             >
               How It Works
             </Link>
+            <Link
+              href="/onboarding"
+              className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"
+            >
+              Onboarding
+            </Link>
             <a
               href="https://github.com"
               target="_blank"

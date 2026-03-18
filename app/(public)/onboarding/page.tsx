@@ -1,8 +1,19 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useContext, type FormEvent } from "react";
 import { useMutation } from "convex/react";
-import { convexApi, useConvexAvailable } from "../hooks/useConvexSafe";
+import { ConvexAvailableContext } from "@/app/ConvexClientProvider";
+import Link from "next/link";
+
+// ---- Dynamic API import ----
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let convexApi: Record<string, any> | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  convexApi = require("@/convex/_generated/api").api;
+} catch {
+  convexApi = null;
+}
 
 // ---------------------------------------------------------------------------
 // Step definitions
@@ -20,30 +31,30 @@ interface OnboardingStep {
 const initialSteps: OnboardingStep[] = [
   {
     id: "slack",
-    title: "Add GrowthRat to Slack",
+    title: "Connect Slack",
     description:
-      "Install the GrowthRat Slack app to your workspace. GrowthRat will post weekly plans, reports, and respond to commands in your designated channel.",
+      "Add GrowthRat to your workspace. It will post weekly plans, reports, and respond to commands.",
     status: "pending",
   },
   {
     id: "cms",
     title: "Connect Blog CMS",
     description:
-      "Provide access to your blog CMS so GrowthRat can publish drafted content. Supports API key or OAuth-based connections.",
+      "Provide CMS API access so GrowthRat can publish drafted content after approval.",
     status: "pending",
   },
   {
     id: "charts",
     title: "Connect Charts API",
     description:
-      "Give GrowthRat read access to your RevenueCat Charts API so it can pull real metrics for reports and content grounding.",
+      "Give GrowthRat read access to RevenueCat Charts for real metrics in reports and content.",
     status: "pending",
   },
   {
     id: "preferences",
     title: "Set Preferences",
     description:
-      "Configure where reports go, how content gets reviewed, and which topics to prioritize.",
+      "Configure reporting channel, content review mode, and focus topics.",
     status: "pending",
   },
 ];
@@ -53,20 +64,23 @@ const initialSteps: OnboardingStep[] = [
 // ---------------------------------------------------------------------------
 
 function StatusBadge({ status }: { status: StepStatus }) {
-  const styles: Record<StepStatus, { bg: string; text: string; label: string }> = {
+  const styles: Record<
+    StepStatus,
+    { bg: string; text: string; label: string }
+  > = {
     pending: {
-      bg: "bg-[var(--color-op-card-alt)]",
-      text: "text-[var(--color-op-muted)]",
+      bg: "bg-gray-100",
+      text: "text-[var(--color-rc-muted)]",
       label: "Pending",
     },
     connected: {
-      bg: "bg-emerald-900/40",
-      text: "text-emerald-400",
+      bg: "bg-emerald-100",
+      text: "text-emerald-700",
       label: "Connected",
     },
     skipped: {
-      bg: "bg-yellow-900/30",
-      text: "text-yellow-400",
+      bg: "bg-yellow-100",
+      text: "text-yellow-700",
       label: "Skipped",
     },
   };
@@ -80,10 +94,10 @@ function StatusBadge({ status }: { status: StepStatus }) {
       <span
         className={`w-1.5 h-1.5 rounded-full ${
           status === "connected"
-            ? "bg-emerald-400"
+            ? "bg-emerald-500"
             : status === "skipped"
-              ? "bg-yellow-400"
-              : "bg-[var(--color-op-muted)]"
+              ? "bg-yellow-500"
+              : "bg-gray-400"
         }`}
       />
       {s.label}
@@ -104,36 +118,45 @@ function SlackStep({
 }) {
   return (
     <div className="space-y-4">
-      <p className="text-sm text-[var(--color-op-muted)]">
-        Click the button below to start the Slack OAuth flow. GrowthRat will
-        request the following scopes:{" "}
-        <code className="text-xs bg-[var(--color-op-bg)] px-1.5 py-0.5 rounded">
-          app_mentions:read
-        </code>
-        ,{" "}
-        <code className="text-xs bg-[var(--color-op-bg)] px-1.5 py-0.5 rounded">
-          chat:write
-        </code>
-        ,{" "}
-        <code className="text-xs bg-[var(--color-op-bg)] px-1.5 py-0.5 rounded">
-          channels:read
-        </code>
-        .
+      <p className="text-sm text-[var(--color-rc-muted)]">
+        GrowthRat integrates with Slack to post weekly plans, reports, and
+        respond to commands. After hiring, the operator will provide a Slack app
+        install link for your workspace.
       </p>
-      <p className="text-xs text-[var(--color-op-dim)]">
-        Alternatively, a workspace admin can install the bot manually from the
-        Slack App Directory and provide the Bot Token below.
+      <div className="rounded-lg bg-[var(--color-rc-surface)] border border-[var(--color-rc-border)] p-4">
+        <p className="text-sm font-medium text-[var(--color-rc-dark)] mb-2">
+          Required Slack scopes:
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            "app_mentions:read",
+            "chat:write",
+            "channels:read",
+            "reactions:read",
+          ].map((scope) => (
+            <code
+              key={scope}
+              className="text-xs bg-white px-2 py-1 rounded border border-[var(--color-rc-border)]"
+            >
+              {scope}
+            </code>
+          ))}
+        </div>
+      </div>
+      <p className="text-xs text-[var(--color-rc-muted)]">
+        For the demo: click &quot;Mark Connected&quot; to simulate the
+        integration, or &quot;Skip&quot; to proceed without Slack.
       </p>
       <div className="flex items-center gap-3">
         <button
           onClick={onConnect}
-          className="px-4 py-2 text-sm font-medium rounded-md bg-[#4A154B] text-white hover:bg-[#611f64] transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-gc-primary)] text-white hover:bg-[var(--color-gc-primary-hover)] transition-colors"
         >
-          Add to Slack
+          Mark Connected
         </button>
         <button
           onClick={onSkip}
-          className="px-4 py-2 text-sm font-medium rounded-md border border-[var(--color-op-border)] text-[var(--color-op-muted)] hover:text-[var(--color-op-text)] hover:border-[var(--color-op-muted)] transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors"
         >
           Skip for now
         </button>
@@ -158,7 +181,7 @@ function CmsStep({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-[var(--color-op-muted)]">
+      <p className="text-sm text-[var(--color-rc-muted)]">
         Enter your CMS API key. GrowthRat supports Ghost, WordPress (REST API),
         and any CMS with a REST or GraphQL endpoint. The key is stored
         server-side and never exposed to the operator dashboard.
@@ -167,7 +190,7 @@ function CmsStep({
         <div className="flex-1">
           <label
             htmlFor="cms-key"
-            className="block text-xs font-medium text-[var(--color-op-muted)] mb-1.5"
+            className="block text-xs font-medium text-[var(--color-rc-muted)] mb-1.5"
           >
             CMS API Key
           </label>
@@ -177,20 +200,20 @@ function CmsStep({
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="sk_live_..."
-            className="w-full px-3 py-2 text-sm rounded-md bg-[var(--color-op-bg)] border border-[var(--color-op-border)] text-[var(--color-op-text)] placeholder:text-[var(--color-op-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--color-op-green)]"
+            className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-[var(--color-rc-border)] text-[var(--color-rc-dark)] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--color-gc-primary)]"
           />
         </div>
         <button
           type="submit"
           disabled={!apiKey.trim()}
-          className="px-4 py-2 text-sm font-medium rounded-md bg-[var(--color-op-green)] text-[var(--color-op-bg)] hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-gc-primary)] text-white hover:bg-[var(--color-gc-primary-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Connect
         </button>
         <button
           type="button"
           onClick={onSkip}
-          className="px-4 py-2 text-sm font-medium rounded-md border border-[var(--color-op-border)] text-[var(--color-op-muted)] hover:text-[var(--color-op-text)] hover:border-[var(--color-op-muted)] transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors"
         >
           Skip
         </button>
@@ -215,7 +238,7 @@ function ChartsStep({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-[var(--color-op-muted)]">
+      <p className="text-sm text-[var(--color-rc-muted)]">
         Provide a RevenueCat API key with read-only access to Charts data.
         GrowthRat uses this to ground weekly reports and content with real
         metrics. The key is encrypted and stored server-side.
@@ -224,7 +247,7 @@ function ChartsStep({
         <div className="flex-1">
           <label
             htmlFor="charts-key"
-            className="block text-xs font-medium text-[var(--color-op-muted)] mb-1.5"
+            className="block text-xs font-medium text-[var(--color-rc-muted)] mb-1.5"
           >
             RevenueCat API Key (read-only)
           </label>
@@ -234,20 +257,20 @@ function ChartsStep({
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder="appl_..."
-            className="w-full px-3 py-2 text-sm rounded-md bg-[var(--color-op-bg)] border border-[var(--color-op-border)] text-[var(--color-op-text)] placeholder:text-[var(--color-op-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--color-op-green)]"
+            className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-[var(--color-rc-border)] text-[var(--color-rc-dark)] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--color-gc-primary)]"
           />
         </div>
         <button
           type="submit"
           disabled={!apiKey.trim()}
-          className="px-4 py-2 text-sm font-medium rounded-md bg-[var(--color-op-green)] text-[var(--color-op-bg)] hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-gc-primary)] text-white hover:bg-[var(--color-gc-primary-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Connect
         </button>
         <button
           type="button"
           onClick={onSkip}
-          className="px-4 py-2 text-sm font-medium rounded-md border border-[var(--color-op-border)] text-[var(--color-op-muted)] hover:text-[var(--color-op-text)] hover:border-[var(--color-op-muted)] transition-colors"
+          className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors"
         >
           Skip
         </button>
@@ -276,7 +299,7 @@ function PreferencesStep({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-[var(--color-op-muted)]">
+      <p className="text-sm text-[var(--color-rc-muted)]">
         Configure how GrowthRat operates. These can be changed later from the
         operator dashboard.
       </p>
@@ -284,7 +307,7 @@ function PreferencesStep({
         <div>
           <label
             htmlFor="report-channel"
-            className="block text-xs font-medium text-[var(--color-op-muted)] mb-1.5"
+            className="block text-xs font-medium text-[var(--color-rc-muted)] mb-1.5"
           >
             Weekly Report Slack Channel
           </label>
@@ -294,14 +317,14 @@ function PreferencesStep({
             value={reportChannel}
             onChange={(e) => setReportChannel(e.target.value)}
             placeholder="#growthrat"
-            className="w-full px-3 py-2 text-sm rounded-md bg-[var(--color-op-bg)] border border-[var(--color-op-border)] text-[var(--color-op-text)] placeholder:text-[var(--color-op-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--color-op-green)]"
+            className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-[var(--color-rc-border)] text-[var(--color-rc-dark)] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--color-gc-primary)]"
           />
         </div>
 
         <div>
           <label
             htmlFor="review-mode"
-            className="block text-xs font-medium text-[var(--color-op-muted)] mb-1.5"
+            className="block text-xs font-medium text-[var(--color-rc-muted)] mb-1.5"
           >
             Content Review Mode
           </label>
@@ -309,7 +332,7 @@ function PreferencesStep({
             id="review-mode"
             value={reviewMode}
             onChange={(e) => setReviewMode(e.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-md bg-[var(--color-op-bg)] border border-[var(--color-op-border)] text-[var(--color-op-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-op-green)]"
+            className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-[var(--color-rc-border)] text-[var(--color-rc-dark)] focus:outline-none focus:ring-1 focus:ring-[var(--color-gc-primary)]"
           >
             <option value="draft-only">
               Draft only &mdash; human reviews before publish
@@ -318,7 +341,7 @@ function PreferencesStep({
               Auto-publish &mdash; publish after quality gates pass
             </option>
           </select>
-          <p className="mt-1 text-xs text-[var(--color-op-dim)]">
+          <p className="mt-1 text-xs text-[var(--color-rc-muted)]">
             &quot;Draft only&quot; is recommended during onboarding. GrowthRat
             will generate content and wait for your approval.
           </p>
@@ -327,7 +350,7 @@ function PreferencesStep({
         <div>
           <label
             htmlFor="focus-topics"
-            className="block text-xs font-medium text-[var(--color-op-muted)] mb-1.5"
+            className="block text-xs font-medium text-[var(--color-rc-muted)] mb-1.5"
           >
             Focus Topics (comma-separated)
           </label>
@@ -337,13 +360,13 @@ function PreferencesStep({
             value={focusTopics}
             onChange={(e) => setFocusTopics(e.target.value)}
             placeholder="webhooks, flutter sdk, react native, paywalls"
-            className="w-full px-3 py-2 text-sm rounded-md bg-[var(--color-op-bg)] border border-[var(--color-op-border)] text-[var(--color-op-text)] placeholder:text-[var(--color-op-dim)] focus:outline-none focus:ring-1 focus:ring-[var(--color-op-green)]"
+            className="w-full px-3 py-2 text-sm rounded-lg bg-white border border-[var(--color-rc-border)] text-[var(--color-rc-dark)] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[var(--color-gc-primary)]"
           />
         </div>
 
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium rounded-md bg-[var(--color-op-green)] text-[var(--color-op-bg)] hover:opacity-90 transition-opacity"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-[var(--color-gc-primary)] text-white hover:bg-[var(--color-gc-primary-hover)] transition-colors"
         >
           Save Preferences
         </button>
@@ -363,10 +386,12 @@ export default function OnboardingPage() {
     null,
   );
 
-  const convexAvailable = useConvexAvailable();
+  const convexAvailable = useContext(ConvexAvailableContext);
   // The mutation ref is stable (env-based), so this conditional hook is safe.
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const saveConfig = convexAvailable ? useMutation(convexApi?.agentConfig?.save ?? ("__skip__" as any)) : null;
+  const saveConfig = convexAvailable
+    ? useMutation(convexApi?.agentConfig?.save ?? ("__skip__" as any))
+    : null;
 
   function updateStepStatus(id: string, status: StepStatus) {
     setSteps((prev) =>
@@ -423,8 +448,12 @@ export default function OnboardingPage() {
     // Persist to Convex
     if (saveConfig) {
       await saveConfig({
-        reviewMode: prefs.reviewMode === "auto-publish" ? "semi_auto" : "draft_only",
-        focusTopics: prefs.focusTopics.split(",").map((t) => t.trim()).filter(Boolean),
+        reviewMode:
+          prefs.reviewMode === "auto-publish" ? "semi_auto" : "draft_only",
+        focusTopics: prefs.focusTopics
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
         slackChannel: prefs.reportChannel,
         enabledPlatforms: ["slack", "x", "github"],
         paused: false,
@@ -438,13 +467,18 @@ export default function OnboardingPage() {
   const completedCount = steps.filter((s) => s.status !== "pending").length;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto px-6 py-16 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-[var(--color-op-text)]">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--color-gc-primary)]/10 text-[var(--color-gc-primary)]">
+            Self-Service Onboarding
+          </span>
+        </div>
+        <h1 className="text-3xl font-bold text-[var(--color-rc-dark)] tracking-tight">
           Onboarding
         </h1>
-        <p className="mt-1 text-sm text-[var(--color-op-muted)]">
+        <p className="mt-2 text-[var(--color-rc-muted)]">
           Connect GrowthRat to your services. API keys are stored server-side
           and never exposed to the operator dashboard.
         </p>
@@ -452,17 +486,15 @@ export default function OnboardingPage() {
 
       {/* Progress bar */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-[var(--color-op-muted)]">
+        <div className="flex items-center justify-between text-xs text-[var(--color-rc-muted)]">
           <span>
             {completedCount} of {steps.length} steps completed
           </span>
-          <span>
-            {connectedCount} connected
-          </span>
+          <span>{connectedCount} connected</span>
         </div>
-        <div className="h-1.5 rounded-full bg-[var(--color-op-card-alt)] overflow-hidden">
+        <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
           <div
-            className="h-full rounded-full bg-[var(--color-op-green)] transition-all duration-500"
+            className="h-full rounded-full bg-[var(--color-gc-primary)] transition-all duration-500"
             style={{
               width: `${(completedCount / steps.length) * 100}%`,
             }}
@@ -472,21 +504,28 @@ export default function OnboardingPage() {
 
       {/* Completion banner */}
       {completionMessage && (
-        <div className="rounded-lg border border-emerald-800/50 bg-emerald-900/20 p-4">
-          <p className="text-sm text-emerald-400 font-medium">
-            {completionMessage}
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+          <h3 className="text-lg font-semibold text-emerald-800 mb-2">
+            Onboarding Complete
+          </h3>
+          <p className="text-sm text-emerald-700 mb-4">
+            GrowthRat is configured and ready to operate. The weekly cycle will
+            begin automatically.
           </p>
-          <p className="mt-1 text-xs text-[var(--color-op-muted)]">
-            Head to the{" "}
-            <a
+          <div className="flex gap-3">
+            <Link
               href="/dashboard"
-              className="underline text-[var(--color-op-green)] hover:opacity-80"
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors no-underline"
             >
-              Dashboard
-            </a>{" "}
-            to see GrowthRat in action, or revisit any step below to update
-            your configuration.
-          </p>
+              Open Dashboard
+            </Link>
+            <Link
+              href="/articles"
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-100 transition-colors no-underline"
+            >
+              View Published Content
+            </Link>
+          </div>
         </div>
       )}
 
@@ -499,10 +538,10 @@ export default function OnboardingPage() {
           return (
             <div
               key={step.id}
-              className={`rounded-lg border transition-colors ${
+              className={`rounded-xl border transition-colors ${
                 isActive
-                  ? "border-[var(--color-op-green)]/50 bg-[var(--color-op-card)]"
-                  : "border-[var(--color-op-border)] bg-[var(--color-op-card)]"
+                  ? "border-[var(--color-gc-primary)]/50 bg-white shadow-sm"
+                  : "border-[var(--color-rc-border)] bg-white"
               }`}
             >
               {/* Step header */}
@@ -518,11 +557,11 @@ export default function OnboardingPage() {
                   className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     isCompleted
                       ? step.status === "connected"
-                        ? "bg-emerald-900/40 text-emerald-400"
-                        : "bg-yellow-900/30 text-yellow-400"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-yellow-100 text-yellow-700"
                       : isActive
-                        ? "bg-[var(--color-op-green)]/20 text-[var(--color-op-green)]"
-                        : "bg-[var(--color-op-card-alt)] text-[var(--color-op-dim)]"
+                        ? "bg-[var(--color-gc-primary)]/10 text-[var(--color-gc-primary)]"
+                        : "bg-gray-100 text-gray-400"
                   }`}
                 >
                   {isCompleted && step.status === "connected" ? (
@@ -547,15 +586,15 @@ export default function OnboardingPage() {
                     <span
                       className={`text-sm font-medium ${
                         isActive || isCompleted
-                          ? "text-[var(--color-op-text)]"
-                          : "text-[var(--color-op-muted)]"
+                          ? "text-[var(--color-rc-dark)]"
+                          : "text-[var(--color-rc-muted)]"
                       }`}
                     >
                       {step.title}
                     </span>
                     <StatusBadge status={step.status} />
                   </div>
-                  <p className="mt-0.5 text-xs text-[var(--color-op-dim)] truncate">
+                  <p className="mt-0.5 text-xs text-[var(--color-rc-muted)] truncate">
                     {step.description}
                   </p>
                 </div>
@@ -568,7 +607,7 @@ export default function OnboardingPage() {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className={`flex-shrink-0 text-[var(--color-op-dim)] transition-transform ${
+                  className={`flex-shrink-0 text-[var(--color-rc-muted)] transition-transform ${
                     isActive ? "rotate-180" : ""
                   }`}
                 >
@@ -578,7 +617,7 @@ export default function OnboardingPage() {
 
               {/* Step content */}
               {isActive && (
-                <div className="px-5 pb-5 pt-0 border-t border-[var(--color-op-border)]">
+                <div className="px-5 pb-5 pt-0 border-t border-[var(--color-rc-border)]">
                   <div className="pt-4">
                     {step.id === "slack" && (
                       <SlackStep
