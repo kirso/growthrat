@@ -24,6 +24,17 @@ export function Chat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
 
+  // Thread persistence: generate a stable threadId per browser session
+  const threadId = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    let id = localStorage.getItem("growthrat-thread-id");
+    if (!id) {
+      id = "thread-" + Math.random().toString(36).slice(2) + "-" + Date.now().toString(36);
+      localStorage.setItem("growthrat-thread-id", id);
+    }
+    return id;
+  }, []);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -50,7 +61,7 @@ export function Chat() {
 
   const handleSend = (text: string) => {
     if (!text.trim() || isLoading) return;
-    sendMessage({ text: text.trim() });
+    sendMessage({ text: text.trim() }, { body: { threadId } });
     setInputValue("");
   };
 

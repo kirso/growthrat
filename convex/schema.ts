@@ -115,6 +115,13 @@ export default defineSchema({
       filterFields: ["provider", "evidenceTier"],
     }),
 
+  // VS-A2: Chat message history (persists across page reloads)
+  chatMessages: defineTable({
+    threadId: v.string(),
+    role: v.string(), // "user" | "assistant"
+    content: v.string(),
+  }).index("by_thread", ["threadId"]),
+
   // VS-B5: Non-secret agent configuration (set during onboarding)
   agentConfig: defineTable({
     reviewMode: v.string(), // "draft_only" | "semi_auto" | "bounded_autonomy"

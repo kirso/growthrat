@@ -48,7 +48,7 @@ When answering questions about RevenueCat, ALWAYS use the RETRIEVED DOCUMENTATIO
 Keep responses concise. Use markdown for formatting.`;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, threadId }: { messages: UIMessage[]; threadId?: string } = await req.json();
 
   // Extract the latest user message for RAG query
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
@@ -79,9 +79,35 @@ export async function POST(req: Request) {
     maxOutputTokens: 2048,
     temperature: 0.4,
     experimental_transform: smoothStream({ delayInMs: 12, chunking: "word" }),
+    onFinish: async ({ text }) => {
+      // Persist messages to Convex for thread history (fire-and-forget)
+      if (threadId && query && text) {
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+        if (convexUrl) {
+          const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
+          // Save user message
+          fetch(`${siteUrl}/api/chat-history`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ threadId, role: "user", content: query }),
+          }).catch(() => {});
+          // Save assistant response
+          fetch(`${siteUrl}/api/chat-history`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ threadId, role: "assistant", content: text }),
+          }).catch(() => {});
+        }
+      }
+    },
   });
 
-  return result.toUIMessageStreamResponse();
+  // Include threadId in response headers so client can store it
+  const response = result.toUIMessageStreamResponse();
+  if (threadId) {
+    response.headers.set("X-Thread-Id", threadId);
+  }
+  return response;
 }
 
 /**

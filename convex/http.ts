@@ -219,6 +219,33 @@ http.route({
 });
 
 // ---------------------------------------------------------------------------
+// Chat history persistence — saves messages from the chat widget
+// ---------------------------------------------------------------------------
+
+http.route({
+  path: "/api/chat-history",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { threadId, role, content } = body;
+
+    if (!threadId || !role || !content) {
+      return new Response(JSON.stringify({ error: "missing fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    await ctx.runMutation(api.chatHistory.saveMessage, { threadId, role, content });
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+// ---------------------------------------------------------------------------
 // Slack reaction handler — receives approval/rejection reactions from Slack
 // ---------------------------------------------------------------------------
 
