@@ -224,6 +224,29 @@ http.route({
 
 http.route({
   path: "/api/chat-history",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const threadId = url.searchParams.get("threadId");
+
+    if (!threadId) {
+      return new Response(JSON.stringify({ messages: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
+    const messages = await ctx.runQuery(api.chatHistory.getThread, { threadId });
+
+    return new Response(JSON.stringify({ messages: messages.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })) }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+http.route({
+  path: "/api/chat-history",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const body = await request.json();

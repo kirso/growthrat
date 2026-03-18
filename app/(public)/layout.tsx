@@ -62,7 +62,7 @@ export default function PublicLayout({
               Onboarding
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/kirso/growthcat"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"

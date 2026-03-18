@@ -14,16 +14,6 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export function Chat() {
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
-  const { messages, sendMessage, status, error } = useChat({
-    transport,
-    experimental_throttle: 50,
-  });
-  const isLoading = status === "streaming" || status === "submitted";
-  const [inputValue, setInputValue] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
-
   // Thread persistence: generate a stable threadId per browser session
   const threadId = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -34,6 +24,43 @@ export function Chat() {
     }
     return id;
   }, []);
+
+  // Load previous messages from Convex on mount
+  const [initialMessages, setInitialMessages] = useState<Array<{ id: string; role: "user" | "assistant"; parts: Array<{ type: "text"; text: string }> }>>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!threadId || historyLoaded) return;
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
+    if (!convexUrl) { setHistoryLoaded(true); return; }
+    const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
+    fetch(`${siteUrl}/api/chat-history?threadId=${encodeURIComponent(threadId)}`)
+      .then((r) => r.ok ? r.json() : { messages: [] })
+      .then((data) => {
+        if (data.messages?.length > 0) {
+          setInitialMessages(
+            data.messages.map((m: { role: string; content: string }, i: number) => ({
+              id: `hist-${i}`,
+              role: m.role as "user" | "assistant",
+              parts: [{ type: "text" as const, text: m.content }],
+            }))
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setHistoryLoaded(true));
+  }, [threadId, historyLoaded]);
+
+  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const { messages, sendMessage, status, error } = useChat({
+    transport,
+    experimental_throttle: 50,
+    ...(initialMessages.length > 0 ? { messages: initialMessages as any } : {}),
+  });
+  const isLoading = status === "streaming" || status === "submitted";
+  const [inputValue, setInputValue] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (scrollRef.current) {
