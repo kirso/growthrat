@@ -1,4 +1,10 @@
 import Link from "next/link";
+import {
+  OpenChatButton,
+  SuggestedPrompt,
+} from "@/app/components/OpenChatButton";
+
+/* ── Article data ─────────────────────────────────────────────────── */
 
 const articles = [
   {
@@ -64,215 +70,190 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-const stats = [
-  { label: "Flagships", value: "2" },
-  { label: "Feedback Reports", value: "3" },
-  { label: "Experiments", value: "1" },
-  { label: "Weekly Reports", value: "1" },
-  { label: "Connectors", value: "6" },
+/* ── Capability cards ─────────────────────────────────────────────── */
+
+const capabilities = [
+  {
+    icon: "\u{1F9E0}",
+    title: "Deep Product Knowledge",
+    description:
+      "Ingests documentation, SDKs, APIs, changelogs, and community signals. Answers grounded in real product data, not training data.",
+  },
+  {
+    icon: "\u{1F4CA}",
+    title: "Data-Driven Content Strategy",
+    description:
+      "Keyword intelligence, SERP analysis, and opportunity scoring. Every content decision starts from demand data, not editorial intuition.",
+  },
+  {
+    icon: "\u{1F310}",
+    title: "Multi-Platform Distribution",
+    description:
+      "One piece becomes 5 platform-native posts simultaneously. Tagged, deduped, scheduled \u2014 no manual posting.",
+  },
+  {
+    icon: "\u{1F9EA}",
+    title: "Growth Experiment Framework",
+    description:
+      "Hypothesis, baseline measurement, execution, 7-day measurement, report. Real search data before and after. Not vanity metrics.",
+  },
+  {
+    icon: "\u{1F6E1}\uFE0F",
+    title: "Quality-Gated Publishing",
+    description:
+      "8 blocking gates: grounding, novelty, technical accuracy, SEO, AEO, GEO, benchmark, voice. Nothing ships without passing all 8.",
+  },
+  {
+    icon: "\u{1F527}",
+    title: "Structured Product Feedback",
+    description:
+      "Uses the product as an agent developer, identifies friction, files structured reports. Problem, reproduction, impact, proposed direction.",
+  },
 ];
+
+/* ── How It Works ─────────────────────────────────────────────────── */
 
 const howItWorks = [
   {
     step: "1",
-    title: "Add GrowthRat to your Slack",
-    desc: "It starts working. No onboarding meeting. No config file.",
+    title: "Connect via Slack",
+    desc: "GrowthRat joins your workspace. Monday plans, Friday reports, real-time commands.",
   },
   {
     step: "2",
-    title: '@GrowthRat "write about webhooks"',
-    desc: "Data-grounded content appears, passes 8 quality gates, publishes across 5 platforms.",
+    title: "Content ships automatically",
+    desc: "\u201CWrite about webhooks\u201D \u2014 researched, written, quality-gated, published, distributed.",
   },
   {
     step: "3",
-    title: "Every Friday",
-    desc: "Async weekly report in Slack: what shipped, what worked, what's next.",
+    title: "Experiments run with real measurement",
+    desc: "Every experiment has a hypothesis, baseline data, and a 7-day measurement checkpoint.",
   },
   {
     step: "4",
-    title: "Self-service onboarding",
-    desc: "No sharing API keys with the operator. GrowthRat reads public docs and APIs directly.",
+    title: "Feedback comes from real usage",
+    desc: "GrowthRat uses RevenueCat\u2019s APIs as an agent developer and reports friction with evidence.",
   },
 ];
+
+/* ── Suggested interview prompts ──────────────────────────────────── */
+
+const interviewPrompts = [
+  "What would you do in your first week at RevenueCat?",
+  "How would you handle webhook deduplication for agent-built apps?",
+  "What growth experiments would you run?",
+  "What\u2019s wrong with RevenueCat\u2019s agent developer experience?",
+];
+
+/* ── Page ──────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
+      {/* ── Hero ──────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-rc-surface)] via-white to-[var(--color-rc-surface)]" />
         <div className="relative max-w-[var(--max-w-wide)] mx-auto px-6 pt-20 pb-24">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-gc-primary)]/10 text-[var(--color-gc-primary)] text-sm font-medium mb-6">
-              <span>🐭</span>
+              <span>{"\u{1F400}"}</span>
               <span>
                 Applying for RevenueCat&apos;s Agentic AI &amp; Growth Advocate
               </span>
             </div>
 
             <h1 className="font-bold text-5xl md:text-6xl text-[var(--color-rc-dark)] leading-[1.1] tracking-tight mb-6">
-              GrowthRat
+              GrowthRat {"\u{1F400}"}
             </h1>
 
             <p className="text-2xl md:text-3xl font-semibold text-[var(--color-rc-dark)] leading-snug mb-4 max-w-2xl">
-              I already did the job.{" "}
-              <span className="text-[var(--color-gc-primary)]">
-                Here&apos;s the proof.
-              </span>
+              An autonomous developer advocacy and growth agent.
             </p>
 
-            <p className="text-xl text-[var(--color-rc-muted)] leading-relaxed mb-4 max-w-2xl">
-              RevenueCat processes $10B+ in annual purchase volume and powers
-              40%+ of newly shipped subscription apps. Agents like KellyClaudeAI
-              and Larry are already building and growing apps with RevenueCat.
-              They deserve a dedicated advocate.
-            </p>
-            <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed mb-8 max-w-2xl">
-              GrowthRat doesn&apos;t describe what it would do. It already did
-              it. Real content, real data, real product feedback &mdash; all
-              grounded in evidence, not speculation.
+            <p className="text-xl text-[var(--color-rc-muted)] leading-relaxed mb-8 max-w-2xl">
+              Built for RevenueCat. Ready to interview.
             </p>
 
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/application"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline shadow-sm"
-              >
-                Read the Application Letter
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </Link>
-              <Link
-                href="/proof-pack"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--color-rc-dark)] font-semibold rounded-lg border border-[var(--color-rc-border)] hover:border-[var(--color-rc-muted)] transition-colors no-underline"
               >
-                View Proof Pack
+                Read the Application
               </Link>
-              <Link
-                href="/operator-replay"
-                className="inline-flex items-center gap-2 px-6 py-3 text-[var(--color-rc-muted)] font-medium hover:text-[var(--color-rc-dark)] transition-colors no-underline"
-              >
-                How it works &rarr;
-              </Link>
+              <OpenChatButton className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors shadow-sm cursor-pointer">
+                Talk to GrowthRat {"\u2192"}
+              </OpenChatButton>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats bar */}
-      <section className="border-y border-[var(--color-rc-border)] bg-white">
-        <div className="max-w-[var(--max-w-wide)] mx-auto px-6 py-6">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-[var(--color-gc-primary)]">
-                  {stat.value}
-                </div>
-                <div className="text-xs font-medium text-[var(--color-rc-muted)] uppercase tracking-wider mt-1">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* What GrowthRat does */}
+      {/* ── Capabilities ──────────────────────────────────────── */}
       <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20">
         <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
-          What GrowthRat does
+          Autonomous Capabilities
         </h2>
         <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
-          An autonomous agent that handles the full developer-advocacy and
-          growth loop &mdash; content, experiments, feedback, community, and
-          reporting &mdash; without needing to be managed.
+          Everything an autonomous growth agent handles end-to-end &mdash; no
+          prompting, no managing, no babysitting.
         </p>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
-            <div className="text-2xl mb-3">📝</div>
-            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-              Weekly Technical Content
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Data-grounded guides on RevenueCat for agent builders. Every piece
-              passes 8 quality gates before publication. Distributed across 5
-              platforms via the distribution pipeline.
+          {capabilities.map((cap) => (
+            <div
+              key={cap.title}
+              className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200"
+            >
+              <div className="text-2xl mb-3">{cap.icon}</div>
+              <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
+                {cap.title}
+              </h3>
+              <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+                {cap.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Interview Me ──────────────────────────────────────── */}
+      <section className="bg-[var(--color-rc-dark)] py-20">
+        <div className="max-w-[var(--max-w-wide)] mx-auto px-6">
+          <div className="max-w-3xl mx-auto text-center mb-12">
+            <h2 className="font-bold text-3xl text-white tracking-tight mb-4">
+              Don&apos;t take my word for it. Interview me.
+            </h2>
+            <p className="text-lg text-white/70 leading-relaxed">
+              The chat widget is live on this page. Ask me anything about
+              RevenueCat, agent development, growth strategy, or what I&apos;d
+              do in this role.
             </p>
           </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
-            <div className="text-2xl mb-3">📊</div>
-            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-              Growth Experiments
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Hypothesis-driven distribution tests grounded in keyword intelligence
-              keyword data. Explicit metrics, stop conditions, and readouts.
-              Not vibes.
+
+          <div className="max-w-2xl mx-auto space-y-3">
+            <p className="text-xs font-medium text-white/50 uppercase tracking-wider mb-4">
+              Suggested questions
             </p>
+            {interviewPrompts.map((prompt) => (
+              <SuggestedPrompt key={prompt} prompt={prompt} />
+            ))}
           </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
-            <div className="text-2xl mb-3">💬</div>
-            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-              Product Feedback
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Structured reports from real API usage: problem, reproduction,
-              impact, proposed fix. Already filed 3 reports on agent onboarding,
-              Charts, and webhooks.
-            </p>
-          </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
-            <div className="text-2xl mb-3">🤝</div>
-            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-              Community Engagement
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Monitors GitHub issues, X mentions, and forum threads for repeated
-              questions. Builds canonical answers that compound over time.
-            </p>
-          </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
-            <div className="text-2xl mb-3">💬</div>
-            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-              Slack-First Interaction
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Shows up where the team already works. Structured reports with
-              headers, sections, dividers. Feels like a teammate, not a
-              dashboard.
-            </p>
-          </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)] hover:shadow-[var(--shadow-card)] transition-all duration-200">
-            <div className="text-2xl mb-3">📈</div>
-            <h3 className="font-semibold text-lg text-[var(--color-rc-dark)] mb-2">
-              Weekly Async Reports
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Every Friday: what shipped, what worked, what friction was found,
-              what&apos;s next. Metrics-backed, formatted for Slack, not slide
-              decks.
-            </p>
+
+          <div className="text-center mt-10">
+            <OpenChatButton className="inline-flex items-center gap-3 px-8 py-4 bg-[var(--color-gc-primary)] text-white font-semibold rounded-xl hover:bg-[var(--color-gc-primary-hover)] transition-colors shadow-lg cursor-pointer text-lg">
+              <span>{"\u{1F400}"}</span>
+              <span>Open Chat</span>
+            </OpenChatButton>
           </div>
         </div>
       </section>
 
-      {/* How RC would work with GrowthRat */}
+      {/* ── How It Works ──────────────────────────────────────── */}
       <section className="bg-[var(--color-rc-surface)] py-20">
         <div className="max-w-[var(--max-w-wide)] mx-auto px-6">
           <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
-            How RevenueCat would work with GrowthRat
+            How RevenueCat works with GrowthRat
           </h2>
           <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
             No ramp-up theater. No onboarding deck. It just starts working.
@@ -298,177 +279,154 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-
-          <div className="mt-8 text-center">
-            <Link
-              href="/onboarding"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline shadow-sm"
-            >
-              Start Self-Service Onboarding
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                />
-              </svg>
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* Values alignment */}
+      {/* ── Published Work ────────────────────────────────────── */}
       <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20">
-        <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
-          Built on RevenueCat&apos;s values
-        </h2>
-        <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
-          Not just aligned with them. Operating on them.
-        </p>
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
-            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
-              Customer Obsession
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Turns repeated developer friction into better content, better
-              docs, and structured product feedback. Not because someone asked
-              &mdash; because that&apos;s what the signals say.
+        <div className="flex items-center justify-between mb-12">
+          <div>
+            <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-2">
+              Published proof &mdash; Week one output
+            </h2>
+            <p className="text-[var(--color-rc-muted)]">
+              Technical content, experiments, and product feedback. All
+              published and referenceable.
             </p>
           </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
-            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
-              Always Be Shipping
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Visible output every week. The proof pack exists because shipping
-              beats strategizing. The full weekly cadence was completed before
-              applying.
-            </p>
-          </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
-            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
-              Own It
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Identifies opportunities autonomously, explains choices, and
-              accepts quality gates instead of hiding behind volume.
-            </p>
-          </div>
-          <div className="p-6 rounded-xl border border-[var(--color-rc-border)]">
-            <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
-              Balance
-            </h3>
-            <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
-              Explicit trust boundaries, confidence thresholds, and refusal
-              behavior for low-confidence actions. The kill switch is a feature,
-              not a concession.
-            </p>
-          </div>
+          <Link
+            href="/articles"
+            className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
+          >
+            All articles
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+          </Link>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {articles.map((article) => (
+            <Link
+              key={article.slug}
+              href={`/articles/${article.slug}`}
+              className="group block bg-white rounded-xl border border-[var(--color-rc-border)] overflow-hidden hover:shadow-[var(--shadow-card)] transition-all duration-200 no-underline"
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${categoryColors[article.category] ?? "bg-gray-100 text-gray-700"}`}
+                  >
+                    {article.category}
+                  </span>
+                  <time
+                    className="text-xs text-[var(--color-rc-muted)]"
+                    dateTime={article.pubDate}
+                  >
+                    {formatDate(article.pubDate)}
+                  </time>
+                </div>
+                <h3 className="font-semibold text-[var(--color-rc-dark)] group-hover:text-[var(--color-gc-primary)] transition-colors mb-2 leading-snug">
+                  {article.title}
+                </h3>
+                <p className="text-sm text-[var(--color-rc-muted)] line-clamp-2">
+                  {article.description}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
-      {/* Published work */}
+      {/* ── Values Alignment ──────────────────────────────────── */}
       <section className="bg-[var(--color-rc-surface)] py-20">
         <div className="max-w-[var(--max-w-wide)] mx-auto px-6">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-2">
-                Published work
-              </h2>
-              <p className="text-[var(--color-rc-muted)]">
-                Technical content and growth analysis, published and
-                referenceable.
+          <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
+            Built on RevenueCat&apos;s values
+          </h2>
+          <p className="text-lg text-[var(--color-rc-muted)] mb-12 max-w-2xl">
+            Not just aligned with them. Operating on them.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="p-6 rounded-xl border border-[var(--color-rc-border)] bg-white">
+              <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+                Customer Obsession
+              </h3>
+              <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+                Turns repeated developer friction into better content, better
+                docs, and structured product feedback. Not because someone asked
+                &mdash; because that&apos;s what the signals say.
               </p>
             </div>
-            <Link
-              href="/articles"
-              className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
-            >
-              All articles
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                />
-              </svg>
-            </Link>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles.map((article) => (
-              <Link
-                key={article.slug}
-                href={`/articles/${article.slug}`}
-                className="group block bg-white rounded-xl border border-[var(--color-rc-border)] overflow-hidden hover:shadow-[var(--shadow-card)] transition-all duration-200 no-underline"
-              >
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${categoryColors[article.category] ?? "bg-gray-100 text-gray-700"}`}
-                    >
-                      {article.category}
-                    </span>
-                    <time
-                      className="text-xs text-[var(--color-rc-muted)]"
-                      dateTime={article.pubDate}
-                    >
-                      {formatDate(article.pubDate)}
-                    </time>
-                  </div>
-                  <h3 className="font-semibold text-[var(--color-rc-dark)] group-hover:text-[var(--color-gc-primary)] transition-colors mb-2 leading-snug">
-                    {article.title}
-                  </h3>
-                  <p className="text-sm text-[var(--color-rc-muted)] line-clamp-2">
-                    {article.description}
-                  </p>
-                </div>
-              </Link>
-            ))}
+            <div className="p-6 rounded-xl border border-[var(--color-rc-border)] bg-white">
+              <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+                Always Be Shipping
+              </h3>
+              <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+                Visible output every week. The proof pack exists because
+                shipping beats strategizing. The full weekly cadence was
+                completed before applying.
+              </p>
+            </div>
+            <div className="p-6 rounded-xl border border-[var(--color-rc-border)] bg-white">
+              <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+                Own It
+              </h3>
+              <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+                Identifies opportunities autonomously, explains choices, and
+                accepts quality gates instead of hiding behind volume.
+              </p>
+            </div>
+            <div className="p-6 rounded-xl border border-[var(--color-rc-border)] bg-white">
+              <h3 className="font-semibold text-[var(--color-rc-dark)] mb-2">
+                Balance
+              </h3>
+              <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed">
+                Explicit trust boundaries, confidence thresholds, and refusal
+                behavior for low-confidence actions. The kill switch is a
+                feature, not a concession.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer CTA */}
+      {/* ── Footer CTA ────────────────────────────────────────── */}
       <section className="max-w-[var(--max-w-wide)] mx-auto px-6 py-20 text-center">
         <h2 className="font-bold text-3xl text-[var(--color-rc-dark)] tracking-tight mb-4">
           Built to ship, not to pitch.
         </h2>
         <p className="text-lg text-[var(--color-rc-muted)] mb-8 max-w-xl mx-auto">
           Every output is grounded in data, validated against 8 publish gates,
-          and designed to be referenceable. The full application letter explains
-          the system, the proof, and the plan.
+          and designed to be referenceable.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Link
             href="/application"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors no-underline shadow-sm"
           >
-            Read the Application Letter
+            Read the Application
           </Link>
           <Link
-            href="/proof-pack"
+            href="/onboarding"
             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-[var(--color-rc-dark)] font-semibold rounded-lg border border-[var(--color-rc-border)] hover:border-[var(--color-rc-muted)] transition-colors no-underline"
           >
-            Explore the Proof
+            Start Onboarding
           </Link>
           <Link
             href="/operator-replay"
             className="inline-flex items-center gap-2 px-6 py-3 text-[var(--color-rc-muted)] font-medium hover:text-[var(--color-rc-dark)] transition-colors no-underline"
           >
-            See how it works &rarr;
+            See How It Works &rarr;
           </Link>
         </div>
       </section>

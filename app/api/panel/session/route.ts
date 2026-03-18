@@ -1,7 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
 import { streamText } from "ai";
-import { GROWTHCAT_VOICE_PROFILE } from "@/lib/config/voice";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -14,8 +12,6 @@ export async function GET(req: Request) {
     return new Response("Missing prompt parameter", { status: 400 });
   }
 
-  // Auth: require a session token to prevent unauthorized LLM usage
-  // In production, use a proper session/JWT. For now, check a simple token.
   const panelToken = searchParams.get("token");
   const expectedToken = process.env.GROWTHCAT_PANEL_TOKEN;
   if (expectedToken && panelToken !== expectedToken) {
@@ -37,66 +33,42 @@ export async function GET(req: Request) {
       // Step 1: Prompt received
       send("progress", { step: "prompt_received", content: prompt, elapsed_ms: elapsed() });
 
-      // Step 2: Retrieve sources
-      const sources = retrieveSources(prompt);
+      // Step 2: REAL source retrieval via vector search
+      const { sources, context } = await retrieveRealSources(prompt);
       send("progress", { step: "sources_retrieved", sources, elapsed_ms: elapsed() });
 
       // Step 3: Reasoning
       send("progress", {
         step: "reasoning",
-        content: "Building response from retrieved sources and RevenueCat knowledge...",
+        content: `Retrieved ${sources.length} relevant documents. Building grounded response...`,
         elapsed_ms: elapsed(),
       });
 
-      // Step 4: Stream LLM response
+      // Step 4: Stream LLM response with real RAG context
       try {
-        const model = process.env.ANTHROPIC_API_KEY
-          ? anthropic("claude-sonnet-4-20250514")
-          : process.env.OPENAI_API_KEY
-            ? openai("gpt-4o-mini")
-            : null;
+        const model = anthropic("claude-sonnet-4-20250514");
 
-        if (!model) {
-          send("stream", {
-            step: "output_chunk",
-            token: "[No LLM configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY to enable live responses.]",
-            elapsed_ms: elapsed(),
-          });
-        } else {
-          const voice = GROWTHCAT_VOICE_PROFILE;
-          const sourcesText = sources
-            .map((s) => `- [${s.label}] (${s.type})`)
-            .join("\n");
-
-          const systemPrompt = `You are ${voice.agentName} in a live panel interview at RevenueCat.
+        const systemPrompt = `You are GrowthRat in a live panel interview at RevenueCat.
 The interviewer is watching you think and work in real time.
-Tone: ${voice.toneTraits.join(", ")}
-Core themes: ${voice.recurringThemes.map((t) => `- ${t}`).join("\n")}
-IMPORTANT: Show your reasoning. Cite specific sources. Be honest about uncertainty.
-${voice.disclosureLine}`;
+Tone: technical, structured, evidence-backed, curious, direct.
 
-          const userPrompt = `Panel prompt: ${prompt}
+IMPORTANT: Show your reasoning. Cite specific sources from the retrieved documents. Be honest about uncertainty.
+GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.`;
 
-Retrieved sources and context:
-${sourcesText}
+        const userPrompt = context
+          ? `${context}\n\n---\n\nPanel prompt: ${prompt}\n\nRespond showing:\n1. How you understand the prompt\n2. Which retrieved sources are relevant and why\n3. Your substantive answer grounded in the sources\n4. Caveats or uncertainty`
+          : `Panel prompt: ${prompt}\n\nRespond showing:\n1. How you understand the prompt\n2. Relevant knowledge\n3. Substantive answer\n4. Caveats or uncertainty`;
 
-Respond to this prompt. Show your thinking:
-1. How you understand the prompt
-2. Relevant sources
-3. Substantive answer
-4. Caveats or uncertainty`;
+        const result = streamText({
+          model,
+          system: systemPrompt,
+          prompt: userPrompt,
+          maxOutputTokens: 4096,
+          temperature: 0.3,
+        });
 
-          const result = streamText({
-            model,
-            system: systemPrompt,
-            prompt: userPrompt,
-            maxOutputTokens: 4096,
-            temperature: 0.3,
-          });
-
-          for await (const chunk of (await result).textStream) {
-            send("stream", { step: "output_chunk", token: chunk, elapsed_ms: elapsed() });
-          }
+        for await (const chunk of (await result).textStream) {
+          send("stream", { step: "output_chunk", token: chunk, elapsed_ms: elapsed() });
         }
       } catch (err) {
         send("stream", {
@@ -121,34 +93,63 @@ Respond to this prompt. Show your thinking:
   });
 }
 
-function retrieveSources(prompt: string): { label: string; type: string }[] {
-  const p = prompt.toLowerCase();
-  const sources: { label: string; type: string }[] = [
-    { label: "RevenueCat REST API v2 Docs", type: "public_product" },
-  ];
+/**
+ * Retrieve REAL sources from the Convex vector search endpoint.
+ * Generates a Voyage AI embedding for the query, then searches the sources table.
+ */
+async function retrieveRealSources(
+  query: string
+): Promise<{ sources: Array<{ label: string; type: string; score: number }>; context: string | null }> {
+  try {
+    // Generate embedding via Voyage AI
+    const voyageKey = process.env.VOYAGE_API_KEY;
+    if (!voyageKey) {
+      return { sources: [{ label: "Knowledge base (no embedding key)", type: "system", score: 0 }], context: null };
+    }
 
-  if (["webhook", "event", "subscription", "lifecycle"].some((k) => p.includes(k))) {
-    sources.push({ label: "RevenueCat Webhook Event Types", type: "public_product" });
-  }
-  if (["offering", "entitlement", "package", "product"].some((k) => p.includes(k))) {
-    sources.push({ label: "RevenueCat Offerings & Entitlements", type: "public_product" });
-  }
-  if (["agent", "autonomous", "ai", "programmatic"].some((k) => p.includes(k))) {
-    sources.push({ label: "Agent-Built App Patterns", type: "market_intelligence" });
-    sources.push({ label: "DataForSEO Keyword Data", type: "market_intelligence" });
-  }
-  if (["growth", "experiment", "metric", "churn"].some((k) => p.includes(k))) {
-    sources.push({ label: "Growth Experiment Framework", type: "internal_config" });
-    sources.push({ label: "KPI Tree", type: "internal_config" });
-  }
-  if (["content", "blog", "tutorial", "guide"].some((k) => p.includes(k))) {
-    sources.push({ label: "Content Strategy Config", type: "internal_config" });
-    sources.push({ label: "Publish Quality Gates (8 gates)", type: "internal_config" });
-  }
-  if (["chart", "analytic", "mrr", "revenue"].some((k) => p.includes(k))) {
-    sources.push({ label: "RevenueCat Charts (dashboard-only)", type: "public_product" });
-  }
+    const embRes = await fetch("https://api.voyageai.com/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${voyageKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "voyage-3-lite", input: [query.slice(0, 16000)] }),
+    });
+    if (!embRes.ok) throw new Error(`Voyage: ${embRes.status}`);
+    const embData = await embRes.json();
+    const embedding = embData.data?.[0]?.embedding;
+    if (!embedding) throw new Error("No embedding returned");
 
-  sources.push({ label: "GrowthRat Voice Profile", type: "internal_config" });
-  return sources;
+    // Vector search via Convex HTTP endpoint
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace(".cloud", ".site") ?? "";
+    const searchRes = await fetch(`${convexUrl}/api/vector-search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embedding, limit: 5 }),
+    });
+    if (!searchRes.ok) throw new Error(`Vector search: ${searchRes.status}`);
+    const searchData = await searchRes.json();
+    const docs = searchData.docs ?? [];
+
+    if (docs.length === 0) {
+      return { sources: [], context: null };
+    }
+
+    const sources = docs.map((d: { provider: string; key: string; summary: string; score: number }) => ({
+      label: `${d.provider} — ${d.key}`,
+      type: d.provider === "RevenueCat" ? "doc" : "data",
+      score: d.score,
+    }));
+
+    const context = `# Retrieved Knowledge Base Documents\n\n${docs
+      .map((d: { provider: string; key: string; summary: string; score: number }) =>
+        `[${d.provider} — ${d.key} (relevance: ${d.score.toFixed(2)})]\n${d.summary}`
+      )
+      .join("\n\n---\n\n")}`;
+
+    return { sources, context };
+  } catch (err) {
+    console.error("[panel] Source retrieval failed:", err);
+    return {
+      sources: [{ label: "Retrieval error — answering from training knowledge", type: "system", score: 0 }],
+      context: null,
+    };
+  }
 }
