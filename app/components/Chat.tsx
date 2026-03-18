@@ -75,6 +75,18 @@ export function Chat() {
     return () => window.removeEventListener("openGrowthRatChat", handleOpen);
   }, []);
 
+  // ⌘K / Ctrl+K keyboard shortcut to toggle chat
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setExpanded((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Listen for suggested-prompt clicks from landing page
   useEffect(() => {
     const handleSendFromPage = (e: Event) => {
