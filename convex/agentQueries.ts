@@ -37,6 +37,14 @@ export const getArtifactBySlug = internalQuery({
   },
 });
 
+/** Get an artifact by its ID */
+export const getArtifactById = internalQuery({
+  args: { id: v.id("artifacts") },
+  handler: async (ctx, { id }) => {
+    return await ctx.db.get(id);
+  },
+});
+
 /** Get the latest weekly report */
 export const getLatestReport = internalQuery({
   args: {},

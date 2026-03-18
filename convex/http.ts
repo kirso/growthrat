@@ -218,4 +218,35 @@ http.route({
   }),
 });
 
+// ---------------------------------------------------------------------------
+// Slack reaction handler — receives approval/rejection reactions from Slack
+// ---------------------------------------------------------------------------
+
+http.route({
+  path: "/api/slack-reaction",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { reaction, messageTs, userId } = body;
+
+    if (!reaction || !messageTs || !userId) {
+      return new Response(JSON.stringify({ error: "missing fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    await ctx.runAction(internal.slackApproval.handleReaction, {
+      reaction,
+      messageTs,
+      userId,
+    });
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }),
+});
+
 export default http;

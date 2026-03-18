@@ -52,6 +52,85 @@ export const fetchKeywords = internalAction({
   },
 });
 
+export const fetchSerpBaseline = internalAction({
+  args: { keyword: v.string() },
+  handler: async (_ctx, { keyword }) => {
+    const login = process.env.DATAFORSEO_LOGIN;
+    const password = process.env.DATAFORSEO_PASSWORD;
+
+    if (!login || !password) {
+      // Return sample data when no credentials
+      return {
+        keyword,
+        serpPosition: null as number | null,
+        difficulty: Math.floor(Math.random() * 30) + 5,
+        volume: Math.floor(Math.random() * 400) + 100,
+        topResults: [] as string[],
+      };
+    }
+
+    // Fetch SERP snapshot
+    const serpRes = await fetch(
+      "https://api.dataforseo.com/v3/serp/google/organic/live/advanced",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${login}:${password}`)}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([{
+          keyword,
+          location_code: 2840,
+          language_code: "en",
+          depth: 20,
+        }]),
+      }
+    );
+    const serpData = await serpRes.json();
+    const items = serpData.tasks?.[0]?.result?.[0]?.items ?? [];
+
+    // Find our domain in results
+    const ourDomain = "ai-growth-agent";
+    const ourResult = items.find((item: any) =>
+      (item.url ?? "").includes(ourDomain)
+    );
+
+    // Get top 5 results
+    const topResults = items
+      .filter((item: any) => item.type === "organic")
+      .slice(0, 5)
+      .map((item: any) => `${item.rank_absolute}. ${item.title} — ${item.domain}`);
+
+    // Fetch keyword difficulty
+    const kwRes = await fetch(
+      "https://api.dataforseo.com/v3/dataforseo_labs/google/keyword_ideas/live",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${login}:${password}`)}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([{
+          keywords: [keyword],
+          location_code: 2840,
+          language_code: "en",
+          limit: 1,
+        }]),
+      }
+    );
+    const kwData = await kwRes.json();
+    const kwItem = kwData.tasks?.[0]?.result?.[0]?.items?.[0];
+
+    return {
+      keyword,
+      serpPosition: ourResult ? (ourResult.rank_absolute as number) : null,
+      difficulty: (kwItem?.keyword_properties?.keyword_difficulty as number) ?? 50,
+      volume: (kwItem?.keyword_info?.search_volume as number) ?? 0,
+      topResults,
+    };
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Content Generation (LLM)
 // ---------------------------------------------------------------------------
@@ -121,35 +200,115 @@ export const publishToCMS = internalAction({
 
 export const distributeViaTypefully = internalAction({
   args: { artifactId: v.id("artifacts"), topic: v.string() },
-  handler: async (_ctx, { topic }) => {
+  handler: async (ctx, { artifactId, topic }): Promise<{ posted: boolean; draftId?: string | null; platforms?: number; reason?: string }> => {
     const apiKey = process.env.TYPEFULLY_API_KEY;
     const socialSetId = process.env.TYPEFULLY_SOCIAL_SET_ID;
-    if (!apiKey || !socialSetId) return { posted: false, reason: "no Typefully credentials" };
+    if (!apiKey || !socialSetId) {
+      console.log("[typefully] No credentials — skipping distribution");
+      return { posted: false, reason: "no Typefully credentials" };
+    }
+
+    // Get the artifact for content
+    const artifact: { slug: string } | null = await ctx.runQuery(internal.agentQueries.getArtifactById, { id: artifactId });
+    const siteUrl = "https://ai-growth-agent-nine.vercel.app";
+    const articleUrl: string = artifact ? `${siteUrl}/articles/${artifact.slug}` : siteUrl;
 
     const { generateText } = await import("ai");
     const { anthropic } = await import("@ai-sdk/anthropic");
 
-    const social = await generateText({
+    // Generate platform-specific posts
+    const xPost: { text: string } = await generateText({
       model: anthropic("claude-sonnet-4-20250514"),
-      prompt: `Write a tweet (max 280 chars) promoting a new article about "${topic}" for agent builders using RevenueCat. Be direct and technical.`,
+      prompt: `Write a tweet (max 270 chars) promoting: "${topic}"\nArticle URL: ${articleUrl}\nAudience: agent builders using RevenueCat\nStyle: direct, technical, no emojis except one at start. Include the URL.`,
       maxOutputTokens: 100,
     });
 
-    const res = await fetch(
+    const linkedinPost: { text: string } = await generateText({
+      model: anthropic("claude-sonnet-4-20250514"),
+      prompt: `Write a LinkedIn post (max 500 chars) promoting: "${topic}"\nArticle URL: ${articleUrl}\nAudience: developer advocates, growth engineers, mobile devs\nStyle: professional but not corporate. Include the URL.`,
+      maxOutputTokens: 200,
+    });
+
+    const res: Response = await fetch(
       `https://api.typefully.com/v1/drafts?social_set_id=${socialSetId}`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           draft_title: topic,
-          tags: [topic.replace(/\s+/g, "-")],
-          platforms: { x: { enabled: true, posts: [{ text: social.text.slice(0, 280) }] } },
+          tags: [topic.replace(/\s+/g, "-").slice(0, 50)],
+          platforms: {
+            x: { enabled: true, posts: [{ text: xPost.text.slice(0, 280) }] },
+            linkedin: { enabled: true, posts: [{ text: linkedinPost.text.slice(0, 3000) }] },
+            threads: { enabled: true, posts: [{ text: xPost.text.slice(0, 500) }] },
+            bluesky: { enabled: true, posts: [{ text: xPost.text.slice(0, 300) }] },
+            mastodon: { enabled: true, posts: [{ text: xPost.text.slice(0, 500) }] },
+          },
           publish_at: "next-free-slot",
         }),
       }
     );
 
-    return { posted: res.ok };
+    const responseData: { id?: string } | null = res.ok ? await res.json().catch(() => null) : null;
+    return { posted: res.ok, draftId: responseData?.id ?? null, platforms: 5 };
+  },
+});
+
+export const distributeViaGitHub = internalAction({
+  args: { artifactId: v.id("artifacts"), title: v.string(), slug: v.string(), content: v.string() },
+  handler: async (_ctx, { title, slug, content }) => {
+    const token = process.env.GITHUB_TOKEN;
+    const owner = process.env.GITHUB_OWNER ?? "kirso";
+    const repo = process.env.GITHUB_CONTENT_REPO ?? "growthcat";
+
+    if (!token) {
+      console.log("[github] No GITHUB_TOKEN — skipping distribution");
+      return { committed: false, reason: "no GitHub token" };
+    }
+
+    const path = `content/articles/${slug}.md`;
+    const frontmatter = `---\ntitle: "${title}"\ndate: "${new Date().toISOString().split("T")[0]}"\nauthor: GrowthRat\nstatus: published\n---\n\n`;
+    const fileContent = frontmatter + content;
+    const encoded = Buffer.from(fileContent).toString("base64");
+
+    // Check if file exists (to get sha for update)
+    let sha: string | undefined;
+    try {
+      const getRes = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+        { headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" } }
+      );
+      if (getRes.ok) {
+        const existing = await getRes.json();
+        sha = existing.sha;
+      }
+    } catch { /* file doesn't exist yet */ }
+
+    const res = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: `publish: ${title}`,
+          content: encoded,
+          ...(sha ? { sha } : {}),
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("[github] Failed to commit:", err);
+      return { committed: false, reason: err.slice(0, 200) };
+    }
+
+    const data = await res.json();
+    return { committed: true, commitSha: data.commit?.sha };
   },
 });
 

@@ -117,6 +117,13 @@ export const contentGenWorkflow = workflow.define({
         { retry: true }
       );
 
+      // Distribute via GitHub
+      await step.runAction(
+        internal.actions.distributeViaGitHub,
+        { artifactId: draft.artifactId as Id<"artifacts">, title: topic, slug: targetKeyword.replace(/\s+/g, "-"), content: draft.content },
+        { retry: true }
+      );
+
       await step.runMutation(
         internal.mutations.updateArtifactStatus,
         { id: artifactId, status: "published" }

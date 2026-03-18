@@ -96,6 +96,21 @@ export async function POST(req: NextRequest) {
       }).catch(() => {/* fire and forget */});
     }
 
+    // Handle reaction_added events — for approval flow
+    if (event.type === "reaction_added") {
+      const reaction = event.reaction;
+      const messageTs = (event as any).item?.ts;
+      const userId = event.user;
+
+      if (messageTs && (reaction === "+1" || reaction === "thumbsup" || reaction === "-1" || reaction === "thumbsdown")) {
+        fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/slack-reaction`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reaction, messageTs, userId }),
+        }).catch(() => {/* fire and forget */});
+      }
+    }
+
     // Handle direct messages
     if (event.type === "message" && event.channel_type === "im") {
       const text = (event.text ?? "").trim().toLowerCase();

@@ -159,6 +159,47 @@ export const createFeedbackItem = internalMutation({
 });
 
 // ---------------------------------------------------------------------------
+// Experiments
+// ---------------------------------------------------------------------------
+
+export const startExperiment = internalMutation({
+  args: {
+    experimentKey: v.string(),
+    title: v.string(),
+    hypothesis: v.string(),
+    baselineMetric: v.string(),
+    targetMetric: v.string(),
+    contentSlug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Check if experiment already exists
+    const existing = await ctx.db
+      .query("experiments")
+      .filter((q) => q.eq(q.field("experimentKey"), args.experimentKey))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: "running",
+        baselineMetric: args.baselineMetric,
+        results: { contentSlug: args.contentSlug },
+      });
+      return existing._id;
+    }
+
+    return await ctx.db.insert("experiments", {
+      experimentKey: args.experimentKey,
+      title: args.title,
+      hypothesis: args.hypothesis,
+      baselineMetric: args.baselineMetric,
+      targetMetric: args.targetMetric,
+      status: "running",
+      startedAt: Date.now(),
+      results: { contentSlug: args.contentSlug },
+    });
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Community
 // ---------------------------------------------------------------------------
 
@@ -219,5 +260,17 @@ export const startContentGen = internalMutation({
   args: { topic: v.string(), targetKeyword: v.string() },
   handler: async (ctx, args) => {
     await workflow.start(ctx, internal.workflows.index.contentGenWorkflow, args);
+  },
+});
+
+export const startExperimentRunner = internalMutation({
+  args: {
+    experimentKey: v.string(),
+    hypothesis: v.string(),
+    targetKeyword: v.string(),
+    contentSlug: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await workflow.start(ctx, internal.workflows.experimentRunner.runExperiment, args);
   },
 });
