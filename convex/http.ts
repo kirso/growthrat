@@ -269,6 +269,37 @@ http.route({
 });
 
 // ---------------------------------------------------------------------------
+// Slack command handler — processes @GrowthRat mentions
+// ---------------------------------------------------------------------------
+
+http.route({
+  path: "/api/slack-command",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const body = await request.json();
+    const { command, channel, threadTs } = body;
+
+    if (!command || !channel) {
+      return new Response(JSON.stringify({ error: "missing fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    await ctx.runAction(internal.slackCommands.handleCommand, {
+      command,
+      channel,
+      threadTs: threadTs ?? "",
+    });
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }),
+});
+
+// ---------------------------------------------------------------------------
 // Slack reaction handler — receives approval/rejection reactions from Slack
 // ---------------------------------------------------------------------------
 
