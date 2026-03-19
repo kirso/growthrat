@@ -247,7 +247,7 @@ export const distributeViaTypefully = internalAction({
 
     // Get the artifact for content
     const artifact: { slug: string } | null = await ctx.runQuery(internal.agentQueries.getArtifactById, { id: artifactId });
-    const siteUrl = "https://ai-growth-agent-nine.vercel.app";
+    const siteUrl = "https://growthrat.vercel.app";
     const articleUrl: string = artifact ? `${siteUrl}/articles/${artifact.slug}` : siteUrl;
 
     const { generateText } = await import("ai");
@@ -296,7 +296,7 @@ export const distributeViaGitHub = internalAction({
   handler: async (_ctx, { title, slug, content }) => {
     const token = process.env.GITHUB_TOKEN;
     const owner = process.env.GITHUB_OWNER ?? "kirso";
-    const repo = process.env.GITHUB_CONTENT_REPO ?? "growthcat";
+    const repo = process.env.GITHUB_CONTENT_REPO ?? "growthrat";
 
     if (!token) {
       console.log("[github] No GITHUB_TOKEN — skipping distribution");
@@ -545,7 +545,7 @@ export const generateFeedback = internalAction({
     // File as GitHub Issue
     const token = process.env.GITHUB_TOKEN;
     const owner = process.env.GITHUB_OWNER ?? "kirso";
-    const repo = process.env.GITHUB_CONTENT_REPO ?? "growthcat";
+    const repo = process.env.GITHUB_CONTENT_REPO ?? "growthrat";
     let issueUrl = "";
 
     if (token) {

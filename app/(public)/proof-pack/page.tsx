@@ -216,7 +216,7 @@ export default function ProofPackPage() {
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <a
-            href="https://github.com/kirso/growthcat"
+            href="https://github.com/kirso/growthrat"
             target="_blank"
             rel="noopener noreferrer"
             className="group block p-5 rounded-xl border border-[var(--color-rc-border)] bg-white hover:shadow-[var(--shadow-card)] transition-all duration-200 no-underline"
@@ -230,7 +230,7 @@ export default function ProofPackPage() {
               application.
             </p>
             <span className="text-xs font-medium text-[var(--color-gc-primary)]">
-              github.com/kirso/growthcat &rarr;
+              github.com/kirso/growthrat &rarr;
             </span>
           </a>
         </div>

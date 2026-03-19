@@ -96,7 +96,7 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
                 try {
                   const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
                   // We don't have a direct article endpoint, return the slug info
-                  return { slug, url: `https://ai-growth-agent-nine.vercel.app/articles/${slug}`, status: "published" };
+                  return { slug, url: `https://growthrat.vercel.app/articles/${slug}`, status: "published" };
                 } catch {
                   return { error: "Article lookup failed" };
                 }
