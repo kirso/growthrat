@@ -82,6 +82,22 @@ export default defineSchema({
       filterFields: ["channel"],
     }),
 
+  usageEvents: defineTable({
+    feature: v.string(),
+    workflowType: v.optional(v.string()),
+    provider: v.string(),
+    model: v.string(),
+    inputTokens: v.number(),
+    outputTokens: v.number(),
+    estimatedUsd: v.number(),
+    latencyMs: v.optional(v.number()),
+    success: v.boolean(),
+    errorCode: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+  })
+    .index("by_feature", ["feature"])
+    .index("by_provider", ["provider"]),
+
   weeklyReports: defineTable({
     weekNumber: v.number(),
     contentCount: v.number(),
@@ -124,13 +140,37 @@ export default defineSchema({
 
   // VS-B5: Non-secret agent configuration (set during onboarding)
   agentConfig: defineTable({
+    mode: v.string(), // "dormant" | "interview_proof" | "rc_live"
     reviewMode: v.string(), // "draft_only" | "semi_auto" | "bounded_autonomy"
     focusTopics: v.array(v.string()),
     slackChannel: v.string(),
     githubOrg: v.optional(v.string()),
     enabledPlatforms: v.array(v.string()),
+    activeUntil: v.optional(v.number()),
+    budgetPolicy: v.optional(v.any()),
     paused: v.boolean(),
   }),
+
+  // VS-B5: Connector verification state visible to operator pages.
+  connectorConnections: defineTable({
+    connector: v.string(),
+    status: v.string(), // "pending" | "verified" | "manual_verification" | "unsupported" | "error"
+    label: v.optional(v.string()),
+    errorSummary: v.optional(v.string()),
+    verificationMethod: v.optional(v.string()),
+    lastSubmittedAt: v.optional(v.number()),
+    lastVerifiedAt: v.optional(v.number()),
+    details: v.optional(v.any()),
+  })
+    .index("by_connector", ["connector"])
+    .index("by_status", ["status"]),
+
+  // VS-B5: Encrypted connector payloads. Never exposed through public queries.
+  connectorSecrets: defineTable({
+    connector: v.string(),
+    encryptedPayload: v.string(),
+    updatedAt: v.number(),
+  }).index("by_connector", ["connector"]),
 
   // VS-B1: Approval tracking
   approvalLog: defineTable({

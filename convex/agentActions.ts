@@ -8,6 +8,7 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 /**
  * Trigger knowledge ingestion (public, for testing).
@@ -91,5 +92,105 @@ export const testFetch = action({
     } catch (err) {
       return { error: String(err) };
     }
+  },
+});
+
+/**
+ * Trigger a bounded proof cycle on the active deployment.
+ * This is intentionally public at the Convex layer but still gated by the
+ * authenticated Next.js route plus RC admin checks.
+ */
+export const triggerProofCycle = action({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.runMutation(internal.mutations.startKnowledgeIngest, {});
+    await ctx.runMutation(internal.mutations.startWeeklyPlan, {});
+    await ctx.runMutation(internal.mutations.startWeeklyReport, {});
+    await ctx.runMutation(internal.mutations.startCommunityMonitor, {});
+    return {
+      triggered: true,
+      steps: [
+        "startKnowledgeIngest",
+        "startWeeklyPlan",
+        "startWeeklyReport",
+        "startCommunityMonitor",
+      ],
+    };
+  },
+});
+
+/**
+ * Recover the most recent proof artifact by slug, revalidate it with the
+ * current gate logic, and push it through the normal publish/distribution path.
+ */
+export const promoteArtifactBySlug = action({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
+    const artifact = await ctx.runQuery(internal.agentQueries.getArtifactBySlug, { slug }) as {
+      _id: Id<"artifacts">;
+      slug: string;
+      title: string;
+      content: string;
+      status: string;
+    } | null;
+    if (!artifact) {
+      return { published: false, reason: `Artifact not found: ${slug}` };
+    }
+
+    const validation = await ctx.runAction(internal.actions.validateQuality, {
+      content: artifact.content,
+      artifactId: artifact._id,
+      title: artifact.title,
+      slug: artifact.slug,
+    }) as { allPassed: boolean; gates: Array<{ key: string; passed: boolean; reason: string }> };
+
+    if (!validation.allPassed) {
+      await ctx.runMutation(internal.mutations.updateArtifactStatus, {
+        id: artifact._id,
+        status: "rejected",
+      });
+      return { published: false, reason: "Validation still failing", validation };
+    }
+
+    await ctx.runMutation(internal.mutations.updateArtifactStatus, {
+      id: artifact._id,
+      status: "validated",
+    });
+
+    const publishResult = await ctx.runAction(internal.actions.publishToCMS, { artifactId: artifact._id }) as {
+      published: boolean;
+      url?: string;
+      state: string;
+    };
+
+    await ctx.runAction(internal.actions.distributeViaTypefully, {
+      artifactId: artifact._id,
+      topic: artifact.title,
+    });
+
+    const githubResult = await ctx.runAction(internal.actions.distributeViaGitHub, {
+      artifactId: artifact._id,
+      title: artifact.title,
+      slug: artifact.slug,
+      content: artifact.content,
+    }) as { committed: boolean; url?: string };
+
+    if (publishResult.published || githubResult.committed) {
+      await ctx.runMutation(internal.mutations.updateArtifactStatus, {
+        id: artifact._id,
+        status: "published",
+      });
+      return {
+        published: true,
+        url: publishResult.url ?? githubResult.url ?? null,
+        validation,
+      };
+    }
+
+    return {
+      published: false,
+      reason: "Publish target unavailable",
+      validation,
+    };
   },
 });

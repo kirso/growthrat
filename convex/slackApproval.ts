@@ -3,6 +3,27 @@
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import { getSlackConnectorConfig } from "./runtimeConnectors";
+
+type ReactionHandlerResult = {
+  handled: boolean;
+  action?: "already_published" | "approved" | "approved_not_published" | "rejected";
+  reason?: string;
+};
+
+type ApprovalLogLookupEntry = {
+  artifactId: Id<"artifacts">;
+  slackThreadTs?: string;
+};
+
+type PublishResult = {
+  published: boolean;
+};
+
+type GitHubDistributionResult = {
+  committed: boolean;
+};
 
 /**
  * Post a draft artifact to Slack for approval.
@@ -17,8 +38,9 @@ export const postForApproval = internalAction({
     qualityGates: v.string(),
   },
   handler: async (ctx, { artifactId, title, slug, contentPreview, qualityGates }) => {
-    const token = process.env.SLACK_BOT_TOKEN;
-    const channel = process.env.SLACK_DEFAULT_CHANNEL ?? "growthrat";
+    const { botToken, defaultChannel } = await getSlackConnectorConfig(ctx);
+    const token = botToken;
+    const channel = defaultChannel ?? "growthrat";
 
     if (!token) {
       console.log("[slack] No SLACK_BOT_TOKEN — skipping approval post");
@@ -83,47 +105,76 @@ export const handleReaction = internalAction({
     messageTs: v.string(),
     userId: v.string(),
   },
-  handler: async (ctx, { reaction, messageTs, userId }) => {
+  handler: async (ctx, { reaction, messageTs, userId }): Promise<ReactionHandlerResult> => {
     // Find the approval log entry for this Slack message
     const logEntries = await ctx.runQuery(internal.slackApprovalQueries.findBySlackTs, {
       slackThreadTs: messageTs,
-    });
+    }) as ApprovalLogLookupEntry[];
 
     if (!logEntries || logEntries.length === 0) {
       console.log("[slack] No approval log entry found for ts:", messageTs);
       return { handled: false };
     }
 
-    const entry = logEntries[0];
-    const artifactId = entry.artifactId;
+    const entry: ApprovalLogLookupEntry = logEntries[0]!;
+    const artifactId: Id<"artifacts"> = entry.artifactId;
+
+    // Idempotency: check if artifact is already published (prevents double-processing)
+    const artifact = await ctx.runQuery(internal.agentQueries.getArtifactById, { id: artifactId });
+    if (artifact?.status === "published") {
+      console.log("[slack] Artifact already published, skipping:", artifactId);
+      return { handled: true, action: "already_published" };
+    }
 
     if (reaction === "+1" || reaction === "thumbsup") {
-      // Approve: update artifact status and log
-      await ctx.runMutation(internal.mutations.updateArtifactStatus, {
-        id: artifactId,
-        status: "published",
-      });
+      // Trigger distribution (CMS, Typefully, GitHub)
+      const publishResult = await ctx.runAction(internal.actions.publishToCMS, { artifactId }) as PublishResult;
+      let githubResult: GitHubDistributionResult | null = null;
+      if (artifact) {
+        await ctx.runAction(internal.actions.distributeViaTypefully, {
+          artifactId,
+          topic: artifact.title,
+        });
+        githubResult = await ctx.runAction(internal.actions.distributeViaGitHub, {
+          artifactId,
+          title: artifact.title,
+          slug: artifact.slug,
+          content: artifact.content,
+        }) as GitHubDistributionResult;
+      }
+
+      const published: boolean = publishResult.published || Boolean(githubResult?.committed);
+      if (published) {
+        await ctx.runMutation(internal.mutations.updateArtifactStatus, {
+          id: artifactId,
+          status: "published",
+        });
+      }
       await ctx.runMutation(internal.approvalLog.log, {
         artifactId,
         action: "approved",
         by: `slack_reaction:${userId}`,
         slackThreadTs: messageTs,
+        reason: published ? undefined : "Approved, but no publish target succeeded",
       });
 
       // Post confirmation
-      const token = process.env.SLACK_BOT_TOKEN;
+      const { botToken, defaultChannel } = await getSlackConnectorConfig(ctx);
+      const token = botToken;
       if (token) {
         const { WebClient } = await import("@slack/web-api");
         const client = new WebClient(token);
-        const channel = process.env.SLACK_DEFAULT_CHANNEL ?? "growthrat";
+        const channel = defaultChannel ?? "growthrat";
         await client.chat.postMessage({
           channel,
           thread_ts: messageTs,
-          text: `✅ Approved and published by <@${userId}>`,
+          text: published
+            ? `✅ Approved and published by <@${userId}>`
+            : `✅ Approved by <@${userId}>, but no publish target succeeded. The artifact remains validated until a publish target is connected.`,
         });
       }
 
-      return { handled: true, action: "approved" };
+      return { handled: true, action: published ? "approved" : "approved_not_published" };
     }
 
     if (reaction === "-1" || reaction === "thumbsdown") {

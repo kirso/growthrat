@@ -33,6 +33,14 @@ export const workflow = new WorkflowManager(components.workflow, {
 export const weeklyPlanWorkflow = workflow.define({
   args: { weekNumber: v.number() },
   handler: async (step, { weekNumber }): Promise<{ weekNumber: number; topicsPlanned: number }> => {
+    // Step 0: Gather historical data for the learning loop
+    const lastWeekMetrics = await step.runQuery(
+      internal.mutations.gatherWeeklyMetrics, {}
+    );
+    const completedExperiments = await step.runQuery(
+      internal.agentQueries.getCompletedExperiments, {}
+    );
+
     // Step 1: Fetch keyword data from DataForSEO
     const keywords = await step.runAction(
       internal.actions.fetchKeywords,
@@ -40,10 +48,10 @@ export const weeklyPlanWorkflow = workflow.define({
       { retry: true }
     );
 
-    // Step 2: Score and select opportunities
+    // Step 2: Score and select opportunities (with historical context)
     const plan = await step.runMutation(
       internal.mutations.scorePlan,
-      { keywords, weekNumber }
+      { keywords, weekNumber, experimentHistory: completedExperiments ?? [], lastWeekMetrics: lastWeekMetrics ?? {} }
     );
 
     // Step 3: Post plan to Slack
@@ -53,11 +61,17 @@ export const weeklyPlanWorkflow = workflow.define({
       { retry: true }
     );
 
-    // Step 4: Trigger content generation for each topic
+    // Step 4: Trigger content generation for each topic with auto-detected content type
     for (const topic of plan.contentTopics) {
+      const lower = topic.toLowerCase();
+      let artifactType = "blog_post";
+      if (lower.includes(" vs ") || lower.includes("alternative")) artifactType = "comparison";
+      else if (lower.includes("api") || lower.includes("endpoint")) artifactType = "api_guide";
+      else if (lower.includes("setup") || lower.includes("integration") || lower.includes("flutter") || lower.includes("react native")) artifactType = "integration_guide";
+
       await step.runAction(
         internal.actions.startContentWorkflow,
-        { topic, targetKeyword: topic, weekNumber }
+        { topic, targetKeyword: topic, weekNumber, artifactType }
       );
     }
 
@@ -92,28 +106,42 @@ export const contentGenWorkflow = workflow.define({
   args: {
     topic: v.string(),
     targetKeyword: v.string(),
+    artifactType: v.optional(v.string()),
   },
-  handler: async (step, { topic, targetKeyword }): Promise<{ artifactId: string; published: boolean }> => {
-    // Step 1: Generate content via LLM
+  handler: async (step, { topic, targetKeyword, artifactType }): Promise<{ artifactId: string; published: boolean }> => {
+    // Step 1: Search knowledge base for RAG grounding
+    const ragContext = await step.runAction(
+      internal.actions.searchKnowledgeForContent,
+      { query: topic },
+      { retry: true }
+    );
+
+    // Step 2: Generate content via LLM (with RAG context and content type)
     const draft = await step.runAction(
       internal.actions.generateContent,
-      { topic, targetKeyword },
+      { topic, targetKeyword, ragContext: ragContext || undefined, artifactType: artifactType || undefined },
       { retry: true }
     );
 
     const artifactId = draft.artifactId as Id<"artifacts">;
+    const slug = targetKeyword.replace(/\s+/g, "-");
 
-    // Step 2: Run quality gates
+    // Step 3: Run quality gates
     const validation = await step.runAction(
       internal.actions.validateQuality,
-      { content: draft.content, artifactId }
+      { content: draft.content, artifactId, title: topic, slug }
     );
 
-    // Step 3: If validated, post for Slack approval then publish
+    // Step 3: If validated, handle approval based on review mode
     if (validation.allPassed) {
       await step.runMutation(
         internal.mutations.updateArtifactStatus,
         { id: artifactId, status: "validated" }
+      );
+
+      // Check review mode to determine approval flow
+      const config = await step.runQuery(
+        internal.slackCommandQueries.getAgentConfig, {}
       );
 
       // Post to Slack for approval (auto-approves if no Slack token)
@@ -129,35 +157,37 @@ export const contentGenWorkflow = workflow.define({
         { retry: true }
       );
 
-      // If auto-approved (no Slack) or we don't wait for reaction, proceed to publish
-      // In production with Slack, the reaction handler triggers publishing separately
-      // For now: publish immediately after posting for approval
-      if (approval.autoApproved || approval.posted) {
-        // Publish to CMS
-        await step.runAction(
-          internal.actions.publishToCMS,
-          { artifactId },
-          { retry: true }
-        );
-
-        // Distribute via Typefully
-        await step.runAction(
-          internal.actions.distributeViaTypefully,
-          { artifactId, topic },
-          { retry: true }
-        );
-
-        // Distribute via GitHub
-        await step.runAction(
+      if (approval.autoApproved) {
+        // No Slack configured — auto-publish immediately
+        const publishResult = await step.runAction(internal.actions.publishToCMS, { artifactId }, { retry: true });
+        await step.runAction(internal.actions.distributeViaTypefully, { artifactId, topic }, { retry: true });
+        const githubResult = await step.runAction(
           internal.actions.distributeViaGitHub,
           { artifactId: draft.artifactId as Id<"artifacts">, title: topic, slug: targetKeyword.replace(/\s+/g, "-"), content: draft.content },
           { retry: true }
         );
-
+        if (publishResult.published || githubResult.committed) {
+          await step.runMutation(internal.mutations.updateArtifactStatus, { id: artifactId, status: "published" });
+        }
+      } else if (config?.reviewMode === "draft_only") {
+        // Draft-only mode: wait for Slack reaction before publishing.
+        // The Slack reaction handler (slackApproval.handleReaction) triggers distribution.
         await step.runMutation(
           internal.mutations.updateArtifactStatus,
-          { id: artifactId, status: "published" }
+          { id: artifactId, status: "pending_approval" }
         );
+      } else {
+        // Semi-auto or bounded autonomy — publish after Slack notification
+        const publishResult = await step.runAction(internal.actions.publishToCMS, { artifactId }, { retry: true });
+        await step.runAction(internal.actions.distributeViaTypefully, { artifactId, topic }, { retry: true });
+        const githubResult = await step.runAction(
+          internal.actions.distributeViaGitHub,
+          { artifactId: draft.artifactId as Id<"artifacts">, title: topic, slug: targetKeyword.replace(/\s+/g, "-"), content: draft.content },
+          { retry: true }
+        );
+        if (publishResult.published || githubResult.committed) {
+          await step.runMutation(internal.mutations.updateArtifactStatus, { id: artifactId, status: "published" });
+        }
       }
     } else {
       await step.runMutation(
@@ -226,20 +256,29 @@ export const knowledgeIngestWorkflow = workflow.define({
 
 /**
  * Community Monitor Workflow
- * Scans RC GitHub repos for agent-related issues
+ * Scans RC GitHub repos + X/Twitter for agent-related signals
  */
 export const communityMonitorWorkflow = workflow.define({
   args: {},
   handler: async (step): Promise<{ totalChunks?: number; signalsFound?: number; engaged?: number }> => {
     // Scan GitHub repos
-    const signals = await step.runAction(
+    const githubSignals = await step.runAction(
       internal.actions.scanGitHubRepos,
       {},
       { retry: true }
     );
 
-    // Generate and post responses for relevant issues
-    for (const signal of signals.slice(0, 5)) {
+    // Scan X/Twitter mentions
+    const xSignals = await step.runAction(
+      internal.actions.scanTwitterMentions,
+      {},
+      { retry: true }
+    );
+
+    const allSignals = [...githubSignals, ...xSignals];
+
+    // Generate and post responses for top signals
+    for (const signal of allSignals.slice(0, 10)) {
       await step.runAction(
         internal.actions.engageCommunity,
         { channel: signal.channel, context: signal.context, targetUrl: signal.url },
@@ -247,6 +286,6 @@ export const communityMonitorWorkflow = workflow.define({
       );
     }
 
-    return { signalsFound: signals.length, engaged: Math.min(signals.length, 5) };
+    return { signalsFound: allSignals.length, engaged: Math.min(allSignals.length, 10) };
   },
 });

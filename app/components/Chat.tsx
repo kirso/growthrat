@@ -25,39 +25,14 @@ export function Chat() {
     return id;
   }, []);
 
-  // Load previous messages from Convex on mount
-  const [initialMessages, setInitialMessages] = useState<Array<{ id: string; role: "user" | "assistant"; parts: Array<{ type: "text"; text: string }> }>>([]);
-  const [historyLoaded, setHistoryLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!threadId || historyLoaded) return;
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
-    if (!convexUrl) { setHistoryLoaded(true); return; }
-    const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
-    fetch(`${siteUrl}/api/chat-history?threadId=${encodeURIComponent(threadId)}`)
-      .then((r) => r.ok ? r.json() : { messages: [] })
-      .then((data) => {
-        if (data.messages?.length > 0) {
-          setInitialMessages(
-            data.messages.map((m: { role: string; content: string }, i: number) => ({
-              id: `hist-${i}`,
-              role: m.role as "user" | "assistant",
-              parts: [{ type: "text" as const, text: m.content }],
-            }))
-          );
-        }
-      })
-      .catch(() => {})
-      .finally(() => setHistoryLoaded(true));
-  }, [threadId, historyLoaded]);
-
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const { messages, sendMessage, status, error } = useChat({
     transport,
     experimental_throttle: 50,
-    ...(initialMessages.length > 0 ? { messages: initialMessages as any } : {}),
   });
   const isLoading = status === "streaming" || status === "submitted";
+  const [runtimeMode, setRuntimeMode] = useState<"dormant" | "interview_proof" | "rc_live" | null>(null);
+  const chatEnabled = runtimeMode === "interview_proof" || runtimeMode === "rc_live";
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -73,6 +48,21 @@ export function Chat() {
     const handleOpen = () => setExpanded(true);
     window.addEventListener("openGrowthRatChat", handleOpen);
     return () => window.removeEventListener("openGrowthRatChat", handleOpen);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadRuntime() {
+      try {
+        const res = await fetch("/api/runtime", { signal: controller.signal });
+        const data = (await res.json()) as { mode?: "dormant" | "interview_proof" | "rc_live" };
+        setRuntimeMode(data.mode ?? "dormant");
+      } catch {
+        setRuntimeMode("dormant");
+      }
+    }
+    void loadRuntime();
+    return () => controller.abort();
   }, []);
 
   // ⌘K / Ctrl+K keyboard shortcut to toggle chat
@@ -99,7 +89,7 @@ export function Chat() {
   });
 
   const handleSend = (text: string) => {
-    if (!text.trim() || isLoading) return;
+    if (!text.trim() || isLoading || !chatEnabled) return;
     sendMessage({ text: text.trim() }, { body: { threadId } });
     setInputValue("");
   };
@@ -150,21 +140,37 @@ export function Chat() {
                 Ask me anything about RevenueCat, agent development, growth strategy,
                 or what I&apos;d do in this role.
               </p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-[var(--color-rc-muted)] uppercase tracking-wider">
-                Try asking:
+              <p className="text-xs text-[var(--color-rc-light)] mt-2">
+                Public chat history does not persist across reloads.
               </p>
-              {SUGGESTED_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSend(prompt)}
-                  className="block w-full text-left text-sm px-3 py-2 rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-body)] hover:bg-[var(--color-rc-surface)] hover:border-[var(--color-gc-primary)]/30 transition-colors"
-                >
-                  {prompt}
-                </button>
-              ))}
+              <p className="text-xs mt-2 text-[var(--color-rc-light)]">
+                {chatEnabled
+                  ? `Runtime mode: ${runtimeMode}`
+                  : runtimeMode === "dormant"
+                    ? "GrowthRat is dormant. Public chat is disabled until interview-proof or RC-live mode is enabled."
+                    : "Loading runtime state..."}
+              </p>
             </div>
+            {chatEnabled ? (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-[var(--color-rc-muted)] uppercase tracking-wider">
+                  Try asking:
+                </p>
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSend(prompt)}
+                    className="block w-full text-left text-sm px-3 py-2 rounded-lg border border-[var(--color-rc-border)] text-[var(--color-rc-body)] hover:bg-[var(--color-rc-surface)] hover:border-[var(--color-gc-primary)]/30 transition-colors"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[var(--color-rc-border)] bg-[var(--color-rc-surface)] px-3.5 py-3 text-xs text-[var(--color-rc-muted)]">
+                Public chat is intentionally disabled in dormant mode to prevent accidental spend.
+              </div>
+            )}
           </div>
         )}
 
@@ -255,11 +261,11 @@ export function Chat() {
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask GrowthRat anything..."
           className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--color-rc-border)] focus:outline-none focus:border-[var(--color-gc-primary)] text-[var(--color-rc-body)] placeholder:text-[var(--color-rc-light)]"
-          disabled={isLoading}
+          disabled={isLoading || !chatEnabled}
         />
         <button
           type="submit"
-          disabled={isLoading || !inputValue.trim()}
+          disabled={isLoading || !inputValue.trim() || !chatEnabled}
           className="px-4 py-2 bg-[var(--color-gc-primary)] text-white text-sm font-medium rounded-lg hover:bg-[var(--color-gc-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Send

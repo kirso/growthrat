@@ -16,6 +16,7 @@ import { Agent, createTool } from "@convex-dev/agent";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { components, internal } from "./_generated/api";
+import { fetchKnowledgeContext, generateQueryEmbedding } from "./knowledge";
 
 const SYSTEM_PROMPT = `You are GrowthRat — an autonomous developer-advocacy and growth agent for agent-built apps.
 
@@ -54,30 +55,8 @@ export const growthRatAgent = new Agent(components.agent, {
         query: z.string().describe("What to search for in the RC knowledge base"),
       }),
       handler: async (ctx, { query }): Promise<string> => {
-        // vectorSearch IS available on ActionCtx
-        try {
-          const embedding = await generateEmbedding(query);
-          const results = await ctx.vectorSearch("sources", "by_embedding", {
-            vector: embedding,
-            limit: 5,
-          });
-
-          if (results.length === 0) {
-            return "No relevant documentation found for this query.";
-          }
-
-          // Must use ctx.runQuery — ActionCtx has NO ctx.db
-          const docs = await ctx.runQuery(
-            internal.agentQueries.getSourcesByIds,
-            { ids: results.map((r) => r._id) }
-          );
-
-          return docs
-            .map((d: { provider: string; key: string; summary: string }) => `[${d.provider} — ${d.key}]:\n${d.summary}`)
-            .join("\n\n---\n\n");
-        } catch {
-          return "Knowledge base search is not available yet. Answering from training knowledge.";
-        }
+        const { context } = await fetchKnowledgeContext(ctx as any, query, { includeHeading: false });
+        return context ?? "No relevant documentation found for this query.";
       },
     }),
 
@@ -138,37 +117,4 @@ export const growthRatAgent = new Agent(components.agent, {
   },
   maxSteps: 5,
 });
-
-/**
- * Generate an embedding. Tries Voyage AI first (free 200M tokens),
- * falls back to OpenAI. Uses fetch (available in default Convex runtime).
- */
-async function generateEmbedding(text: string): Promise<number[]> {
-  const voyageKey = process.env.VOYAGE_API_KEY;
-  if (voyageKey) {
-    const res = await fetch("https://api.voyageai.com/v1/embeddings", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${voyageKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "voyage-3-lite", input: [text.slice(0, 16000)] }),
-    });
-    if (!res.ok) throw new Error(`Voyage error: ${res.status}`);
-    const data = await res.json();
-    return data.data[0].embedding;
-  }
-
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (openaiKey) {
-    const res = await fetch("https://api.openai.com/v1/embeddings", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "text-embedding-3-small", input: text.slice(0, 8000) }),
-    });
-    if (!res.ok) throw new Error(`OpenAI error: ${res.status}`);
-    const data = await res.json();
-    return data.data[0].embedding;
-  }
-
-  throw new Error("No embedding key. Set VOYAGE_API_KEY or OPENAI_API_KEY.");
-}
-
-export { generateEmbedding };
+export { generateQueryEmbedding as generateEmbedding };

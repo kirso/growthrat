@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-// Slack commands are processed via a background fetch to our own API
-// (replaces Inngest event sending)
+// Slack commands are forwarded to Convex, which verifies the Slack signature
+// and handles command/reaction routing natively.
 
 // ---------------------------------------------------------------------------
 // Slack Event Handler — receives events when someone mentions @GrowthRat
@@ -10,27 +9,6 @@ import crypto from "crypto";
 // asynchronously via Inngest. This keeps the Slack API happy while
 // allowing arbitrarily complex background work.
 // ---------------------------------------------------------------------------
-
-function verifySlackSignature(
-  body: string,
-  timestamp: string,
-  signature: string,
-  secret: string,
-): boolean {
-  // Reject requests older than 5 minutes to prevent replay attacks
-  const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
-  if (parseInt(timestamp, 10) < fiveMinutesAgo) return false;
-
-  const baseString = `v0:${timestamp}:${body}`;
-  const computed =
-    "v0=" +
-    crypto.createHmac("sha256", secret).update(baseString).digest("hex");
-
-  return crypto.timingSafeEqual(
-    Buffer.from(computed, "utf8"),
-    Buffer.from(signature, "utf8"),
-  );
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -50,17 +28,19 @@ export async function POST(req: NextRequest) {
   }
 
   // -----------------------------------------------------------------------
-  // 2. Verify request authenticity via SLACK_SIGNING_SECRET
+  // 2. Forward the raw Slack payload to Convex.
+  // Convex verifies Slack signatures and handles event translation.
   // -----------------------------------------------------------------------
-  const signingSecret = process.env.SLACK_SIGNING_SECRET;
-  if (signingSecret) {
-    const timestamp = req.headers.get("x-slack-request-timestamp") ?? "";
-    const slackSig = req.headers.get("x-slack-signature") ?? "";
-
-    if (!verifySlackSignature(body, timestamp, slackSig, signingSecret)) {
-      return NextResponse.json({ error: "invalid signature" }, { status: 401 });
-    }
-  }
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.replace(".convex.cloud", ".convex.site");
+  const commonHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(req.headers.get("x-slack-request-timestamp")
+      ? { "X-Slack-Request-Timestamp": req.headers.get("x-slack-request-timestamp") ?? "" }
+      : {}),
+    ...(req.headers.get("x-slack-signature")
+      ? { "X-Slack-Signature": req.headers.get("x-slack-signature") ?? "" }
+      : {}),
+  };
 
   // -----------------------------------------------------------------------
   // 3. Handle event callbacks
@@ -78,52 +58,40 @@ export async function POST(req: NextRequest) {
 
     // Handle app_mention events — someone @-mentioned GrowthRat
     if (event.type === "app_mention") {
-      // Strip the @mention tag, leaving only the command text
-      const text = (event.text ?? "")
-        .replace(/<@[^>]+>/g, "")
-        .trim()
-        .toLowerCase();
-      const channel = event.channel;
-      const threadTs = event.thread_ts ?? event.ts;
-
-      // Fire-and-forget: send the command to Inngest for background processing
-      // Process in background via fetch to our chat API
-      // (fire-and-forget, don't await — Slack needs response in 3s)
-      fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/slack-command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: text, channel, threadTs }),
-      }).catch(() => {/* fire and forget */});
+      // Fire-and-forget to Convex; it will translate the raw Slack event into a command.
+      if (convexUrl) {
+        fetch(`${convexUrl}/api/slack-command`, {
+          method: "POST",
+          headers: commonHeaders,
+          body,
+        }).catch(() => {/* fire and forget */});
+      }
     }
 
     // Handle reaction_added events — for approval flow
     if (event.type === "reaction_added") {
-      const reaction = event.reaction;
       const messageTs = (event as any).item?.ts;
-      const userId = event.user;
 
-      if (messageTs && (reaction === "+1" || reaction === "thumbsup" || reaction === "-1" || reaction === "thumbsdown")) {
-        fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/slack-reaction`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reaction, messageTs, userId }),
-        }).catch(() => {/* fire and forget */});
+      if (messageTs) {
+        if (convexUrl) {
+          fetch(`${convexUrl}/api/slack-reaction`, {
+            method: "POST",
+            headers: commonHeaders,
+            body,
+          }).catch(() => {/* fire and forget */});
+        }
       }
     }
 
     // Handle direct messages
     if (event.type === "message" && event.channel_type === "im") {
-      const text = (event.text ?? "").trim().toLowerCase();
-      const channel = event.channel;
-      const threadTs = event.thread_ts ?? event.ts;
-
-      // Process in background via fetch to our chat API
-      // (fire-and-forget, don't await — Slack needs response in 3s)
-      fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL?.replace('.convex.cloud', '.convex.site')}/api/slack-command`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: text, channel, threadTs }),
-      }).catch(() => {/* fire and forget */});
+      if (convexUrl) {
+        fetch(`${convexUrl}/api/slack-command`, {
+          method: "POST",
+          headers: commonHeaders,
+          body,
+        }).catch(() => {/* fire and forget */});
+      }
     }
   }
 

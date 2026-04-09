@@ -8,8 +8,8 @@
 
 import { action, ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
-import { growthRatAgent, generateEmbedding } from "./agent";
-import { internal } from "./_generated/api";
+import { growthRatAgent } from "./agent";
+import { fetchKnowledgeContext } from "./knowledge";
 
 /**
  * Create a new conversation thread.
@@ -21,6 +21,20 @@ export const createThread = action({
       userId,
     });
     return { threadId };
+  },
+});
+
+/**
+ * Search RevenueCat documentation and return the retrieved context.
+ * Used by the Next.js chat route so it can stay off the old HTTP bridge.
+ */
+export const searchKnowledge = action({
+  args: {
+    query: v.string(),
+  },
+  handler: async (ctx, { query }) => {
+    const { context, sources } = await fetchRAGContextWithSources(ctx, query);
+    return { context: context ?? "", sources };
   },
 });
 
@@ -102,40 +116,5 @@ async function fetchRAGContextWithSources(
   ctx: ActionCtx,
   query: string
 ): Promise<{ context: string | null; sources: Array<{ label: string; type: string; score: number }> }> {
-  try {
-    const embedding = await generateEmbedding(query);
-
-    const results = await ctx.vectorSearch("sources", "by_embedding", {
-      vector: embedding,
-      limit: 5,
-    });
-
-    if (results.length === 0) {
-      return { context: null, sources: [] };
-    }
-
-    // Fetch full documents
-    const docs = await ctx.runQuery(internal.agentQueries.getSourcesByIds, {
-      ids: results.map((r) => r._id),
-    });
-
-    const sources = docs.map((d: { provider: string; key: string; summary: string }, i: number) => ({
-      label: `${d.provider} — ${d.key}`,
-      type: d.provider === "RevenueCat" ? "doc" : "data",
-      score: results[i]?._score ?? 0,
-    }));
-
-    const contextText = docs
-      .map((d: { provider: string; key: string; summary: string }, i: number) =>
-        `[Source: ${d.provider} — ${d.key} (relevance: ${(results[i]?._score ?? 0).toFixed(2)})]\n${d.summary}`
-      )
-      .join("\n\n---\n\n");
-
-    const context = `# Retrieved Knowledge Base Context\n\nThe following documents were retrieved and are relevant to the question:\n\n${contextText}`;
-
-    return { context, sources };
-  } catch (err) {
-    console.error("[chat] RAG context fetch failed:", err);
-    return { context: null, sources: [] };
-  }
+  return await fetchKnowledgeContext(ctx as any, query);
 }

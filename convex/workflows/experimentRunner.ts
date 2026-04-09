@@ -2,6 +2,11 @@ import { workflow } from "./index";
 import { internal } from "../_generated/api";
 import { v } from "convex/values";
 
+/**
+ * Experiment Runner Workflow — Phase 1: Start
+ * Fetches baseline, creates record, posts to Slack.
+ * Measurement is scheduled as a separate action via Convex scheduler (7-day delay).
+ */
 export const runExperiment = workflow.define({
   args: {
     experimentKey: v.string(),
@@ -27,7 +32,7 @@ export const runExperiment = workflow.define({
       title: `Experiment: ${targetKeyword}`,
       hypothesis,
       baselineMetric: JSON.stringify(baseline),
-      targetMetric: "SERP position improvement within 14 days",
+      targetMetric: "SERP position improvement within 7 days",
       contentSlug,
     });
 
@@ -40,10 +45,17 @@ export const runExperiment = workflow.define({
       { retry: true }
     );
 
+    // Step 4: Schedule measurement after 7 days via Convex scheduler
+    await step.runMutation(internal.mutations.scheduleExperimentMeasurement, {
+      experimentKey,
+      targetKeyword,
+      contentSlug,
+    });
+
     return {
       experimentKey,
       baselinePosition: String(baseline.serpPosition ?? "not ranking"),
-      measurementPosition: "pending",
+      measurementPosition: "scheduled",
     };
   },
 });

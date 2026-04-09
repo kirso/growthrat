@@ -22,9 +22,12 @@ export async function fileFeedbackIssue(
   const owner =
     process.env.GITHUB_FEEDBACK_OWNER ??
     process.env.GITHUB_OWNER ??
-    "growthrat";
+    "kirso";
   const repo =
-    process.env.GITHUB_FEEDBACK_REPO ?? "ai-growth-agent";
+    process.env.GITHUB_FEEDBACK_REPO ??
+    process.env.GITHUB_CONTENT_REPO ??
+    process.env.GITHUB_REPO ??
+    "growthcat";
 
   if (!token) {
     return { filed: false, method: "dry-run: no GITHUB_TOKEN" };

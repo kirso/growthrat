@@ -1,5 +1,6 @@
 import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
+import { requireRcAdmin } from "./authz";
 
 export const list = query({
   args: {
@@ -7,6 +8,7 @@ export const list = query({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     if (args.artifactType && args.status) {
       return await ctx.db
         .query("artifacts")
@@ -71,6 +73,7 @@ export const create = mutation({
     publishedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     return await ctx.db.insert("artifacts", args);
   },
 });
@@ -82,6 +85,7 @@ export const updateStatus = mutation({
     publishedAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     const { id, ...patch } = args;
     await ctx.db.patch(id, patch);
   },
@@ -93,6 +97,7 @@ export const searchByContent = action({
     artifactType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     const results = await ctx.runQuery(
       // Use the internal search query helper
       "artifacts:_searchByContent" as any,

@@ -35,7 +35,7 @@ export function useConvexAvailable(): boolean {
  * Usage in pages:
  * ```ts
  * const liveData = useConvexQuery(convexApi?.artifacts?.list, {});
- * const data = liveData ?? SAMPLE_DATA;
+ * // Render explicit loading / empty states when liveData is undefined or empty.
  * ```
  *
  * NOTE: The `useConvexAvailable()` value is determined by an env var and

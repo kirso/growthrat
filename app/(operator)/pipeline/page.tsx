@@ -1,13 +1,12 @@
 "use client";
 
-import { useConvexQuery, convexApi } from "../hooks/useConvexSafe";
+import { useConvexAvailable, useConvexQuery, convexApi } from "../hooks/useConvexSafe";
 
-// Sample data — used as fallback when Convex isn't connected
 interface ContentSlot {
   id: string;
   title: string;
   stage: "Draft" | "Quality Gates" | "Published";
-  gates: boolean[]; // true = passed
+  gates: boolean[];
 }
 
 interface Opportunity {
@@ -15,34 +14,6 @@ interface Opportunity {
   title: string;
   lane: "SEO" | "Social" | "Community" | "Technical";
 }
-
-const SAMPLE_SLOTS: ContentSlot[] = [
-  {
-    id: "flagship_1",
-    title: "Why RevenueCat Should Hire an AI Growth Agent",
-    stage: "Quality Gates",
-    gates: [true, true, true, true, true, false, false, true],
-  },
-  {
-    id: "flagship_2",
-    title: "Building Developer Advocacy with Agentic AI",
-    stage: "Draft",
-    gates: [true, true, false, false, false, false, false, false],
-  },
-];
-
-const SAMPLE_DERIVATIVES = [
-  { type: "X Thread", title: "Thread: AI-first developer advocacy", status: "queued" },
-  { type: "X Thread", title: "Thread: Why agentic hiring matters", status: "queued" },
-  { type: "Gist", title: "GrowthRat architecture overview", status: "queued" },
-];
-
-const SAMPLE_OPPORTUNITIES: Opportunity[] = [
-  { score: 92, title: "RevenueCat SDK integration deep-dive", lane: "Technical" },
-  { score: 87, title: "Developer community engagement playbook", lane: "Community" },
-  { score: 81, title: "Agentic AI for growth — SEO long-tail", lane: "SEO" },
-  { score: 74, title: "X/Twitter growth for dev tools", lane: "Social" },
-];
 
 const stageBadgeColors = {
   Draft: "bg-[var(--color-op-amber)]/15 text-[var(--color-op-amber)]",
@@ -58,6 +29,9 @@ const laneBadgeColors: Record<Opportunity["lane"], string> = {
 };
 
 function GateProgress({ gates }: { gates: boolean[] }) {
+  if (gates.length === 0) {
+    return <span className="text-xs text-[var(--color-op-dim)]">No gate results yet.</span>;
+  }
   return (
     <div className="flex items-center gap-1">
       {gates.map((passed, i) => (
@@ -78,47 +52,67 @@ function GateProgress({ gates }: { gates: boolean[] }) {
 }
 
 export default function PipelinePage() {
-  // CONVEX: wire to api.artifacts.list when connected (flagship content)
+  const available = useConvexAvailable();
   const convexArtifacts = useConvexQuery(convexApi?.artifacts?.list, {
     artifactType: "flagship",
   });
 
-  // CONVEX: wire to api.opportunities.getTopOverall when connected
   const convexOpportunities = useConvexQuery(
     convexApi?.opportunities?.getTopOverall,
     { limit: 10 }
   );
 
-  // Map Convex artifacts to the UI shape, or fall back to sample data.
-  // Use sample data as the default immediately so there is no flash of
-  // empty state while the Convex hook resolves (it returns undefined
-  // during SSR and on first client render when Convex is not connected).
-  const slots: ContentSlot[] = convexArtifacts && convexArtifacts.length > 0
-    ? convexArtifacts.map((a: any) => ({
-        id: a.slug ?? a._id,
-        title: a.title,
-        stage: a.status === "published"
-          ? "Published" as const
-          : a.status === "review"
-            ? "Quality Gates" as const
-            : "Draft" as const,
-        gates: a.qualityScores
-          ? Object.values(a.qualityScores).map((v: any) => Boolean(v))
-          : [false, false, false, false, false, false, false, false],
-      }))
-    : SAMPLE_SLOTS;
+  if (!available) {
+    return (
+      <div className="space-y-6 max-w-5xl">
+        <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+          Content Pipeline
+        </h1>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Convex is not connected yet. No pipeline data is available.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  // Map Convex opportunities to the UI shape, or fall back to sample data.
-  // Same pattern: sample data is the default so the layout never flashes.
-  const opportunities: Opportunity[] = convexOpportunities && convexOpportunities.length > 0
-    ? convexOpportunities.map((o: any) => ({
-        score: o.score,
-        title: o.title,
-        lane: (o.lane ?? "Technical") as Opportunity["lane"],
-      }))
-    : SAMPLE_OPPORTUNITIES;
+  if (convexArtifacts === undefined || convexOpportunities === undefined) {
+    return (
+      <div className="space-y-6 max-w-5xl">
+        <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+          Content Pipeline
+        </h1>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Loading live pipeline data...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const derivatives = SAMPLE_DERIVATIVES; // No dedicated derivatives table yet
+  const slots: ContentSlot[] = convexArtifacts.map((a: any) => ({
+    id: a.slug ?? a._id,
+    title: a.title,
+    stage:
+      a.status === "published"
+        ? "Published" as const
+        : a.status === "validated" || a.status === "pending_approval"
+          ? "Quality Gates" as const
+          : "Draft" as const,
+    gates: a.qualityScores
+      ? Object.values(a.qualityScores).map((v: any) => Boolean(v))
+      : [],
+  }));
+
+  const opportunities: Opportunity[] = convexOpportunities.map((o: any) => ({
+    score: o.score,
+    title: o.title,
+    lane: (o.lane ?? "Technical") as Opportunity["lane"],
+  }));
+
+  const derivatives: Array<{ type: string; title: string; status: string }> = [];
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -131,34 +125,42 @@ export default function PipelinePage() {
         <h2 className="text-sm font-medium text-[var(--color-op-muted)] uppercase tracking-wider mb-3">
           This Week&apos;s Plan
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {slots.map((slot, index) => (
-            <div
-              key={slot.id}
-              className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-4"
-            >
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div>
-                  <div className="text-xs text-[var(--color-op-dim)] mb-1">
-                    Flagship {index + 1}
+        {slots.length === 0 ? (
+          <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+            <p className="text-sm text-[var(--color-op-dim)]">
+              No flagship content queued yet.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {slots.map((slot, index) => (
+              <div
+                key={slot.id}
+                className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-4"
+              >
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div>
+                    <div className="text-xs text-[var(--color-op-dim)] mb-1">
+                      Flagship {index + 1}
+                    </div>
+                    <h3 className="text-sm font-medium text-[var(--color-op-text)] leading-snug">
+                      {slot.title}
+                    </h3>
                   </div>
-                  <h3 className="text-sm font-medium text-[var(--color-op-text)] leading-snug">
-                    {slot.title}
-                  </h3>
+                  <span
+                    className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${stageBadgeColors[slot.stage]}`}
+                  >
+                    {slot.stage}
+                  </span>
                 </div>
-                <span
-                  className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${stageBadgeColors[slot.stage]}`}
-                >
-                  {slot.stage}
-                </span>
+                <div className="text-xs text-[var(--color-op-dim)] mb-1.5">
+                  Quality Gates
+                </div>
+                <GateProgress gates={slot.gates} />
               </div>
-              <div className="text-xs text-[var(--color-op-dim)] mb-1.5">
-                Quality Gates
-              </div>
-              <GateProgress gates={slot.gates} />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Derivatives */}
@@ -167,21 +169,27 @@ export default function PipelinePage() {
           Derivatives
         </h2>
         <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] divide-y divide-[var(--color-op-border)]">
-          {derivatives.map((d, i) => (
-            <div key={i} className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--color-op-card-alt)] text-[var(--color-op-muted)]">
-                  {d.type}
-                </span>
-                <span className="text-sm text-[var(--color-op-text)]">
-                  {d.title}
+          {derivatives.length === 0 ? (
+            <div className="px-4 py-8 text-sm text-[var(--color-op-dim)]">
+              No derivative assets recorded yet.
+            </div>
+          ) : (
+            derivatives.map((d, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--color-op-card-alt)] text-[var(--color-op-muted)]">
+                    {d.type}
+                  </span>
+                  <span className="text-sm text-[var(--color-op-text)]">
+                    {d.title}
+                  </span>
+                </div>
+                <span className="text-xs text-[var(--color-op-dim)]">
+                  {d.status}
                 </span>
               </div>
-              <span className="text-xs text-[var(--color-op-dim)]">
-                {d.status}
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -191,21 +199,27 @@ export default function PipelinePage() {
           Opportunity Queue
         </h2>
         <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] divide-y divide-[var(--color-op-border)]">
-          {opportunities.map((opp, i) => (
-            <div key={i} className="flex items-center gap-4 px-4 py-3">
-              <span className="shrink-0 w-10 text-right font-mono text-sm font-semibold text-[var(--color-op-green)]">
-                {opp.score}
-              </span>
-              <span className="flex-1 text-sm text-[var(--color-op-text)]">
-                {opp.title}
-              </span>
-              <span
-                className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${laneBadgeColors[opp.lane]}`}
-              >
-                {opp.lane}
-              </span>
+          {opportunities.length === 0 ? (
+            <div className="px-4 py-8 text-sm text-[var(--color-op-dim)]">
+              No scored opportunities yet.
             </div>
-          ))}
+          ) : (
+            opportunities.map((opp, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <span className="shrink-0 w-10 text-right font-mono text-sm font-semibold text-[var(--color-op-green)]">
+                  {opp.score}
+                </span>
+                <span className="flex-1 text-sm text-[var(--color-op-text)]">
+                  {opp.title}
+                </span>
+                <span
+                  className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${laneBadgeColors[opp.lane]}`}
+                >
+                  {opp.lane}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </section>
     </div>

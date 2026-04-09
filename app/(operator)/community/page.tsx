@@ -1,23 +1,6 @@
 "use client";
 
-import { useConvexQuery, convexApi } from "../hooks/useConvexSafe";
-
-// Sample data — used as fallback when Convex isn't connected
-const SAMPLE_COMMUNITY = {
-  current: 12,
-  target: 50,
-  channels: [
-    { name: "X / Twitter", count: 6, icon: "\u{1D54F}" },
-    { name: "GitHub", count: 4, icon: "GH" },
-    { name: "Discord", count: 2, icon: "DC" },
-  ],
-  quality: {
-    high: 4,
-    medium: 5,
-    low: 3,
-  },
-  pendingDrafts: 3,
-};
+import { useConvexAvailable, useConvexQuery, convexApi } from "../hooks/useConvexSafe";
 
 function ProgressBar({
   value,
@@ -40,38 +23,59 @@ function ProgressBar({
 }
 
 export default function CommunityPage() {
-  // CONVEX: wire to api.community.getStats when connected
+  const available = useConvexAvailable();
   const convexStats = useConvexQuery(convexApi?.community?.getStats, {});
-
-  // CONVEX: wire to api.community.list when connected
   const convexInteractions = useConvexQuery(convexApi?.community?.list, {});
 
-  // Build display data from Convex or fall back to sample
-  const data = convexStats
-    ? {
-        current: convexStats.total ?? 0,
-        target: 50, // Target is a config constant, not stored in Convex yet
-        channels: Object.entries(
-          (convexStats as any).byChannel as Record<string, number>
-        ).map(([name, count]) => ({
-          name,
-          count,
-          icon: name.toLowerCase().includes("twitter")
-            ? "\u{1D54F}"
-            : name.toLowerCase().includes("github")
-              ? "GH"
-              : "DC",
-        })),
-        quality: {
-          high: (convexStats as any).meaningful ?? 0,
-          medium: Math.max(0, ((convexStats as any).total ?? 0) - ((convexStats as any).meaningful ?? 0)),
-          low: 0,
-        },
-        pendingDrafts: convexInteractions
-          ? convexInteractions.filter((i: any) => !i.meaningful).length
-          : 0,
-      }
-    : SAMPLE_COMMUNITY;
+  if (!available) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+          Community Tracker
+        </h1>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Convex is not connected yet. No community signals are available.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (convexStats === undefined || convexInteractions === undefined) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+          Community Tracker
+        </h1>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Loading live community data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const data = {
+    current: convexStats.total ?? 0,
+    target: 50,
+    channels: Object.entries((convexStats as any).byChannel as Record<string, number>).map(([name, count]) => ({
+      name,
+      count,
+      icon: name.toLowerCase().includes("twitter")
+        ? "\u{1D54F}"
+        : name.toLowerCase().includes("github")
+          ? "GH"
+          : "DC",
+    })),
+    quality: {
+      high: (convexStats as any).meaningful ?? 0,
+      medium: Math.max(0, ((convexStats as any).total ?? 0) - ((convexStats as any).meaningful ?? 0)),
+      low: 0,
+    },
+    pendingDrafts: convexInteractions.filter((i: any) => !i.meaningful).length,
+  };
 
   const pct = Math.round((data.current / data.target) * 100);
 
@@ -104,23 +108,29 @@ export default function CommunityPage() {
           <h2 className="text-xs font-medium text-[var(--color-op-dim)] uppercase tracking-wider mb-3">
             By Channel
           </h2>
-          <div className="space-y-3">
-            {data.channels.map((ch) => (
-              <div key={ch.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-[var(--color-op-card-alt)] text-xs font-mono font-medium text-[var(--color-op-muted)]">
-                    {ch.icon}
-                  </span>
-                  <span className="text-sm text-[var(--color-op-text)]">
-                    {ch.name}
+          {data.channels.length === 0 ? (
+            <div className="text-sm text-[var(--color-op-dim)]">
+              No channel activity logged yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {data.channels.map((ch) => (
+                <div key={ch.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded bg-[var(--color-op-card-alt)] text-xs font-mono font-medium text-[var(--color-op-muted)]">
+                      {ch.icon}
+                    </span>
+                    <span className="text-sm text-[var(--color-op-text)]">
+                      {ch.name}
+                    </span>
+                  </div>
+                  <span className="font-mono text-sm font-semibold text-[var(--color-op-text)]">
+                    {ch.count}
                   </span>
                 </div>
-                <span className="font-mono text-sm font-semibold text-[var(--color-op-text)]">
-                  {ch.count}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quality Distribution */}
@@ -168,7 +178,7 @@ export default function CommunityPage() {
             Pending Drafts
           </div>
           <div className="text-xs text-[var(--color-op-dim)] mt-1">
-            Awaiting review
+            Awaiting review or posting
           </div>
         </div>
       </div>

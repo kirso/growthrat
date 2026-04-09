@@ -16,8 +16,9 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { WebClient } from "@slack/web-api";
+import { getSlackConnectorConfig } from "./runtimeConnectors";
 
 export const handleCommand = internalAction({
   args: {
@@ -26,8 +27,10 @@ export const handleCommand = internalAction({
     threadTs: v.string(),
   },
   handler: async (ctx, { command, channel, threadTs }) => {
-    const token = process.env.SLACK_BOT_TOKEN;
+    const { botToken } = await getSlackConnectorConfig(ctx);
+    const token = botToken;
     if (!token) return;
+    const runtime = await ctx.runQuery((api.agentConfig as any).getRuntimeState, {});
 
     const client = new WebClient(token);
     const cmd = command.toLowerCase().trim();
@@ -42,6 +45,10 @@ export const handleCommand = internalAction({
 
     // ── plan ──
     if (cmd === "plan" || cmd === "run plan" || cmd.startsWith("plan")) {
+      if (!runtime.isActive) {
+        await reply("🐭 I’m dormant right now. Interview-proof or RC-live mode must be enabled before I can run planning.");
+        return;
+      }
       await reply("🐭 Starting weekly planning...");
       await ctx.runMutation(internal.mutations.startWeeklyPlan, {});
       return;
@@ -49,6 +56,10 @@ export const handleCommand = internalAction({
 
     // ── write about X ──
     if (cmd.startsWith("write about ") || cmd.startsWith("write ")) {
+      if (!runtime.isActive) {
+        await reply("🐭 I’m dormant right now. Enable interview-proof or RC-live mode before I can generate content.");
+        return;
+      }
       const topic = cmd.replace(/^write (about )?/, "").trim();
       if (!topic) {
         await reply("Usage: `@GrowthRat write about [topic]`");
@@ -77,6 +88,10 @@ export const handleCommand = internalAction({
 
     // ── report ──
     if (cmd === "report" || cmd === "weekly report") {
+      if (!runtime.isActive) {
+        await reply("🐭 I’m dormant right now. Enable interview-proof or RC-live mode before I can generate reports.");
+        return;
+      }
       await reply("🐭 Generating weekly report...");
       await ctx.runMutation(internal.mutations.startWeeklyReport, {});
       return;
@@ -88,7 +103,7 @@ export const handleCommand = internalAction({
       const config = await ctx.runQuery(internal.slackCommandQueries.getAgentConfig, {});
       if (config) {
         await ctx.runMutation(internal.slackCommandMutations.pauseAgent, { paused: true });
-        await reply("🐭 *Paused.* All scheduled workflows will skip until resumed. Use `@GrowthRat resume` to restart.");
+        await reply("🐭 *Paused.* All scheduled workflows will skip until resumed. If the agent is dormant, set Operating Mode to interview-proof or RC-live in onboarding.");
       } else {
         await reply("🐭 No agent configuration found. Run onboarding first.");
       }
@@ -100,7 +115,11 @@ export const handleCommand = internalAction({
       const config = await ctx.runQuery(internal.slackCommandQueries.getAgentConfig, {});
       if (config) {
         await ctx.runMutation(internal.slackCommandMutations.pauseAgent, { paused: false });
-        await reply("🐭 *Resumed.* Workflows are active again.");
+        if (runtime.mode === "dormant") {
+          await reply("🐭 *Resumed.* Paused workflows can run again, but the agent is still dormant. Set Operating Mode to interview-proof or RC-live in onboarding to activate automation.");
+        } else {
+          await reply("🐭 *Resumed.* Workflows are active again.");
+        }
       } else {
         await reply("🐭 No agent configuration found. Run onboarding first.");
       }
@@ -125,6 +144,11 @@ export const handleCommand = internalAction({
 
     // ── fallback: answer from knowledge base ──
     try {
+      if (!runtime.isActive) {
+        await reply("🐭 I’m dormant right now. Enable interview-proof or RC-live mode before I answer open-ended questions.");
+        return;
+      }
+
       const { generateText } = await import("ai");
       const { anthropic } = await import("@ai-sdk/anthropic");
 

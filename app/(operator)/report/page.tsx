@@ -1,23 +1,15 @@
 "use client";
 
-import { useConvexQuery, convexApi } from "../hooks/useConvexSafe";
+import { useMemo, useState } from "react";
+import { useAction } from "convex/react";
+import { useConvexAvailable, useConvexQuery, convexApi } from "../hooks/useConvexSafe";
 
-// Sample data — used as fallback when Convex isn't connected
 interface Metric {
   label: string;
   current: number;
   target: number;
   color: string;
 }
-
-const SAMPLE_METRICS: Metric[] = [
-  { label: "Content", current: 2, target: 2, color: "var(--color-op-green)" },
-  { label: "Experiments", current: 1, target: 1, color: "var(--color-op-blue)" },
-  { label: "Feedback", current: 3, target: 3, color: "var(--color-op-amber)" },
-  { label: "Community", current: 12, target: 50, color: "var(--color-op-green)" },
-];
-
-const SAMPLE_WEEK = 1;
 
 function MetricBar({ metric }: { metric: Metric }) {
   const pct = Math.min((metric.current / metric.target) * 100, 100);
@@ -55,72 +47,116 @@ function MetricBar({ metric }: { metric: Metric }) {
 }
 
 export default function ReportPage() {
-  // CONVEX: wire to api.weeklyReports.getLatest when connected
+  const available = useConvexAvailable();
   const convexReport = useConvexQuery(convexApi?.weeklyReports?.getLatest, {});
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const sendLatestToSlack = available
+    ? useAction(convexApi?.weeklyReports?.sendLatestToSlack ?? ("__skip__" as any))
+    : null;
+  const [showPreview, setShowPreview] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  // Build metrics from Convex report, or fall back to sample data
-  const weekNumber = convexReport
-    ? (convexReport as any).weekNumber
-    : SAMPLE_WEEK;
+  if (!available) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+            Week Report
+          </h1>
+        </div>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Convex is not connected yet. No weekly report is available.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  const metrics: Metric[] = convexReport
+  if (convexReport === undefined) {
+    return (
+      <div className="space-y-6 max-w-3xl">
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+            Week Report
+          </h1>
+        </div>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Loading live weekly report...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const report = convexReport as { weekNumber?: number; contentCount?: number; experimentCount?: number; feedbackCount?: number; interactionCount?: number; reportContent?: string } | null;
+  const hasReport = !!report;
+  const weekNumber = report?.weekNumber ?? 0;
+
+  const metrics: Metric[] = report
     ? [
         {
           label: "Content",
-          current: (convexReport as any).contentCount ?? 0,
+          current: report.contentCount ?? 0,
           target: 2,
           color: "var(--color-op-green)",
         },
         {
           label: "Experiments",
-          current: (convexReport as any).experimentCount ?? 0,
+          current: report.experimentCount ?? 0,
           target: 1,
           color: "var(--color-op-blue)",
         },
         {
           label: "Feedback",
-          current: (convexReport as any).feedbackCount ?? 0,
+          current: report.feedbackCount ?? 0,
           target: 3,
           color: "var(--color-op-amber)",
         },
         {
           label: "Community",
-          current: (convexReport as any).interactionCount ?? 0,
+          current: report.interactionCount ?? 0,
           target: 50,
           color: "var(--color-op-green)",
         },
       ]
-    : SAMPLE_METRICS;
+    : [];
 
-  const handlePreview = () => {
-    // Will open preview modal or navigate to preview page
-    alert("Preview report — not yet implemented");
-  };
-
-  const handleSendToSlack = () => {
-    // Will call Convex mutation to send to Slack
-    alert("Send to Slack — not yet implemented");
-  };
-
-  const handleExportMD = () => {
-    // Use Convex report content if available, else generate from metrics
-    const reportContent = convexReport
-      ? (convexReport as any).reportContent
-      : null;
-
-    const md = reportContent ?? [
+  const previewMarkdown = useMemo(() => {
+    const reportContent = report?.reportContent ?? null;
+    return reportContent ?? [
       `# Week ${weekNumber} Report`,
       "",
       "## Metrics",
-      ...metrics.map(
-        (m) => `- **${m.label}**: ${m.current}/${m.target}`
-      ),
+      ...metrics.map((m) => `- **${m.label}**: ${m.current}/${m.target}`),
       "",
       "---",
       `Generated by GrowthRat Operator`,
     ].join("\n");
+  }, [metrics, report?.reportContent, weekNumber]);
 
-    const blob = new Blob([md], { type: "text/markdown" });
+  const handlePreview = () => {
+    setShowPreview((current) => !current);
+  };
+
+  const handleSendToSlack = async () => {
+    if (!sendLatestToSlack || !hasReport) return;
+    setSending(true);
+    setMessage(null);
+    try {
+      const result = await sendLatestToSlack({});
+      setMessage(result?.posted ? "Report sent to Slack." : "Slack is not connected, so the report was not sent.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Failed to send report to Slack");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleExportMD = () => {
+    const blob = new Blob([previewMarkdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -129,81 +165,117 @@ export default function ReportPage() {
     URL.revokeObjectURL(url);
   };
 
-  const allComplete = metrics.every((m) => m.current >= m.target);
+  const allComplete = metrics.length > 0 && metrics.every((m) => m.current >= m.target);
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-baseline justify-between">
         <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
-          Week {weekNumber} Report
+          Week {weekNumber ? weekNumber : "—"} Report
         </h1>
-        {allComplete ? (
-          <span className="flex items-center gap-1.5 text-sm text-[var(--color-op-green)]">
-            <span className="inline-block w-2 h-2 rounded-full bg-[var(--color-op-green)]" />
-            All targets met
-          </span>
+        {metrics.length > 0 ? (
+          allComplete ? (
+            <span className="flex items-center gap-1.5 text-sm text-[var(--color-op-green)]">
+              <span className="inline-block w-2 h-2 rounded-full bg-[var(--color-op-green)]" />
+              All targets met
+            </span>
+          ) : (
+            <span className="text-sm text-[var(--color-op-muted)]">
+              In progress
+            </span>
+          )
         ) : (
-          <span className="text-sm text-[var(--color-op-muted)]">
-            In progress
+          <span className="text-sm text-[var(--color-op-dim)]">
+            No weekly metrics yet
           </span>
         )}
       </div>
 
-      {/* Metric progress bars */}
-      <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-5 space-y-5">
-        {metrics.map((metric) => (
-          <MetricBar key={metric.label} metric={metric} />
-        ))}
-      </div>
-
-      {/* Summary */}
-      <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-5">
-        <h2 className="text-xs font-medium text-[var(--color-op-dim)] uppercase tracking-wider mb-3">
-          Summary
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {metrics.map((m) => (
-            <div key={m.label} className="text-center">
-              <div
-                className="text-2xl font-bold"
-                style={{
-                  color:
-                    m.current >= m.target
-                      ? "var(--color-op-green)"
-                      : "var(--color-op-text)",
-                }}
-              >
-                {Math.round((m.current / m.target) * 100)}%
-              </div>
-              <div className="text-xs text-[var(--color-op-muted)] mt-0.5">
-                {m.label}
-              </div>
-            </div>
-          ))}
+      {message && (
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-3 text-sm text-[var(--color-op-text)]">
+          {message}
         </div>
-      </div>
+      )}
+
+      {!hasReport ? (
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            No report has been generated yet. Run the weekly report workflow to populate live metrics.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Metric progress bars */}
+          <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-5 space-y-5">
+            {metrics.map((metric) => (
+              <MetricBar key={metric.label} metric={metric} />
+            ))}
+          </div>
+
+          {/* Summary */}
+          <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-5">
+            <h2 className="text-xs font-medium text-[var(--color-op-dim)] uppercase tracking-wider mb-3">
+              Summary
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {metrics.map((m) => (
+                <div key={m.label} className="text-center">
+                  <div
+                    className="text-2xl font-bold"
+                    style={{
+                      color:
+                        m.current >= m.target
+                          ? "var(--color-op-green)"
+                          : "var(--color-op-text)",
+                    }}
+                  >
+                    {Math.round((m.current / m.target) * 100)}%
+                  </div>
+                  <div className="text-xs text-[var(--color-op-muted)] mt-0.5">
+                    {m.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap gap-3">
         <button
           onClick={handlePreview}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-op-card)] border border-[var(--color-op-border)] text-[var(--color-op-text)] hover:bg-[var(--color-op-card-alt)] transition-colors"
+          disabled={!hasReport}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-op-card)] border border-[var(--color-op-border)] text-[var(--color-op-text)] hover:bg-[var(--color-op-card-alt)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Preview Report
         </button>
         <button
           onClick={handleSendToSlack}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-op-card)] border border-[var(--color-op-border)] text-[var(--color-op-text)] hover:bg-[var(--color-op-card-alt)] transition-colors"
+          disabled={!hasReport || sending}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-op-card)] border border-[var(--color-op-border)] text-[var(--color-op-text)] hover:bg-[var(--color-op-card-alt)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Send to Slack
+          {sending ? "Sending…" : "Send to Slack"}
         </button>
         <button
           onClick={handleExportMD}
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-op-green)] text-white hover:opacity-90 transition-opacity"
+          disabled={!hasReport}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--color-op-green)] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Export MD
         </button>
       </div>
+
+      {hasReport && showPreview && (
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-5">
+          <h2 className="text-xs font-medium text-[var(--color-op-dim)] uppercase tracking-wider mb-3">
+            Report Preview
+          </h2>
+          <pre className="whitespace-pre-wrap text-sm text-[var(--color-op-text)] font-mono">
+            {previewMarkdown}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }

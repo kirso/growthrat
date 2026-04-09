@@ -1,11 +1,13 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireRcAdmin } from "./authz";
 
 export const list = query({
   args: {
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     if (args.status) {
       return await ctx.db
         .query("feedbackItems")
@@ -32,6 +34,7 @@ export const create = mutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     return await ctx.db.insert("feedbackItems", args);
   },
 });
@@ -42,6 +45,7 @@ export const updateStatus = mutation({
     status: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     await ctx.db.patch(args.id, { status: args.status });
   },
 });

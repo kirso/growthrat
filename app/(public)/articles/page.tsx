@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 
 export const metadata: Metadata = {
   title: "Articles",
-  description: "All published content from GrowthRat.",
+  description: "Portfolio samples and pipeline-generated content from GrowthRat.",
 };
 
 interface ArticleItem {
@@ -17,6 +17,7 @@ interface ArticleItem {
   pubDate?: string;
   publishedAt?: number;
   content?: string;
+  originLabel?: string;
 }
 
 const HARDCODED_ARTICLES: ArticleItem[] = [
@@ -24,9 +25,10 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
     slug: "week-one-async-report",
     title: "Week One Async Check-In Report",
     description:
-      "GrowthRat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
+      "Sample weekly report: content produced, experiment brief drafted, feedback reports prepared, and operating loop demonstrated.",
     category: "report",
     pubDate: "2026-03-16",
+    originLabel: "Portfolio sample",
   },
   {
     slug: "revenuecat-for-agent-built-apps",
@@ -35,6 +37,7 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
       "How AI agents can integrate RevenueCat's offerings, entitlements, and webhooks to build monetized apps programmatically — with real API examples.",
     category: "technical",
     pubDate: "2026-03-15",
+    originLabel: "Portfolio sample",
   },
   {
     slug: "week-one-experiment-report",
@@ -43,6 +46,7 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
       "Testing whether data-grounded content outperforms generic content on search visibility and engagement metrics.",
     category: "experiment",
     pubDate: "2026-03-15",
+    originLabel: "Portfolio sample",
   },
   {
     slug: "agent-onboarding-reference-path-gap",
@@ -51,6 +55,7 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
       "RevenueCat's getting-started flow assumes a human developer with an IDE. Agent builders need a different entry point.",
     category: "feedback",
     pubDate: "2026-03-14",
+    originLabel: "Portfolio sample",
   },
   {
     slug: "charts-behavioral-analytics-bridge",
@@ -59,6 +64,7 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
       "RevenueCat Charts are powerful but dashboard-only. Agent-driven growth work needs programmatic access to subscription analytics.",
     category: "feedback",
     pubDate: "2026-03-14",
+    originLabel: "Portfolio sample",
   },
   {
     slug: "webhook-trust-boundaries",
@@ -67,6 +73,7 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
       "Webhook verification and replay capabilities need improvement for agent-operated systems that can't tolerate missed events.",
     category: "feedback",
     pubDate: "2026-03-13",
+    originLabel: "Portfolio sample",
   },
 ];
 
@@ -97,7 +104,6 @@ function formatTimestamp(ts: number) {
 }
 
 export default async function ArticlesPage() {
-  // Try to fetch published artifacts from Convex; fall back to hardcoded array
   let articles: ArticleItem[] = HARDCODED_ARTICLES;
 
   try {
@@ -105,14 +111,27 @@ export default async function ArticlesPage() {
       () => null
     );
     if (convexArticles && convexArticles.length > 0) {
-      articles = convexArticles.map((a: { slug: string; title: string; content?: string; artifactType?: string; publishedAt?: number }) => ({
+      articles = convexArticles.map((a: {
+        slug: string;
+        title: string;
+        content?: string;
+        artifactType?: string;
+        publishedAt?: number;
+        metadata?: { origin?: string };
+      }) => ({
         slug: a.slug,
         title: a.title,
         description: (a.content ?? "").slice(0, 180) + "...",
-        category: a.artifactType,
-        artifactType: a.artifactType,
-        publishedAt: a.publishedAt,
-      }));
+          category: a.artifactType,
+          artifactType: a.artifactType,
+          publishedAt: a.publishedAt,
+          originLabel:
+            a.metadata?.origin === "pipeline"
+              ? "Activated run"
+              : a.metadata?.origin === "seed"
+                ? "Portfolio sample"
+                : "Artifact",
+        }));
     }
   } catch {
     // Convex not available or types not generated — use hardcoded fallback
@@ -154,6 +173,11 @@ export default async function ArticlesPage() {
                   >
                     {category}
                   </span>
+                  {article.originLabel && (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-rc-surface)] text-[var(--color-rc-muted)]">
+                      {article.originLabel}
+                    </span>
+                  )}
                   {dateTime && (
                     <time
                       className="text-xs text-[var(--color-rc-muted)]"

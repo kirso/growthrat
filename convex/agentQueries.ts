@@ -30,8 +30,10 @@ export const getArtifactBySlug = internalQuery({
 
     if (!article) return null;
     return {
+      _id: article._id,
+      slug: article.slug,
       title: article.title,
-      content: article.content.slice(0, 2000),
+      content: article.content,
       status: article.status,
     };
   },
@@ -61,6 +63,78 @@ export const getLatestReport = internalQuery({
       experimentCount: report.experimentCount,
       feedbackCount: report.feedbackCount,
       interactionCount: report.interactionCount,
+    };
+  },
+});
+
+export const getLatestReportWithContent = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("weeklyReports")
+      .order("desc")
+      .first();
+  },
+});
+
+/** Get an experiment by its key */
+export const getExperimentByKey = internalQuery({
+  args: { experimentKey: v.string() },
+  handler: async (ctx, { experimentKey }) => {
+    return await ctx.db
+      .query("experiments")
+      .filter((q) => q.eq(q.field("experimentKey"), experimentKey))
+      .first();
+  },
+});
+
+/** Get completed experiments for the learning loop */
+export const getCompletedExperiments = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("experiments")
+      .withIndex("by_status", (q) => q.eq("status", "completed"))
+      .order("desc")
+      .take(10);
+  },
+});
+
+/** Get the latest experiment (for panel tool) */
+export const getLatestExperiment = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    // Prefer running experiments, then most recent
+    const running = await ctx.db
+      .query("experiments")
+      .withIndex("by_status", (q) => q.eq("status", "running"))
+      .first();
+    if (running) return running;
+    return await ctx.db.query("experiments").order("desc").first();
+  },
+});
+
+/** Get aggregated weekly metrics summary (for panel tool) */
+export const getWeeklyMetricsSummary = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const artifacts = await ctx.db.query("artifacts").collect();
+    const experiments = await ctx.db.query("experiments").collect();
+    const feedback = await ctx.db.query("feedbackItems").collect();
+    const interactions = await ctx.db.query("communityInteractions").collect();
+    const latestReport = await ctx.db.query("weeklyReports").order("desc").first();
+
+    return {
+      week: latestReport?.weekNumber ?? 0,
+      contentPublished: artifacts.filter((a) => a.status === "published").length,
+      contentTarget: 2,
+      experimentsRunning: experiments.filter((e) => e.status === "running").length,
+      experimentsTarget: 1,
+      feedbackFiled: feedback.length,
+      feedbackTarget: 3,
+      communityInteractions: interactions.length,
+      communityTarget: 50,
+      source: "convex" as const,
     };
   },
 });

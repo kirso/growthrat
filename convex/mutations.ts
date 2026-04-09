@@ -6,23 +6,39 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { isRuntimeActive } from "./agentConfig";
 
 // ---------------------------------------------------------------------------
 // Scoring + Planning
 // ---------------------------------------------------------------------------
 
 export const scorePlan = internalMutation({
-  args: { keywords: v.any(), weekNumber: v.number() },
-  handler: async (ctx, { keywords, weekNumber }) => {
+  args: { keywords: v.any(), weekNumber: v.number(), experimentHistory: v.optional(v.any()), lastWeekMetrics: v.optional(v.any()) },
+  handler: async (ctx, { keywords, weekNumber, experimentHistory }) => {
+    // Build a set of keywords that had positive experiment results (learning loop)
+    const expHistory = (experimentHistory ?? []) as Array<{ results?: { delta?: number }; title?: string }>;
+    const boostedKeywords = new Set<string>();
+    const penalizedKeywords = new Set<string>();
+    for (const exp of expHistory) {
+      const keyword = (exp.title ?? "").replace("Experiment: ", "").toLowerCase();
+      if (keyword && exp.results?.delta !== undefined) {
+        if (exp.results.delta > 0) boostedKeywords.add(keyword);
+        else penalizedKeywords.add(keyword);
+      }
+    }
+
     const scored = (keywords as Array<{ keyword: string; difficulty: number; volume: number }>)
-      .map((kw) => ({
-        ...kw,
-        score: Math.round(
-          (((100 - kw.difficulty) / 100) * 0.4 +
-            (Math.min(kw.volume, 1000) / 1000) * 0.3 +
-            (kw.keyword.includes("revenuecat") ? 0.3 : 0.1)) * 100
-        ) / 100,
-      }))
+      .map((kw) => {
+        const lower = kw.keyword.toLowerCase();
+        // Base score: difficulty (40%) + volume (30%) + brand match (30%)
+        let score = ((100 - kw.difficulty) / 100) * 0.4 +
+          (Math.min(kw.volume, 1000) / 1000) * 0.3 +
+          (kw.keyword.includes("revenuecat") ? 0.3 : 0.1);
+        // Learning loop adjustments from experiment history
+        if (boostedKeywords.has(lower)) score += 0.15;
+        if (penalizedKeywords.has(lower)) score -= 0.1;
+        return { ...kw, score: Math.round(Math.max(0, Math.min(1, score)) * 100) / 100 };
+      })
       .sort((a, b) => b.score - a.score);
 
     for (const opp of scored) {
@@ -60,6 +76,7 @@ export const createArtifact = internalMutation({
     content: v.string(),
     contentFormat: v.string(),
     status: v.string(),
+    metadata: v.optional(v.any()),
     llmProvider: v.optional(v.string()),
     llmModel: v.optional(v.string()),
     inputTokens: v.optional(v.number()),
@@ -158,6 +175,19 @@ export const createFeedbackItem = internalMutation({
   },
 });
 
+export const updateFeedbackMetadata = internalMutation({
+  args: {
+    id: v.id("feedbackItems"),
+    metadata: v.any(),
+    status: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, metadata, status }) => {
+    const patch: Record<string, unknown> = { metadata };
+    if (status) patch.status = status;
+    await ctx.db.patch(id, patch);
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Experiments
 // ---------------------------------------------------------------------------
@@ -199,6 +229,32 @@ export const startExperiment = internalMutation({
   },
 });
 
+export const scheduleExperimentMeasurement = internalMutation({
+  args: { experimentKey: v.string(), targetKeyword: v.string(), contentSlug: v.string() },
+  handler: async (ctx, args) => {
+    // Schedule measurement 7 days from now
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    await ctx.scheduler.runAfter(sevenDaysMs, internal.actions.measureExperiment, args);
+  },
+});
+
+export const completeExperiment = internalMutation({
+  args: { experimentKey: v.string(), results: v.any() },
+  handler: async (ctx, { experimentKey, results }) => {
+    const exp = await ctx.db
+      .query("experiments")
+      .filter((q) => q.eq(q.field("experimentKey"), experimentKey))
+      .first();
+    if (exp) {
+      await ctx.db.patch(exp._id, {
+        status: "completed",
+        results,
+        completedAt: Date.now(),
+      });
+    }
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Community
 // ---------------------------------------------------------------------------
@@ -225,6 +281,11 @@ import { workflow } from "./workflows/index";
 export const startWeeklyPlan = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Weekly plan skipped — agent not active");
+      return;
+    }
     const weekNumber = Math.ceil(
       (Date.now() - new Date("2026-03-16").getTime()) / (7 * 24 * 60 * 60 * 1000)
     ) + 1;
@@ -235,6 +296,11 @@ export const startWeeklyPlan = internalMutation({
 export const startWeeklyReport = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Weekly report skipped — agent not active");
+      return;
+    }
     const weekNumber = Math.ceil(
       (Date.now() - new Date("2026-03-16").getTime()) / (7 * 24 * 60 * 60 * 1000)
     ) + 1;
@@ -245,6 +311,11 @@ export const startWeeklyReport = internalMutation({
 export const startCommunityMonitor = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Community monitor skipped — agent not active");
+      return;
+    }
     await workflow.start(ctx, internal.workflows.index.communityMonitorWorkflow, {});
   },
 });
@@ -252,13 +323,23 @@ export const startCommunityMonitor = internalMutation({
 export const startKnowledgeIngest = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Knowledge ingest skipped — agent not active");
+      return;
+    }
     await workflow.start(ctx, internal.workflows.index.knowledgeIngestWorkflow, {});
   },
 });
 
 export const startContentGen = internalMutation({
-  args: { topic: v.string(), targetKeyword: v.string() },
+  args: { topic: v.string(), targetKeyword: v.string(), artifactType: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Content generation skipped — agent not active");
+      return;
+    }
     await workflow.start(ctx, internal.workflows.index.contentGenWorkflow, args);
   },
 });
@@ -266,6 +347,11 @@ export const startContentGen = internalMutation({
 export const startTaskExecution = internalMutation({
   args: { taskPrompt: v.string(), deadline: v.optional(v.string()) },
   handler: async (ctx, args) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Task execution skipped — agent not active");
+      return;
+    }
     await workflow.start(ctx, internal.workflows.taskExecution.executeTask, args);
   },
 });
@@ -278,6 +364,11 @@ export const startExperimentRunner = internalMutation({
     contentSlug: v.string(),
   },
   handler: async (ctx, args) => {
+    const config = await ctx.db.query("agentConfig").first();
+    if (!isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Experiment runner skipped — agent not active");
+      return;
+    }
     await workflow.start(ctx, internal.workflows.experimentRunner.runExperiment, args);
   },
 });

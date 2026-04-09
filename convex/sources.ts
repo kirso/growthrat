@@ -8,6 +8,50 @@ export const list = query({
   },
 });
 
+export const count = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("sources").collect();
+    return { total: all.length, providers: [...new Set(all.map((s) => s.provider))] };
+  },
+});
+
+export const getFreshnessSummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("sources").collect();
+    const now = Date.now();
+    const staleThresholdMs = 7 * 24 * 60 * 60 * 1000;
+
+    const stale = all.filter((source) => now - source.lastRefreshed > staleThresholdMs);
+    const byProvider: Record<string, { total: number; stale: number }> = {};
+    for (const source of all) {
+      const bucket = byProvider[source.provider] ?? { total: 0, stale: 0 };
+      bucket.total += 1;
+      if (now - source.lastRefreshed > staleThresholdMs) bucket.stale += 1;
+      byProvider[source.provider] = bucket;
+    }
+
+    const oldest = all
+      .slice()
+      .sort((a, b) => a.lastRefreshed - b.lastRefreshed)[0];
+
+    return {
+      total: all.length,
+      staleCount: stale.length,
+      staleThresholdMs,
+      oldestSource: oldest
+        ? {
+            key: oldest.key,
+            provider: oldest.provider,
+            lastRefreshed: oldest.lastRefreshed,
+          }
+        : null,
+      byProvider,
+    };
+  },
+});
+
 export const getById = query({
   args: { id: v.id("sources") },
   handler: async (ctx, { id }) => {
@@ -101,7 +145,10 @@ export const auditFreshness = internalMutation({
       `[cron] auditFreshness: ${staleCount} stale out of ${sources.length} total sources`
     );
 
-    // TODO: send Slack notification if stale sources found
-    // TODO: trigger automatic refresh for stale sources
+    if (staleCount > 0) {
+      console.log(
+        `[cron] auditFreshness: ALERT ${staleCount} stale sources detected; trigger knowledge ingest to refresh the docs corpus`
+      );
+    }
   },
 });

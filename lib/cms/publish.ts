@@ -20,13 +20,13 @@ export interface ArticleContent {
 
 export async function publishArticle(
   article: ArticleContent
-): Promise<{ published: boolean; url?: string; method: string }> {
+): Promise<{ published: boolean; url?: string; method: string; state: "built" | "activated" | "rc-connected"; reason?: string }> {
   const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER ?? "growthrat";
-  const repo = process.env.GITHUB_REPO ?? "ai-growth-agent";
+  const owner = process.env.GITHUB_OWNER ?? "kirso";
+  const repo = process.env.GITHUB_CONTENT_REPO ?? process.env.GITHUB_REPO ?? "growthcat";
 
   if (!token) {
-    return { published: false, method: "dry-run: no GITHUB_TOKEN" };
+    return { published: false, method: "dry-run: no GITHUB_TOKEN", state: "built", reason: "no GITHUB_TOKEN" };
   }
 
   const path = `content/articles/${article.slug}.md`;
@@ -65,6 +65,18 @@ ${article.content}
 
   if (checkRes.ok) {
     const existing = await checkRes.json();
+    const existingContent = typeof existing.content === "string" && existing.encoding === "base64"
+      ? Buffer.from(existing.content.replace(/\n/g, ""), "base64").toString("utf8")
+      : null;
+    if (existingContent === markdown) {
+      return {
+        published: true,
+        url: existing.html_url ?? `https://${owner}.github.io/${repo}/articles/${article.slug}`,
+        method: "github-commit",
+        state: "activated",
+        reason: "already up to date",
+      };
+    }
     body.sha = existing.sha; // update existing
   }
 
@@ -82,12 +94,13 @@ ${article.content}
 
   if (!res.ok) {
     const err = await res.text();
-    return { published: false, method: `github error: ${err.slice(0, 200)}` };
+    return { published: false, method: `github error: ${err.slice(0, 200)}`, state: "built", reason: err.slice(0, 200) };
   }
 
   return {
     published: true,
     url: `https://${owner}.github.io/${repo}/articles/${article.slug}`,
     method: "github-commit",
+    state: "activated",
   };
 }

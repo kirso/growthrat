@@ -1,6 +1,7 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamText, UIMessage, convertToModelMessages, smoothStream } from "ai";
-import { GROWTHCAT_VOICE_PROFILE } from "@/lib/config/voice";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { AI_MODEL_IDS, getEstimatedAnthropicUsd, getRouteModel, getRouteProviderOptions } from "@/lib/ai/runtime";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -17,7 +18,7 @@ WEEKLY CADENCE (designed for, activates fully with Slack + distribution credenti
 - Friday: Generate weekly report with real metrics from the database, post to Slack (when connected)
 
 CAPABILITIES (working right now):
-- Ingest and search documentation — 1,700+ chunks from 340+ RevenueCat doc pages embedded and searchable via vector search
+- Ingest and search documentation — when the knowledge base is populated, RevenueCat doc pages are embedded and searchable via vector search
 - Content pipeline: research with RAG → generate via LLM → validation (grounding, voice, length checks) → store in database
 - Structured product feedback: uses the product as an agent developer, identifies friction, files structured reports
 - Growth experiment framework: hypothesis → baseline → execution → measurement workflow defined
@@ -30,13 +31,13 @@ CAPABILITIES (built, activate with credentials):
 - Community monitoring: scans GitHub repos for agent-related issues, generates responses
 - GitHub distribution: commits article markdown to repository for SEO backup
 
-WHAT YOU'VE ALREADY SHIPPED (reference these with specifics):
+PORTFOLIO ARTIFACTS (published on GrowthRat's own site as proof samples, not on RevenueCat's blog):
 - "Agent-Native Subscription Flows with RevenueCat" — technical guide showing how agents use offerings, entitlements, webhooks via REST API v2
 - 3 product feedback reports: Agent Onboarding Reference Path Gap, Charts & Behavioral Analytics Bridge, Webhook Sync Trust Boundaries
-- 1 growth experiment: Distribution Channel Test comparing keyword-targeted vs intuition-based content
-- 1 weekly async check-in report with real metrics
+- 1 growth experiment brief: Distribution Channel Test — demonstrates the measurement system on GrowthRat's domain (post-hire: would run against RC's domain)
+- 1 weekly async check-in report with real metrics from the operator database
 - Full operator dashboard with live data from the database
-- Self-service onboarding flow for RC to connect their services
+- Self-service onboarding flow for RC to connect their assets post-hire
 
 CONSTRAINTS (be honest about these):
 - You are an autonomous agent, NOT a human. You cannot attend meetings, make phone calls, or have informal conversations.
@@ -51,8 +52,68 @@ When answering questions about RevenueCat, ALWAYS use the RETRIEVED DOCUMENTATIO
 
 Keep responses concise. Use markdown for formatting.`;
 
+function getRequestKey(req: Request, feature: string) {
+  const forwarded = req.headers.get("x-forwarded-for");
+  const realIp = req.headers.get("x-real-ip");
+  const ip = forwarded?.split(",")[0]?.trim() || realIp || "anonymous";
+  return `${feature}:${ip}`;
+}
+
 export async function POST(req: Request) {
   const { messages, threadId }: { messages: UIMessage[]; threadId?: string } = await req.json();
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
+
+  if (!convex) {
+    return new Response(
+      "GrowthRat is dormant right now. Backend connectivity is unavailable, so public chat is closed.",
+      { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+
+  try {
+    const runtime = await convex.query((api.agentConfig as any).getRuntimeState, {});
+    if (!runtime.isActive) {
+      return new Response(
+        "GrowthRat is dormant right now. Enable interview-proof or RC-live mode before using public chat.",
+        { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+      );
+    }
+  } catch {
+    return new Response(
+      "GrowthRat is dormant right now. Runtime state could not be verified, so public chat is closed.",
+      { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+
+  let rateStatus;
+  let budgetStatus;
+  try {
+    rateStatus = await convex.mutation((api.rateLimits as any).consumePublicChat, {
+      key: getRequestKey(req, "public_chat"),
+    });
+    budgetStatus = await convex.query((api.usageEvents as any).getBudgetStatus, {
+      feature: "public_chat",
+    });
+  } catch {
+    return new Response(
+      "GrowthRat could not verify chat limits right now, so public chat is closed.",
+      { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+
+  if (!rateStatus?.ok) {
+    return new Response(
+      `Public chat rate limit reached. Retry after ${Math.ceil((rateStatus.retryAfter ?? 60_000) / 1000)} seconds.`,
+      { status: 429, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+  if (!budgetStatus?.ok) {
+    return new Response(
+      budgetStatus?.reason ?? "Public chat budget is exhausted right now. Try again later.",
+      { status: 429, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
 
   // Extract the latest user message for RAG query
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
@@ -65,7 +126,8 @@ export async function POST(req: Request) {
   let ragContext = "";
   if (query.length > 5) {
     try {
-      ragContext = await fetchRAGContext(query);
+      const result = await convex.action(api.chat.searchKnowledge, { query });
+      ragContext = result.context ?? "";
     } catch {
       // Knowledge base not available — fall through
     }
@@ -77,32 +139,42 @@ export async function POST(req: Request) {
     : BASE_SYSTEM_PROMPT;
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-20250514"),
+    model: getRouteModel("generation"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
+    providerOptions: getRouteProviderOptions("generation"),
     maxOutputTokens: 2048,
     temperature: 0.4,
     experimental_transform: smoothStream({ delayInMs: 12, chunking: "word" }),
-    onFinish: async ({ text }) => {
+    onFinish: async ({ text, usage }) => {
       // Persist messages to Convex for thread history (fire-and-forget)
       if (threadId && query && text) {
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-        if (convexUrl) {
-          const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
-          // Save user message
-          fetch(`${siteUrl}/api/chat-history`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ threadId, role: "user", content: query }),
-          }).catch(() => {});
-          // Save assistant response
-          fetch(`${siteUrl}/api/chat-history`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ threadId, role: "assistant", content: text }),
-          }).catch(() => {});
-        }
+        void convex.mutation(api.chatHistory.saveMessage, {
+          threadId,
+          role: "user",
+          content: query,
+        }).catch(() => {});
+        void convex.mutation(api.chatHistory.saveMessage, {
+          threadId,
+          role: "assistant",
+          content: text,
+        }).catch(() => {});
       }
+      void convex.mutation((api.usageEvents as any).record, {
+        feature: "public_chat",
+        workflowType: "chat",
+        provider: "anthropic",
+        model: AI_MODEL_IDS.generation,
+        inputTokens: usage?.inputTokens ?? 0,
+        outputTokens: usage?.outputTokens ?? 0,
+        estimatedUsd: getEstimatedAnthropicUsd(AI_MODEL_IDS.generation, usage),
+        success: true,
+        metadata: {
+          threadId: threadId ?? null,
+          ragUsed: Boolean(ragContext),
+          cachedPrompt: true,
+        },
+      }).catch(() => {});
     },
   });
 
@@ -112,54 +184,4 @@ export async function POST(req: Request) {
     response.headers.set("X-Thread-Id", threadId);
   }
   return response;
-}
-
-/**
- * Fetch RAG context from Convex sources table via vector search.
- * Generates a Voyage embedding for the query, searches the sources table,
- * and returns the top matching doc summaries as context text.
- */
-async function fetchRAGContext(query: string): Promise<string> {
-  const voyageKey = process.env.VOYAGE_API_KEY;
-  if (!voyageKey) return "";
-
-  // Generate embedding for the query
-  const embRes = await fetch("https://api.voyageai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${voyageKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "voyage-3-lite",
-      input: [query.slice(0, 4000)],
-    }),
-  });
-
-  if (!embRes.ok) return "";
-  const embData = await embRes.json();
-  const embedding = embData.data?.[0]?.embedding;
-  if (!embedding) return "";
-
-  // Search Convex sources via the HTTP action endpoint
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!convexUrl) return "";
-
-  const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
-  const searchRes = await fetch(`${siteUrl}/api/vector-search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ embedding, limit: 5 }),
-  });
-
-  if (!searchRes.ok) return "";
-  const results = await searchRes.json();
-
-  if (!results.docs || results.docs.length === 0) return "";
-
-  return results.docs
-    .map((d: { provider: string; key: string; summary: string }) =>
-      `[${d.provider} — ${d.key}]:\n${d.summary}`
-    )
-    .join("\n\n---\n\n");
 }

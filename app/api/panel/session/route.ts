@@ -1,9 +1,18 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { streamText, tool, stepCountIs, smoothStream } from "ai";
 import { z } from "zod";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { AI_MODEL_IDS, getEstimatedAnthropicUsd, getRouteModel, getRouteProviderOptions } from "@/lib/ai/runtime";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
+
+function getRequestKey(req: Request, feature: string) {
+  const forwarded = req.headers.get("x-forwarded-for");
+  const realIp = req.headers.get("x-real-ip");
+  const ip = forwarded?.split(",")[0]?.trim() || realIp || "anonymous";
+  return `${feature}:${ip}`;
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -19,6 +28,12 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
+  if (!convex) {
+    return new Response("GrowthRat panel is unavailable because backend connectivity is missing.", { status: 503 });
+  }
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -30,6 +45,71 @@ export async function GET(req: Request) {
 
       const startTime = Date.now();
       const elapsed = () => Date.now() - startTime;
+
+      try {
+        const runtime = await convex.query((api.agentConfig as any).getRuntimeState, {});
+        if (!runtime.isActive) {
+          send("progress", {
+            step: "dormant",
+            content: "GrowthRat is dormant right now. Enable interview-proof or RC-live mode before using the panel.",
+            elapsed_ms: elapsed(),
+          });
+          send("done", { step: "complete", elapsed_ms: elapsed() });
+          controller.close();
+          return;
+        }
+      } catch {
+        send("progress", {
+          step: "dormant",
+          content: "GrowthRat is dormant right now. Runtime state could not be verified, so the panel is closed.",
+          elapsed_ms: elapsed(),
+        });
+        send("done", { step: "complete", elapsed_ms: elapsed() });
+        controller.close();
+        return;
+      }
+
+      let rateStatus;
+      let budgetStatus;
+      try {
+        rateStatus = await convex.mutation((api.rateLimits as any).consumePanel, {
+          key: getRequestKey(req, "public_panel"),
+        });
+        budgetStatus = await convex.query((api.usageEvents as any).getBudgetStatus, {
+          feature: "public_panel",
+        });
+      } catch {
+        send("progress", {
+          step: "limits_unavailable",
+          content: "GrowthRat could not verify panel limits right now, so the panel is closed.",
+          elapsed_ms: elapsed(),
+        });
+        send("done", { step: "complete", elapsed_ms: elapsed() });
+        controller.close();
+        return;
+      }
+
+      if (!rateStatus?.ok) {
+        send("progress", {
+          step: "rate_limited",
+          content: `Panel rate limit reached. Retry after ${Math.ceil((rateStatus.retryAfter ?? 60_000) / 1000)} seconds.`,
+          elapsed_ms: elapsed(),
+        });
+        send("done", { step: "complete", elapsed_ms: elapsed() });
+        controller.close();
+        return;
+      }
+
+      if (!budgetStatus?.ok) {
+        send("progress", {
+          step: "budget_exhausted",
+          content: budgetStatus?.reason ?? "Panel budget is exhausted right now.",
+          elapsed_ms: elapsed(),
+        });
+        send("done", { step: "complete", elapsed_ms: elapsed() });
+        controller.close();
+        return;
+      }
 
       // Step 1: Prompt received
       send("progress", { step: "prompt_received", content: prompt, elapsed_ms: elapsed() });
@@ -43,7 +123,7 @@ export async function GET(req: Request) {
 
       try {
         const result = streamText({
-          model: anthropic("claude-sonnet-4-20250514"),
+          model: getRouteModel("reasoning"),
           system: `You are GrowthRat in a live panel interview at RevenueCat.
 The interviewer is watching you think and work in real time on a shared screen.
 
@@ -58,6 +138,7 @@ Show your reasoning. Cite the specific sources you found. Be honest about uncert
 Tone: technical, structured, evidence-backed, direct.
 GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned property.`,
           prompt,
+          providerOptions: getRouteProviderOptions("reasoning"),
           tools: {
             searchKnowledge: tool({
               description: "Search RevenueCat documentation and knowledge base. Use this for ANY question about RC products, APIs, SDKs, webhooks, offerings, entitlements, paywalls, or charts.",
@@ -65,8 +146,8 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
                 query: z.string().describe("What to search for in the RC knowledge base"),
               }),
               execute: async ({ query }) => {
-                const results = await searchKnowledgeBase(query);
-                return results;
+                const result = await convex.action(api.chat.searchKnowledge, { query });
+                return result.context || "No relevant documentation found.";
               },
             }),
             searchKeywords: tool({
@@ -75,13 +156,33 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
                 keywords: z.array(z.string()).describe("Keywords to research"),
               }),
               execute: async ({ keywords }) => {
-                // Return realistic data (actual DataForSEO would need credentials)
-                return keywords.map((kw) => ({
-                  keyword: kw,
-                  searchVolume: Math.floor(Math.random() * 500) + 50,
-                  difficulty: Math.floor(Math.random() * 40) + 5,
-                  competition: +(Math.random() * 0.5 + 0.1).toFixed(2),
-                }));
+                // Try DataForSEO if credentials exist
+                const login = process.env.DATAFORSEO_LOGIN;
+                const password = process.env.DATAFORSEO_PASSWORD;
+                if (login && password) {
+                  try {
+                    const res = await fetch("https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live", {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Basic ${Buffer.from(`${login}:${password}`).toString("base64")}`,
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify([{ keywords, language_code: "en", location_code: 2840 }]),
+                    });
+                    if (res.ok) {
+                      const data = await res.json();
+                      const results = data.tasks?.[0]?.result ?? [];
+                      return results.map((r: { keyword: string; search_volume: number; competition: number; cpc: number }) => ({
+                        keyword: r.keyword,
+                        searchVolume: r.search_volume ?? 0,
+                        competition: r.competition ?? 0,
+                        cpc: r.cpc ?? 0,
+                        source: "dataforseo",
+                      }));
+                    }
+                  } catch { /* fall through */ }
+                }
+                return keywords.map((kw) => ({ keyword: kw, source: "unavailable", note: "DataForSEO credentials not configured" }));
               },
             }),
             getArticle: tool({
@@ -90,15 +191,19 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
                 slug: z.string().describe("Article slug"),
               }),
               execute: async ({ slug }) => {
-                const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-                if (!convexUrl) return { error: "No Convex URL configured" };
-                // Use the Convex HTTP endpoint
                 try {
-                  const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
-                  // We don't have a direct article endpoint, return the slug info
-                  return { slug, url: `https://growthrat.vercel.app/articles/${slug}`, status: "published" };
+                  const article = await convex.query(api.artifacts.getBySlug, { slug });
+                  if (!article) return { error: `No article found with slug "${slug}"` };
+                  return {
+                    slug: article.slug,
+                    title: article.title,
+                    status: article.status,
+                    url: `https://growthrat.vercel.app/articles/${article.slug}`,
+                    contentPreview: article.content.slice(0, 500),
+                    source: "convex",
+                  };
                 } catch {
-                  return { error: "Article lookup failed" };
+                  return { slug, url: `https://growthrat.vercel.app/articles/${slug}`, source: "fallback" };
                 }
               },
             }),
@@ -106,35 +211,56 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
               description: "Check the status of growth experiments.",
               inputSchema: z.object({}),
               execute: async () => {
-                return {
-                  active: "Distribution Channel Test",
-                  hypothesis: "Keyword-targeted content achieves higher search visibility than intuition-based content within 14 days",
-                  day: 3,
-                  totalDays: 14,
-                  currentMetric: "12 referral visits, 47 search impressions",
-                  status: "running",
-                };
+                try {
+                  const experiment = await convex.query(api.experiments.getLatest, {});
+                  if (!experiment) return { status: "none", note: "No experiments found" };
+                  return {
+                    active: experiment.title,
+                    experimentKey: experiment.experimentKey,
+                    hypothesis: experiment.hypothesis,
+                    baselineMetric: experiment.baselineMetric,
+                    targetMetric: experiment.targetMetric,
+                    status: experiment.status,
+                    results: experiment.results,
+                    source: "convex",
+                  };
+                } catch {
+                  return { status: "unavailable", source: "fallback" };
+                }
               },
             }),
             getWeeklyMetrics: tool({
               description: "Get this week's performance metrics.",
               inputSchema: z.object({}),
               execute: async () => {
-                return {
-                  week: 12,
-                  contentPublished: 2,
-                  contentTarget: 2,
-                  experimentsRunning: 1,
-                  experimentsTarget: 1,
-                  feedbackFiled: 3,
-                  feedbackTarget: 3,
-                  communityInteractions: 12,
-                  communityTarget: 50,
-                };
+                try {
+                  const metrics = await convex.query(api.weeklyReports.getMetricsSummary, {});
+                  return { ...metrics, source: "convex" };
+                } catch {
+                  return { source: "fallback", note: "Could not reach Convex" };
+                }
               },
             }),
           },
           stopWhen: stepCountIs(5),
+          onFinish: async ({ usage }) => {
+            await convex.mutation((api.usageEvents as any).record, {
+              feature: "public_panel",
+              workflowType: "panel",
+              provider: "anthropic",
+              model: AI_MODEL_IDS.reasoning,
+              inputTokens: usage?.inputTokens ?? 0,
+              outputTokens: usage?.outputTokens ?? 0,
+              estimatedUsd: getEstimatedAnthropicUsd(AI_MODEL_IDS.reasoning, usage),
+              success: true,
+              latencyMs: elapsed(),
+              metadata: {
+                promptLength: prompt.length,
+                cachedPrompt: true,
+                toolCount: 5,
+              },
+            }).catch(() => {});
+          },
           onStepFinish: async ({ toolCalls, toolResults }) => {
             // Emit SSE events for each tool call so the panel shows them
             if (toolCalls && toolCalls.length > 0) {
@@ -190,45 +316,4 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
       Connection: "keep-alive",
     },
   });
-}
-
-/**
- * Search the knowledge base via Voyage embedding + Convex vector search.
- */
-async function searchKnowledgeBase(query: string): Promise<string> {
-  try {
-    const voyageKey = process.env.VOYAGE_API_KEY;
-    if (!voyageKey) return "Knowledge base not available (no embedding key).";
-
-    const embRes = await fetch("https://api.voyageai.com/v1/embeddings", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${voyageKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "voyage-3-lite", input: [query.slice(0, 16000)] }),
-    });
-    if (!embRes.ok) return "Embedding generation failed.";
-    const embData = await embRes.json();
-    const embedding = embData.data?.[0]?.embedding;
-    if (!embedding) return "No embedding returned.";
-
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
-    const siteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
-    const searchRes = await fetch(`${siteUrl}/api/vector-search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embedding, limit: 5 }),
-    });
-    if (!searchRes.ok) return "Vector search failed.";
-    const results = await searchRes.json();
-    const docs = results.docs ?? [];
-
-    if (docs.length === 0) return "No relevant documentation found.";
-
-    return docs
-      .map((d: { provider: string; key: string; summary: string; score: number }) =>
-        `[${d.provider} — ${d.key} (relevance: ${d.score.toFixed(2)})]\n${d.summary}`
-      )
-      .join("\n\n---\n\n");
-  } catch (err) {
-    return `Knowledge base search error: ${err}`;
-  }
 }

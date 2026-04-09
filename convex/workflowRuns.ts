@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireRcAdmin } from "./authz";
 
 export const list = query({
   args: {
@@ -7,6 +8,7 @@ export const list = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     const limit = args.limit ?? 50;
 
     if (args.workflowType) {
@@ -33,6 +35,7 @@ export const create = mutation({
     inputParams: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     return await ctx.db.insert("workflowRuns", {
       workflowType: args.workflowType,
       status: args.status,
@@ -49,6 +52,7 @@ export const complete = mutation({
     errorMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     const { id, ...patch } = args;
     await ctx.db.patch(id, {
       ...patch,

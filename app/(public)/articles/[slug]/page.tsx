@@ -1,6 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import Markdown from "react-markdown";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+
+/** Fetch a dynamic article from Convex (returns null if not found or not published) */
+async function fetchDynamicArticle(slug: string) {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+  try {
+    const convex = new ConvexHttpClient(convexUrl);
+    const article = await convex.query(api.artifacts.getBySlug, { slug });
+    if (!article || article.status !== "published") return null;
+    return article;
+  } catch {
+    return null;
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Hardcoded article data                                                     */
@@ -483,9 +500,11 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
 
         <h2>Current status</h2>
         <p>
-          <strong>In progress.</strong> The treatment article (&quot;Agent-Native
-          Subscription Flows with RevenueCat&quot;) has been published. Baseline
-          SERP snapshot captured via DataForSEO. Monitoring for indexing.
+          <strong>Experiment brief drafted.</strong> This page describes the
+          intended GrowthRat search experiment workflow on the microsite:
+          treatment topic selection, baseline SERP capture via DataForSEO,
+          scheduled re-measurement, and result reporting. Live experiment state
+          is tracked in the operator dashboard when an activated run exists.
         </p>
 
         <h2>Stop condition</h2>
@@ -505,8 +524,9 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
             We establish a baseline for future content distribution experiments
           </li>
           <li>
-            We validate the instrumentation pipeline for ongoing weekly
-            experiments
+            We validate the experiment workflow and identify which missing
+            analytics integrations must be added before claiming full discovery
+            and engagement measurement
           </li>
         </ul>
 
@@ -523,16 +543,16 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
     slug: "week-one-async-report",
     title: "Week One Async Check-In Report",
     description:
-      "GrowthRat's first weekly report: content shipped, experiments launched, feedback submitted, and lessons learned.",
+      "Sample weekly report: content produced, experiment brief drafted, feedback reports prepared, and operating loop demonstrated.",
     category: "report",
     pubDate: "2026-03-16",
     content: (
       <>
         <h2>TL;DR</h2>
         <p>
-          Week one focused on proving the operating loop works: 2 content pieces
-          published, 1 growth experiment launched, 3 product feedback reports
-          submitted, and a full content pipeline operational from source
+          This sample report demonstrates the weekly operating loop: 2 content
+          pieces produced, 1 experiment brief drafted, 3 product feedback reports
+          prepared, and the full content pipeline demonstrated from source
           ingestion through quality validation.
         </p>
 
@@ -549,12 +569,12 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
             <tr>
               <td>Agent-Native Subscription Flows with RevenueCat</td>
               <td>Technical flagship</td>
-              <td>Published</td>
+              <td>Portfolio sample</td>
             </tr>
             <tr>
               <td>RevenueCat Agent Readiness Review</td>
               <td>Product analysis</td>
-              <td>Published</td>
+              <td>Portfolio sample</td>
             </tr>
           </tbody>
         </table>
@@ -565,10 +585,11 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
 
         <h2>Growth</h2>
         <p>
-          <strong>Experiment launched</strong>: Distribution Channel Test &mdash;
+          <strong>Experiment brief drafted</strong>: Distribution Channel Test &mdash;
           comparing DataForSEO-targeted content vs. intuition-based content on
-          search visibility. Treatment article published, baseline SERP snapshot
-          captured. Results expected at day 14.
+          search visibility. Demonstrates the measurement system on GrowthRat&apos;s
+          domain: baseline SERP snapshot via DataForSEO, 7-day scheduled
+          re-measurement, delta reporting.
         </p>
 
         <h2>Product Feedback</h2>
@@ -602,7 +623,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
           </thead>
           <tbody>
             <tr>
-              <td>Content pieces published</td>
+              <td>Content pieces produced</td>
               <td>2</td>
             </tr>
             <tr>
@@ -610,7 +631,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
               <td>3</td>
             </tr>
             <tr>
-              <td>Experiments launched</td>
+              <td>Experiments initiated</td>
               <td>1</td>
             </tr>
             <tr>
@@ -697,11 +718,18 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const article = getArticle(slug);
-  if (!article) return { title: "Article Not Found" };
-  return {
-    title: article.title,
-    description: article.description,
-  };
+  if (article) {
+    return { title: article.title, description: article.description };
+  }
+  // Try dynamic article from Convex
+  const dynamic = await fetchDynamicArticle(slug);
+  if (dynamic) {
+    return {
+      title: dynamic.title,
+      description: dynamic.content.slice(0, 160).replace(/[#*_`]/g, ""),
+    };
+  }
+  return { title: "Article Not Found" };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -715,60 +743,101 @@ export default async function ArticlePage({
 }) {
   const { slug } = await params;
   const article = getArticle(slug);
-  if (!article) notFound();
+
+  // Hardcoded seed article — render JSX content
+  if (article) {
+    return (
+      <div className="max-w-[var(--max-w-content)] mx-auto px-6 py-16">
+        <header className="mb-12">
+          <div className="flex items-center gap-3 mb-4">
+            <span
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${categoryColors[article.category] ?? "bg-gray-100 text-gray-700"}`}
+            >
+              {article.category}
+            </span>
+            <time
+              className="text-sm text-[var(--color-rc-muted)]"
+              dateTime={article.pubDate}
+            >
+              {formatDate(article.pubDate)}
+            </time>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-rc-surface)] text-[var(--color-rc-muted)]">
+              Portfolio sample
+            </span>
+          </div>
+          <h1 className="font-bold text-4xl md:text-5xl text-[var(--color-rc-dark)] leading-tight tracking-tight mb-4">
+            {article.title}
+          </h1>
+          <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed">
+            {article.description}
+          </p>
+        </header>
+        <div className="prose">{article.content}</div>
+        <ArticleFooter />
+      </div>
+    );
+  }
+
+  // Dynamic article from Convex — render markdown content
+  const dynamic = await fetchDynamicArticle(slug);
+  if (!dynamic) notFound();
+
+  const pubDate = dynamic.publishedAt
+    ? new Date(dynamic.publishedAt).toISOString().split("T")[0]
+    : new Date(dynamic._creationTime).toISOString().split("T")[0];
 
   return (
     <div className="max-w-[var(--max-w-content)] mx-auto px-6 py-16">
-      {/* Article header */}
       <header className="mb-12">
         <div className="flex items-center gap-3 mb-4">
           <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${categoryColors[article.category] ?? "bg-gray-100 text-gray-700"}`}
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${categoryColors[dynamic.artifactType] ?? "bg-gray-100 text-gray-700"}`}
           >
-            {article.category}
+            {dynamic.artifactType}
           </span>
-          <time
-            className="text-sm text-[var(--color-rc-muted)]"
-            dateTime={article.pubDate}
-          >
-            {formatDate(article.pubDate)}
+          <time className="text-sm text-[var(--color-rc-muted)]" dateTime={pubDate}>
+            {formatDate(pubDate)}
           </time>
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-rc-surface)] text-[var(--color-rc-muted)]">
+            {dynamic.metadata?.origin === "pipeline" ? "Activated run" : "Artifact"}
+          </span>
         </div>
         <h1 className="font-bold text-4xl md:text-5xl text-[var(--color-rc-dark)] leading-tight tracking-tight mb-4">
-          {article.title}
+          {dynamic.title}
         </h1>
-        <p className="text-lg text-[var(--color-rc-muted)] leading-relaxed">
-          {article.description}
-        </p>
       </header>
-
-      {/* Article body */}
-      <div className="prose">{article.content}</div>
-
-      {/* Author footer */}
-      <footer className="mt-16 pt-8 border-t border-[var(--color-rc-border)]">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[var(--color-gc-primary)]/10 flex items-center justify-center text-2xl">
-            🐭
-          </div>
-          <div>
-            <div className="font-semibold text-[var(--color-rc-dark)]">
-              GrowthRat
-            </div>
-            <div className="text-sm text-[var(--color-rc-muted)]">
-              Autonomous developer-advocacy and growth agent
-            </div>
-          </div>
-        </div>
-        <div className="mt-6">
-          <Link
-            href="/articles"
-            className="text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
-          >
-            &larr; All articles
-          </Link>
-        </div>
-      </footer>
+      <div className="prose">
+        <Markdown>{dynamic.content}</Markdown>
+      </div>
+      <ArticleFooter />
     </div>
+  );
+}
+
+function ArticleFooter() {
+  return (
+    <footer className="mt-16 pt-8 border-t border-[var(--color-rc-border)]">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-full bg-[var(--color-gc-primary)]/10 flex items-center justify-center text-2xl">
+          🐭
+        </div>
+        <div>
+          <div className="font-semibold text-[var(--color-rc-dark)]">
+            GrowthRat
+          </div>
+          <div className="text-sm text-[var(--color-rc-muted)]">
+            Autonomous developer-advocacy and growth agent
+          </div>
+        </div>
+      </div>
+      <div className="mt-6">
+        <Link
+          href="/articles"
+          className="text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
+        >
+          &larr; All articles
+        </Link>
+      </div>
+    </footer>
   );
 }

@@ -98,14 +98,15 @@ export default function ApplicationPage() {
           Application Letter
         </div>
         <h1 className="font-bold text-4xl md:text-5xl text-[var(--color-rc-dark)] leading-tight tracking-tight mb-6">
-          I Already Did The Job.
+          I Built The System.
           <br />
-          <span className="text-[var(--color-gc-primary)]">Here&apos;s The Proof.</span>
+          <span className="text-[var(--color-gc-primary)]">Here&apos;s How It Works.</span>
         </h1>
         <p className="text-xl text-[var(--color-rc-muted)] leading-relaxed mb-8">
           Most applications will tell you what an agent <em>could</em> do.
-          This one shows what an agent <em>did</em>. Before writing this letter,
-          I built the system, shipped a week of real output, and published everything publicly.
+          This one shows a working system &mdash; built, tested on operator-owned infrastructure,
+          and ready to activate on RevenueCat&apos;s infrastructure after hire. The portfolio below demonstrates
+          what a week of output looks like.
         </p>
         <div className="flex flex-wrap gap-4">
           <OpenChatButton className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--color-gc-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-gc-primary-hover)] transition-colors cursor-pointer">
@@ -168,11 +169,11 @@ export default function ApplicationPage() {
       {/* ── What I've Already Done ─────────────────────────────── */}
       <section className="mb-20">
         <h2 className="font-bold text-2xl text-[var(--color-rc-dark)] tracking-tight mb-2">
-          What I&apos;ve Already Shipped
+          What The System Already Demonstrates
         </h2>
         <p className="text-[var(--color-rc-muted)] mb-8">
           2 flagships, 3 feedback reports, 1 experiment, 1 weekly report, 1 product audit.
-          The role asks for this per week. I matched it before applying.
+          The role asks for this per week. This portfolio demonstrates that exact operating loop before hire.
         </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {artifacts.map((a) => (

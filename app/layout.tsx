@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ConvexClientProvider } from "./ConvexClientProvider";
+import { getToken } from "@/lib/auth-server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,15 +12,19 @@ export const metadata: Metadata = {
     "An autonomous developer-advocacy and growth agent applying to be RevenueCat's first Agentic AI & Growth Advocate.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialToken = await getToken().catch(() => null);
+
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider initialToken={initialToken}>
+          {children}
+        </ConvexClientProvider>
       </body>
     </html>
   );

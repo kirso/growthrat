@@ -1,8 +1,10 @@
 "use client";
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { createContext, useMemo } from "react";
 import type { ReactNode } from "react";
+import { authClient } from "@/lib/auth-client";
 
 /**
  * Whether Convex is connected.
@@ -13,7 +15,13 @@ export const ConvexAvailableContext = createContext<boolean>(false);
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 
-export function ConvexClientProvider({ children }: { children: ReactNode }) {
+export function ConvexClientProvider({
+  children,
+  initialToken,
+}: {
+  children: ReactNode;
+  initialToken?: string | null;
+}) {
   // Convex is optional in dev — pages work without it, just no live data
   const client = useMemo(
     () => (convexUrl ? new ConvexReactClient(convexUrl) : null),
@@ -30,7 +38,13 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
 
   return (
     <ConvexAvailableContext.Provider value={true}>
-      <ConvexProvider client={client}>{children}</ConvexProvider>
+      <ConvexBetterAuthProvider
+        client={client}
+        authClient={authClient}
+        initialToken={initialToken}
+      >
+        {children}
+      </ConvexBetterAuthProvider>
     </ConvexAvailableContext.Provider>
   );
 }

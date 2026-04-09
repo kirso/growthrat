@@ -1,8 +1,7 @@
 "use client";
 
-import { useConvexQuery, convexApi } from "../hooks/useConvexSafe";
+import { useConvexAvailable, useConvexQuery, convexApi } from "../hooks/useConvexSafe";
 
-// Sample data — used as fallback when Convex isn't connected
 interface Experiment {
   id: string;
   title: string;
@@ -15,23 +14,6 @@ interface Experiment {
   stopCondition: string;
   currentMetric: string;
 }
-
-const SAMPLE_ACTIVE: Experiment = {
-  id: "exp_001",
-  title: "Distribution Channel Test",
-  hypothesis:
-    "Publishing content on X/Twitter with engagement-optimized threads will drive 3x more traffic than organic SEO alone in Week 1.",
-  baseline: "0 referral visits from X",
-  target: "50 referral visits from X in 14 days",
-  currentDay: 3,
-  totalDays: 14,
-  status: "active",
-  stopCondition:
-    "Stop if zero engagement after 5 consecutive posts, or if referral traffic exceeds target before Day 14.",
-  currentMetric: "12 referral visits",
-};
-
-const SAMPLE_COMPLETED: Experiment[] = [];
 
 function ExperimentProgress({
   current,
@@ -61,23 +43,53 @@ function ExperimentProgress({
   );
 }
 
-const statusColors = {
-  active: "bg-[var(--color-op-green)]/15 text-[var(--color-op-green)]",
-  paused: "bg-[var(--color-op-amber)]/15 text-[var(--color-op-amber)]",
-  complete: "bg-[var(--color-op-blue)]/15 text-[var(--color-op-blue)]",
+const statusColors: Record<string, string> = {
+  planned: "bg-[var(--color-op-dim)]/15 text-[var(--color-op-dim)]",
+  running: "bg-[var(--color-op-green)]/15 text-[var(--color-op-green)]",
+  measuring: "bg-[var(--color-op-amber)]/15 text-[var(--color-op-amber)]",
+  completed: "bg-[var(--color-op-blue)]/15 text-[var(--color-op-blue)]",
   stopped: "bg-[var(--color-op-red)]/15 text-[var(--color-op-red)]",
 };
 
 export default function ExperimentsPage() {
-  // CONVEX: wire to api.experiments.list when connected
+  const available = useConvexAvailable();
   const convexActive = useConvexQuery(convexApi?.experiments?.list, {
-    status: "active",
+    status: "running",
   });
   const convexCompleted = useConvexQuery(convexApi?.experiments?.list, {
-    status: "complete",
+    status: "completed",
   });
 
-  // Map Convex experiment data to the UI shape, or fall back to sample data
+  if (!available) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+          Experiment Tracker
+        </h1>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Convex is not connected yet. No experiment data is available.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (convexActive === undefined || convexCompleted === undefined) {
+    return (
+      <div className="space-y-6 max-w-4xl">
+        <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
+          Experiment Tracker
+        </h1>
+        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
+          <p className="text-sm text-[var(--color-op-dim)]">
+            Loading live experiment state...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const mapExperiment = (e: any): Experiment => ({
     id: e.experimentKey ?? e._id,
     title: e.title,
@@ -91,15 +103,11 @@ export default function ExperimentsPage() {
     currentMetric: e.results?.currentMetric ?? "",
   });
 
-  const activeExperiment: Experiment | null = convexActive
-    ? convexActive.length > 0
-      ? mapExperiment(convexActive[0])
-      : null
-    : SAMPLE_ACTIVE;
+  const activeExperiment: Experiment | null = convexActive.length > 0
+    ? mapExperiment(convexActive[0])
+    : null;
 
-  const completed: Experiment[] = convexCompleted
-    ? convexCompleted.map(mapExperiment)
-    : SAMPLE_COMPLETED;
+  const completed: Experiment[] = convexCompleted.map(mapExperiment);
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -188,7 +196,7 @@ export default function ExperimentsPage() {
         ) : (
           <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
             <p className="text-sm text-[var(--color-op-dim)]">
-              No active experiments.
+              No active experiments yet. Run the weekly planner to start one.
             </p>
           </div>
         )}

@@ -18,18 +18,19 @@ For product requirements, goals, and scope, see [PRD](docs/product/2026-03-13-gr
 5. [VS-B2: The Loop Works](#vs-b2-the-loop-works) — Full weekly Mon-Fri cycle
 6. [VS-B3: The Dashboard Works](#vs-b3-the-dashboard-works) — Live data in operator console
 7. [VS-B4: The Experiment Works](#vs-b4-the-experiment-works) — Measure + report
-8. [VS-B5: The Onboarding Works](#vs-b5-the-onboarding-works) — Server-only secrets, agentConfig for preferences
+8. [VS-B5: The Onboarding Works](#vs-b5-the-onboarding-works) — Verified self-service onboarding, encrypted connector storage, agentConfig for preferences
 
 ### Reference
-9. [Approval Model](#approval--human-in-the-loop-model)
-10. [Architecture Overview](#architecture-overview)
-11. [Tool Selection Rationale](#tool-selection-rationale)
-12. [Convex Schema (Complete)](#convex-schema-complete)
-13. [Growth Levers](#growth-levers)
-14. [Ownership Model](#ownership-model)
-15. [Security Model](#security-model)
-16. [Open Decisions](#open-decisions)
-17. [Risks](#risks)
+9. [Job Requirement Coverage](#job-requirement-coverage)
+10. [Autonomy / Human-in-the-Loop Model](#autonomy--human-in-the-loop-model)
+11. [Architecture Overview](#architecture-overview)
+12. [Tool Selection Rationale](#tool-selection-rationale)
+13. [Convex Schema (Complete)](#convex-schema-complete)
+14. [Growth Levers](#growth-levers)
+15. [Ownership Model](#ownership-model)
+16. [Security Model](#security-model)
+17. [Open Decisions](#open-decisions)
+18. [Risks](#risks)
 
 ---
 
@@ -47,11 +48,48 @@ Track B (operating product — can start after VS-A1):
                                                    → VS-B5 (onboarding persistence)
 ```
 
-**Track A delivers**: a public URL where RC can talk to GrowthRat via the chat widget, see static proof articles (already hardcoded as seed content), and explore the operator replay page. This is sufficient for Stage 1 (Application).
+**Track A delivers**: a public application package at a stable URL where RC can talk to GrowthRat via the chat widget, review the proof pack, inspect a public RevenueCat demo artifact/repo, and explore the operator replay page. Seed articles are acceptable as the initial proof pack, but the package still must satisfy the Stage 1 deliverables from the PRD.
 
-**Track B delivers**: the full operating system — content generation with approval flow, weekly Monday-Friday cycle, live dashboard, experiments with measurement, and secure onboarding. This is required for Stage 2 (Take-Home), Stage 3 (Panel), and Stage 4 (Founder).
+**Track B delivers**: the full bounded-autonomy operating system — content generation with approval flow, weekly Monday-Friday cycle, live dashboard, experiments with measurement, secure onboarding, and enough operational depth to support the take-home, panel, and founder stages.
+
+Track B is only complete when **RC-connected mode** has been verified: RevenueCat can connect its own assets, run the weekly loop on approved infrastructure, and inspect the resulting artifacts without operator-only database edits or demo toggles.
 
 VS-B1 depends on VS-A1 (needs the brain for RAG-grounded content generation). VS-B3/B4/B5 can proceed in parallel once VS-B2 has run at least one cycle.
+
+---
+
+## Job Requirement Coverage
+
+This roadmap is not just a feature backlog. It is the build plan for satisfying the RevenueCat job requirements with explicit deliverables, operating metrics, and autonomy boundaries.
+
+### Hiring-stage coverage
+
+| Hiring stage | Job requirement | Roadmap coverage |
+| --- | --- | --- |
+| Stage 1: Application | Public application microsite, live chat, proof pack, public RevenueCat demo artifact/repo, operator replay, careers-page submission | VS-A1 + VS-A2 + VS-A3 |
+| Stage 2: Take-Home | Novel technical content + growth task executed autonomously within 48 hours | VS-A1 + VS-B1 + VS-B2 + take-home execution mode |
+| Stage 3: Panel Interview | Live screen-shared reasoning with grounded retrieval, visible work steps, and defensible answers | VS-A2 + panel console + source retrieval + thread replay |
+| Stage 4: Founder Interview | Business case, safety model, autonomy boundaries, and role-extension recommendation framework | Founder briefing pack + operating metrics + trust model |
+
+### Weekly operating requirements
+
+| Requirement from job posting | Roadmap expectation |
+| --- | --- |
+| 2+ published content pieces/week | VS-B1 + VS-B2 deliver two flagship artifacts through the full pipeline |
+| 1 new growth experiment/week | VS-B4 plus planner-triggered weekly experiment |
+| 50+ meaningful community interactions/week | VS-B2 community monitor + engagement across all required channels, with 10+ as the pipeline demo threshold and 50+ as the steady-state target |
+| 3+ structured product feedback items/week | VS-B2 starts 3 separate feedback workflows and stores/files each item |
+| 1 async weekly report/week | VS-B2 Friday report with real DB-backed metrics |
+
+### First-month, three-month, and six-month outcomes
+
+The roadmap must explicitly support these operating outcomes from the PRD, not treat them as implied:
+
+- Month 1: ingest RC docs/SDKs/APIs, publish 10 pieces, connect Slack/CMS/Charts, complete a feedback cycle, establish public X/GitHub identity
+- Month 3: sustain 30+ published pieces, become a go-to agent resource, produce a roadmap-input document from repeated feedback patterns, collaborate on joint initiatives with human teammates
+- Month 6: show measurable visibility impact, own a content stream end to end, contribute to at least one shipped product improvement, and make the continue/expand/evolve recommendation
+
+These are required outcomes, not optional stretch goals. Any roadmap review should check them alongside the weekly loop.
 
 ---
 
@@ -1400,43 +1438,61 @@ await step.runAction(internal.workflows.startExperiment, {
 
 ## VS-B5: The Onboarding Works
 
-**Goal**: Onboarding page securely stores RC secrets server-side. `agentConfig` stores only non-secret preferences. Secrets are never readable from client code.
+**Goal**: RevenueCat can connect supported assets through the onboarding flow, raw connector payloads stay server-only, connector verification state is visible in the operator console, and `agentConfig` stores only non-secret preferences.
 
 **Dependencies**: Convex deployed
 
-### Critical fix: server-only secret handling
+### Critical fix: verified self-service onboarding
 
-The previous design stored RC secrets (Slack bot token, CMS API key, Charts API key) in the Convex `agentConfig` table, which is readable by any client query. This is a security violation.
+The previous design treated onboarding as a demo wizard and assumed secrets would live only in environment variables. That was not enough for real RC activation.
 
-**The fix**:
-- **Secrets** (API tokens, bot tokens) are stored via **Convex environment variables** (`npx convex env set`) or in a server-only mechanism. They are accessed only from Convex actions and workflows (server-side), never from queries or the client.
-- **Preferences** (review mode, focus topics, report channel name, enabled platforms) are stored in the Convex `agentConfig` table — these are non-secret and safe to read from the client.
+**The implemented fix**:
+- **Connector payloads** are submitted through a server-side Next.js route, signed with `GROWTHCAT_INTERNAL_SECRET`, verified in Convex, encrypted, and stored in the internal `connectorSecrets` table.
+- **Connector status** is stored separately in `connectorConnections` so the UI can show `verified`, `manual_verification`, `unsupported`, or `error` without ever exposing raw credentials.
+- **Preferences** (review mode, focus topics, report channel name, enabled platforms, pause state) are stored in the Convex `agentConfig` table and are safe for client reads.
+- **Runtime integrations** still use environment variables where needed, but the onboarding flow is now the RC-facing control plane and verification surface.
 
 ### What gets built
 
-#### 1. New Convex table: `agentConfig` (preferences only, NO secrets)
+#### 1. Convex tables for onboarding state
 
 **File**: `convex/schema.ts`
 
 ```typescript
 agentConfig: defineTable({
-  reviewMode: v.string(),          // "draft_only" | "auto_publish"
+  reviewMode: v.string(),
   focusTopics: v.array(v.string()),
-  slackChannel: v.optional(v.string()),  // channel NAME (not token)
-  githubOrg: v.optional(v.string()),     // org name (not token)
-  enabledPlatforms: v.optional(v.array(v.string())), // ["slack", "cms", "charts"]
-  paused: v.boolean(),             // kill switch
+  slackChannel: v.string(),
+  githubOrg: v.optional(v.string()),
+  enabledPlatforms: v.array(v.string()),
+  paused: v.boolean(),
+}),
+
+connectorConnections: defineTable({
+  connector: v.string(),
+  status: v.string(), // "pending" | "verified" | "manual_verification" | "unsupported" | "error"
+  label: v.optional(v.string()),
+  errorSummary: v.optional(v.string()),
+  verificationMethod: v.optional(v.string()),
+  lastSubmittedAt: v.optional(v.number()),
+  lastVerifiedAt: v.optional(v.number()),
+  details: v.optional(v.any()),
+}),
+
+connectorSecrets: defineTable({
+  connector: v.string(),
+  encryptedPayload: v.string(),
   updatedAt: v.number(),
 }),
 ```
 
-**REMOVED from agentConfig**: `slackBotToken`, `cmsApiKey`, `chartsApiKey` — these are secrets and must NOT be in a client-readable table.
+**REMOVED from agentConfig**: tokens, API keys, and raw connector payloads — these must never be in a client-readable table.
 
-#### 2. Convex internal action for secret storage
+#### 2. Convex onboarding verification and secret storage
 
 **New file**: `convex/onboarding.ts`
 
-The onboarding page calls a Convex action (internal, not client-callable) to handle secrets:
+The onboarding page calls a Convex action (server-triggered, not client-callable) to handle connector submissions:
 
 ```typescript
 // convex/onboarding.ts
@@ -1444,14 +1500,23 @@ The onboarding page calls a Convex action (internal, not client-callable) to han
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 
-// Internal action — only callable from other server-side code, not from clients
-export const storeSecret = internalAction({
-  args: { key: v.string(), value: v.string() },
-  handler: async (_ctx, { key, value }) => {
-    // Store as Convex environment variable via admin API
-    // OR store in a server-only table with only internal queries
-    // Either way, the value is never exposed to client-side code.
-    return { success: true };
+// submitConnectorSubmission:
+// - verifies a signed envelope from /api/onboarding/secrets
+// - runs connector-specific verification where possible
+// - stores encrypted payloads in connectorSecrets
+// - stores visible status in connectorConnections
+//
+// Real verification today:
+// - Slack: auth.test
+// - GitHub: GET /user
+// - RevenueCat: product list via REST API
+// - DataForSEO: lightweight live request
+// - Twitter/X: recent search probe
+// - Typefully / CMS: manual verification until RC-specific access exists
+export const submitConnectorSubmission = action({
+  args: { connector: v.string(), payload: v.any(), timestamp: v.number(), nonce: v.string(), signature: v.string() },
+  handler: async (ctx, args) => {
+    return { ok: true };
   },
 });
 ```
@@ -1461,27 +1526,18 @@ export const storeSecret = internalAction({
 **File**: `app/(operator)/onboarding/page.tsx`
 
 Wire the existing onboarding UI to:
-1. **Secrets** (Slack token, CMS key, Charts key): Send to a Next.js API route (`/api/onboarding/secrets`) which calls the Convex internal action. The client never stores or reads the actual secret value.
-2. **Preferences** (review mode, focus topics, channel name): Save to the `agentConfig` table via a standard Convex mutation. These are non-secret and safe for client access.
-3. Show connection status by checking which platforms are in `agentConfig.enabledPlatforms` (not by checking if a secret key exists — that would expose its presence).
+1. **Connector submissions**: send connector payloads to a Next.js API route (`/api/onboarding/secrets`) which signs and forwards them into Convex verification/storage. The client never receives the encrypted payload back.
+2. **Preferences**: save review mode, focus topics, report channel, and pause state to the `agentConfig` table.
+3. **Status**: show connector health from `connectorConnections`, not from local UI state or inferred secret presence.
 
 **New file**: `app/api/onboarding/secrets/route.ts`
 
 ```typescript
-// Next.js API route that forwards secrets to Convex internal action
+// Next.js API route that signs connector submissions for Convex
 export async function POST(req: Request) {
-  const { secretName, secretValue } = await req.json();
-
-  // Call Convex action directly via the Convex client (server-side)
-  // No HTTP bridge or shared secret needed — the Next.js server
-  // has direct access to Convex via the SDK
-  const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-  await client.action(internal.onboarding.storeSecret, {
-    key: secretName,
-    value: secretValue,
-  });
-
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+  // Compute a signed envelope with GROWTHCAT_INTERNAL_SECRET
+  // and forward it to onboarding.submitConnectorSubmission.
+  // Convex verifies the signature before encrypting and storing the payload.
 }
 ```
 
@@ -1504,30 +1560,17 @@ export const save = mutation({
   args: {
     reviewMode: v.string(),
     focusTopics: v.array(v.string()),
-    slackChannel: v.optional(v.string()),
+    slackChannel: v.string(),
     githubOrg: v.optional(v.string()),
-    enabledPlatforms: v.optional(v.array(v.string())),
+    enabledPlatforms: v.array(v.string()),
+    paused: v.boolean(),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("agentConfig").first();
     if (existing) {
-      await ctx.db.patch(existing._id, { ...args, updatedAt: Date.now() });
+      await ctx.db.patch(existing._id, args);
     } else {
-      await ctx.db.insert("agentConfig", {
-        ...args,
-        paused: false,
-        updatedAt: Date.now(),
-      });
-    }
-  },
-});
-
-export const setPaused = mutation({
-  args: { paused: v.boolean() },
-  handler: async (ctx, { paused }) => {
-    const existing = await ctx.db.query("agentConfig").first();
-    if (existing) {
-      await ctx.db.patch(existing._id, { paused, updatedAt: Date.now() });
+      await ctx.db.insert("agentConfig", args);
     }
   },
 });
@@ -1535,25 +1578,22 @@ export const setPaused = mutation({
 
 ### How secrets are accessed at runtime
 
-Convex actions and workflows access secrets via `process.env`:
+There are two layers:
 
-```typescript
-// In any Convex action or workflow step:
-const slackToken = process.env.SLACK_BOT_TOKEN;    // Set via npx convex env set
-const cmsKey = process.env.CMS_API_KEY;            // Set via npx convex env set
-const chartsKey = process.env.CHARTS_API_KEY;      // Set via npx convex env set
-```
+1. **Onboarding control-plane state**
+   - encrypted connector payloads in `connectorSecrets`
+   - visible verification state in `connectorConnections`
 
-The onboarding flow either:
-1. Sets these via the Convex admin API (programmatic `npx convex env set` equivalent)
-2. Or instructs the operator to run `npx convex env set SLACK_BOT_TOKEN <value>` manually
+2. **Runtime execution**
+   - environment variables and provider-specific runtime credentials used by live workflows
+   - a small internal signing layer (`GROWTHCAT_INTERNAL_SECRET`) for trusted Next.js → Convex requests where a server hop remains necessary
 
-Either way, secrets live in server-side environment variables, not in the database.
+This means the broad Inngest-era HTTP bridge is gone, but a narrow internal auth mechanism still exists where the implementation needs a trusted server-to-server call.
 
 ### Demo
 
 1. Open `/onboarding`
-2. Enter CMS API key → see "Connected" badge (the key is sent server-side, never stored in client state)
+2. Enter a connector payload such as Slack or GitHub → see a verified or manual-verification badge (the payload is sent server-side, encrypted, and never returned to the browser)
 3. Set review mode to "draft_only" → see it reflected in `agentConfig` table
 4. Set focus topics → see them stored in `agentConfig`
 5. Verify: open browser DevTools → Network tab → no API call ever returns the CMS API key
@@ -1561,19 +1601,20 @@ Either way, secrets live in server-side environment variables, not in the databa
 
 ### Exit criteria
 
-- [ ] `agentConfig` table contains ONLY non-secret fields: `reviewMode`, `focusTopics`, `slackChannel` (name), `githubOrg` (name), `enabledPlatforms`, `paused`, `updatedAt`
+- [ ] `agentConfig` contains only non-secret preferences: `reviewMode`, `focusTopics`, `slackChannel`, `githubOrg`, `enabledPlatforms`, `paused`
 - [ ] `agentConfig` table does NOT contain: `slackBotToken`, `cmsApiKey`, `chartsApiKey`
-- [ ] Secrets are stored via Convex environment variables (server-side only)
-- [ ] Onboarding page sends secrets to a server-side endpoint (Next.js API route → Convex internal action), never to a client-callable mutation
+- [ ] Connector payloads are submitted through `/api/onboarding/secrets`, signed server-side, verified in Convex, and stored encrypted in `connectorSecrets`
+- [ ] `connectorConnections` reflects the current status for each configured connector
 - [ ] `useConvexQuery(api.agentConfig.get)` returns preferences only — no secret values anywhere in the response
 - [ ] Review mode selection works: changing to "draft_only" causes next content generation to post to Slack for approval
 - [ ] Kill switch: `@GrowthRat stop` in Slack sets `agentConfig.paused = true`
+- [ ] RC can complete onboarding without operator-only database edits
 
 ### Expected outcomes
 
-**What the user sees**: Onboarding wizard with 4 steps. Secrets are entered once and confirmed with a "Connected" badge. Preferences are editable. No secret values visible in the UI or in network requests.
+**What the user sees**: Onboarding wizard with real connector verification states, clear manual-verification fallbacks where needed, and editable operating preferences. No secret values are visible in the UI or returned to the browser.
 
-**What is stored in Convex**: `agentConfig` row with non-secret preferences only. Secrets stored as Convex environment variables (not in any table).
+**What is stored in Convex**: `agentConfig` row with non-secret preferences, `connectorConnections` rows with verification state, and encrypted connector payloads in `connectorSecrets`.
 
 ### Files touched
 
@@ -1587,7 +1628,60 @@ Either way, secrets live in server-side environment variables, not in the databa
 
 ---
 
-## Approval / Human-in-the-Loop Model
+## Autonomy / Human-in-the-Loop Model
+
+### What autonomy means here
+
+GrowthRat is a bounded-autonomy system, not a fully unsupervised publisher. "Autonomous execution" in this roadmap means the agent can:
+
+- take a novel goal or prompt and decompose it into concrete work
+- retrieve evidence, choose tools, and ground claims before acting
+- run the weekly plan/content/feedback/community/report loop without daily steering
+- checkpoint long-running work, resume after failure, and preserve execution state
+- measure outcomes and feed results back into the next planning cycle
+
+Autonomy is deliberately constrained by review modes, permissions, budgets, and revocation controls.
+
+### Responsibility boundaries
+
+**Fully autonomous by default**
+- Knowledge ingestion and freshness checks
+- Opportunity scoring and weekly planning
+- Draft generation for content, feedback, experiment briefs, and reports
+- Source retrieval, tool use, and panel reasoning
+- Measurement runs and post-publish analysis
+
+**Conditionally autonomous based on review mode**
+- Publishing content
+- Posting community replies
+- Social distribution
+- Filing external issues or external-facing artifacts
+
+**Operator-only**
+- Deployment, environment, and emergency revocation controls
+- Credential and budget management
+- Policy changes, review-mode changes, and scope expansion
+- Any action that adds new permissions or broadens external reach
+
+**RC-admin self-service**
+- Connector submission through `/onboarding`
+- Review-mode and focus-topic configuration
+- Approving or pausing output from Slack
+
+### Execution loop
+
+The intended end-to-end execution model is:
+
+1. Receive goal or detect opportunity
+2. Decompose into tasks and select the lane (content, community, experiment, feedback, report)
+3. Retrieve evidence and choose tools
+4. Generate draft output
+5. Run quality and safety checks
+6. Either publish, hold for approval, or reject
+7. Measure outcome and store learnings
+8. Feed results into the next plan
+
+This loop is what "autonomous agent execution" means in practice for GrowthRat.
 
 ### Trust Ramp
 
@@ -1684,7 +1778,7 @@ Next.js 15 (App Router) — single framework
 │   ├── Typefully — social distribution
 │   ├── Slack Web API — team communication
 │   ├── GitHub REST API — code artifacts, issues
-│   ├── DataForSEO REST API — keyword intelligence
+│   ├── Search-intel provider — DataForSEO by default, Ahrefs optional
 │   └── RevenueCat REST API v2 — product data
 ├── Tailwind CSS v4 — styling
 └── Single Bun runtime
@@ -1759,7 +1853,8 @@ Next.js 15 (App Router) — single framework
 │  └────────────┘ └────────────┘ └──────────────┘                      │
 │                                                                         │
 │  All workflows have direct DB access via step.runMutation/runQuery     │
-│  No HTTP bridge. No shared secret. No inter-service auth.              │
+│  The broad Inngest-era HTTP bridge is gone. A narrow internal signing  │
+│  layer remains for trusted Next.js → Convex server calls.              │
 └─────────────────────────────────────────────────────────────────────────┘
         │
         ▼
@@ -1796,8 +1891,9 @@ Next.js 15 (App Router) — single framework
 │  SECONDARY: GitHub commit (backup/SEO) + Typefully draft (distribution)│
 │                                                                         │
 │  Security:                                                              │
-│  HMAC-SHA256 (Slack), Token (Panel), fail-closed on all endpoints      │
-│  Secrets: Convex env vars (server-only, NOT in agentConfig table)      │
+│  HMAC-SHA256 (Slack), token auth (panel), internal request signing     │
+│  Secrets: encrypted connector payloads + runtime env vars, never in    │
+│  agentConfig and never exposed to client queries                        │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1815,11 +1911,13 @@ OpenRouter plugs into the Vercel AI SDK as a drop-in provider replacement. It ad
 
 ### Why Convex Workflow over Inngest
 
-Inngest was the original orchestration layer. The problem: Inngest functions run outside Convex, so they needed an HTTP bridge (`lib/convex-client.ts`) to read and write Convex data. This required a shared secret (`GROWTHCAT_INTERNAL_SECRET`), authenticated HTTP POST endpoints in `convex/http.ts`, and serialization overhead on every DB operation.
+Inngest was the original orchestration layer. The problem: Inngest functions ran outside Convex, so they needed a broad HTTP bridge (`lib/convex-client.ts`) to read and write Convex data, plus authenticated endpoints for routine orchestration traffic.
 
-Convex Workflow (`@convex-dev/workflow`) runs **inside** Convex. Workflow steps call `step.runMutation()`, `step.runAction()`, and `step.runQuery()` with direct DB access. No HTTP bridge. No shared secret. No inter-service auth. The same durability guarantees (retries, sleep, observability) apply.
+Convex Workflow (`@convex-dev/workflow`) now runs **inside** Convex. Workflow steps call `step.runMutation()`, `step.runAction()`, and `step.runQuery()` with direct DB access. The old general-purpose workflow bridge is gone.
 
-**Removed**: `inngest/` directory, `agents/` directory (Inngest AgentKit), `lib/convex-client.ts`, `app/api/inngest/route.ts`, `GROWTHCAT_INTERNAL_SECRET`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`.
+What remains is a **small internal signing layer** for specific server-to-server hops, most notably the Next.js onboarding route and selected internal API paths. That is intentionally narrower than the original Inngest seam.
+
+**Removed**: `inngest/` directory, `agents/` directory (Inngest AgentKit), `lib/convex-client.ts`, `app/api/inngest/route.ts`, `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`.
 
 ### Why Convex Agent (`@convex-dev/agent`)
 
@@ -1835,11 +1933,9 @@ The Vercel AI SDK's `generateText` with tool calling provides the same agent-loo
 
 Inngest is a good orchestration tool, but it creates an architecture seam: Inngest functions run in their own runtime and communicate with Convex via HTTP. This seam requires:
 - `lib/convex-client.ts` — an HTTP bridge wrapper
-- `GROWTHCAT_INTERNAL_SECRET` — a shared secret for inter-service auth
-- Authenticated POST endpoints in `convex/http.ts` for every table
 - Serialization/deserialization overhead on every DB operation
 
-Convex Workflow eliminates this seam entirely. All orchestration runs inside the same Convex deployment that holds the database.
+Convex Workflow removes that orchestration seam. All workflow orchestration now runs inside the same Convex deployment that holds the database. A limited internal secret still exists for trusted Next.js → Convex requests where a server hop remains necessary.
 
 ---
 
@@ -2000,15 +2096,31 @@ export default defineSchema({
 
   // ────────────────────────────────────────────────────────────
   // Agent configuration (VS-B5) — NON-SECRET preferences only
-  // Secrets (tokens, API keys) stored as Convex env vars, NOT here
+  // Raw connector payloads are stored encrypted elsewhere, NOT here
   // ────────────────────────────────────────────────────────────
   agentConfig: defineTable({
-    reviewMode: v.string(),          // "draft_only" | "auto_publish"
+    reviewMode: v.string(),
     focusTopics: v.array(v.string()),
-    slackChannel: v.optional(v.string()),   // channel NAME (not token)
-    githubOrg: v.optional(v.string()),      // org name (not token)
-    enabledPlatforms: v.optional(v.array(v.string())), // ["slack", "cms", "charts"]
+    slackChannel: v.string(),
+    githubOrg: v.optional(v.string()),
+    enabledPlatforms: v.array(v.string()),
     paused: v.boolean(),
+  }),
+
+  connectorConnections: defineTable({
+    connector: v.string(),
+    status: v.string(),
+    label: v.optional(v.string()),
+    errorSummary: v.optional(v.string()),
+    verificationMethod: v.optional(v.string()),
+    lastSubmittedAt: v.optional(v.number()),
+    lastVerifiedAt: v.optional(v.number()),
+    details: v.optional(v.any()),
+  }),
+
+  connectorSecrets: defineTable({
+    connector: v.string(),
+    encryptedPayload: v.string(),
     updatedAt: v.number(),
   }),
 
@@ -2143,6 +2255,112 @@ Based on DataForSEO keyword difficulty analysis (retrieved 2026-03-16):
 
 ---
 
+## V2 Versatility Roadmap
+
+The current system is a strong bounded-autonomy core for content, search visibility, community response, and product feedback. It is **not yet** a fully versatile developer advocacy agent. The next phase should expand it from a weekly content operator into a programmable DevRel system that can teach, support, demonstrate, compare, and measure.
+
+### North star
+
+GrowthRat should be able to:
+
+- answer grounded product questions
+- brainstorm strategy with RC teams
+- generate multiple DevRel artifact types beyond blog posts
+- maintain example apps, templates, and docs fixes
+- support developers across multiple public channels
+- run experiments and measure meaningful developer and business outcomes
+
+### Capability lanes
+
+| Lane | What it adds | Programmatic tools / APIs | Success metric | Priority |
+| --- | --- | --- | --- | --- |
+| Docs intelligence | Changelog digests, docs gap detection, "what changed this week", source freshness alerts | GitHub API, docs crawler, RSS/changelog feeds, vector diffing | Weekly change brief lands automatically; docs gaps become backlog items | P0 |
+| Example app generation | Runnable sample apps, starter repos, integration templates | GitHub API, template repos, Vercel deploy hooks, CI, Playwright smoke tests | 1-2 working sample repos/month with verified setup steps | P0 |
+| Docs PR agent | Direct fixes to docs, examples, broken links, missing snippets | GitHub contents API, pull request API, markdown lint, link checker | 2+ merged docs PRs/month | P0 |
+| Canonical support answers | FAQ hubs, Stack Overflow answers, issue deflection, troubleshooting kits | Stack Exchange API, GitHub API, Reddit API, Discord bot API | repeated-question reduction and answer reuse | P1 |
+| Release advocacy | Explain RC product releases in agent-native language | GitHub release API, changelog crawler, article templates, social scheduling API | every significant release gets summary + derivative content | P1 |
+| Competitive intelligence | Monitor Adapty/Superwall/Qonversion changes and generate comparison updates | competitor docs crawler, GitHub repo monitoring, SERP monitoring | comparison pages stay fresh within 7 days of competitor updates | P1 |
+| Ecosystem presence | Support developers where they already are | Discord bot, Reddit API, Stack Overflow, dev.to/Hashnode publishing APIs | 50+ meaningful interactions/week across real channels | P1 |
+| Developer tooling | SDK wrappers, CLI, GitHub Actions, playgrounds, starter kits | npm publishing, GitHub Actions, template repos, sandbox deploys | at least one useful developer tool shipped and maintained | P2 |
+| Business measurement | Tie DevRel output to activation and revenue influence | RevenueCat metrics exports/APIs, GSC API, GA4/PostHog/Mixpanel, warehouse syncs | report includes influence metrics, not just output counts | P0 |
+| Lifecycle / PLG support | Help improve onboarding, docs-to-activation, paywall education, retention content | product analytics, email APIs, in-app event streams, app telemetry | improved activation and lower support friction | P2 |
+
+### New artifact types
+
+To be considered versatile, GrowthRat must generate and maintain more than articles. The artifact system should support:
+
+- tutorials and integration guides
+- API guides and endpoint recipes
+- comparison pages and alternative pages
+- migration guides
+- troubleshooting articles
+- FAQ hubs
+- release notes commentary
+- code samples and starter repos
+- docs pull requests
+- webinar outlines, demo scripts, and workshop plans
+- product feedback memos and roadmap-input summaries
+
+### Programmatic tooling stack
+
+The most useful additions are not more prompts. They are new programmable surfaces:
+
+| Surface | Why it matters | Suggested implementation |
+| --- | --- | --- |
+| GitHub GraphQL + REST | repos, issues, PRs, releases, docs edits, templates | extend existing GitHub connector into PR + release + repo-template workflows |
+| RevenueCat REST / exports / metrics | product grounding, monetization examples, business reporting | use available RC APIs and document fallbacks when Charts is not API-accessible |
+| Search intelligence provider | keyword research, SERP baselines, AI visibility, citation gaps | keep `SearchIntelProvider` abstraction with DataForSEO as default and Ahrefs as optional alternative |
+| Search Console + analytics | measure discovery, clicks, and on-site engagement | add GSC API, GA4 or PostHog adapter, weekly reporting integration |
+| Discord / Reddit / Stack Exchange | reach developers outside GitHub and X | add bot/webhook listeners plus dedup + approval policy |
+| Playwright | verify example apps, reproduce docs flows, automate GUI-only verification | keep browser actions approval-gated and auditable |
+| CI + deploy hooks | ensure examples and generated artifacts actually run | run smoke tests on sample apps and starter templates |
+| CMS APIs | move from portfolio publishing to RC-owned publishing | support RC CMS directly when post-hire access exists |
+
+### Experiment expansion
+
+Experiments should move beyond "did this keyword rank?" into multiple classes:
+
+| Experiment class | Example | Success measure |
+| --- | --- | --- |
+| Search | integration guide vs FAQ hub | ranking, impressions, clicks, AI mentions |
+| Content format | long-form article vs short troubleshooting page | engagement depth, shares, community reuse |
+| Distribution | X thread vs GitHub gist vs docs page | clickthrough, saves, replies, assisted visits |
+| Support deflection | canonical answer page vs repeated issue replies | repeated-question reduction, faster resolution |
+| Activation | tutorial with runnable sample vs docs-only guide | setup completion, first successful API call, webhook received |
+
+### Measurement v2
+
+The current reporting layer is operational. V2 reporting should add:
+
+- discovery metrics: rankings, impressions, clicks, AI mentions
+- engagement metrics: time on page, scroll depth, code-copy events, repo stars/clones
+- activation metrics: started integration, first webhook received, first entitlement configured
+- support metrics: answer reuse, issue deflection, docs PR merges, repeated-question reduction
+- business influence metrics: signup assists, activation assists, influenced subscriptions or revenue
+
+### Build order
+
+| Phase | Goal | Work included |
+| --- | --- | --- |
+| V2-A | Make DevRel outputs more useful | docs intelligence, sample repos, docs PR agent, release advocacy |
+| V2-B | Expand public support surface | Discord/Reddit/Stack Overflow, canonical answer workflows, support deflection |
+| V2-C | Improve measurement | GSC + product analytics + RC metrics integration, richer experiment classes |
+| V2-D | Add developer tooling | CLI, starter templates, GitHub Actions, playgrounds |
+
+### Completion bar
+
+GrowthRat becomes a versatile developer advocacy agent when it can:
+
+- support at least 5 distinct artifact types in production
+- maintain at least one runnable example repo and one docs-PR workflow
+- operate across at least 4 real external channels
+- produce weekly reports that include both operational and business-impact metrics
+- show that experiments influence future planning using real outcome data
+
+This is the level needed to claim that RevenueCat can execute the role end to end, not just the content pipeline portion of it.
+
+---
+
 ## Ownership Model
 
 ### Operator pays for (covered by RC's "dedicated budget for compute resources and API access")
@@ -2152,24 +2370,29 @@ Based on DataForSEO keyword difficulty analysis (retrieved 2026-03-16):
 | Anthropic API | LLM for chat, panel, content generation | ~$50-200 |
 | OpenAI API | Embeddings (text-embedding-3-small) | ~$5-10 |
 | OpenRouter (optional) | Model fallback + cost optimization | Usage-based |
-| DataForSEO | Keyword research, SERP analysis | ~$50-100 |
+| DataForSEO (default) | Keyword research, SERP analysis | ~$50-100 |
+| Ahrefs (optional) | AI visibility, citations, Brand Radar, strategic SEO context | plan-dependent |
 | Convex | Database, crons, vector search, file storage, Workflow, Agent | Free tier or ~$25/mo |
 | Vercel | Next.js hosting | Free tier or ~$20/mo |
 | Typefully | Multi-platform social distribution | ~$12/mo |
 | Domain | growthrat.dev or similar | ~$15/yr |
 | GitHub account | GrowthRat's repos and community presence | Free |
 
-### RevenueCat connects via self-service onboarding (zero cost to them)
+### RevenueCat connects via self-service onboarding
 
 | Asset | How they connect | What it enables |
 | --- | --- | --- |
-| Slack workspace | Add GrowthRat bot via OAuth | Commands, plans, reports, approvals |
-| Blog CMS | API key entered in `/onboarding` | Direct publishing to RC blog |
-| Charts API | API key (if REST available) | Metric grounding for content |
-| GitHub org | Add GrowthRat as collaborator | PRs, issue triage |
+| Slack workspace | Submit bot credentials in `/onboarding`, verified server-side | Commands, plans, reports, approvals |
+| RevenueCat account | Submit project + API credentials in `/onboarding` | Product grounding and RC-connected mode |
+| Blog CMS | Submit publishing credentials in `/onboarding` or use manual verification path | Direct publishing to RC blog when API access exists |
+| GitHub org / repo | Submit token and repo target in `/onboarding` | PRs, issue triage, backup publishing |
+| Typefully | Submit social set credentials in `/onboarding` | Multi-platform distribution |
+| DataForSEO | Submit API credentials in `/onboarding` | Keyword research and SERP measurement |
+| Ahrefs (optional) | Submit API or workspace credentials in `/onboarding` when RC prefers Ahrefs over DataForSEO | AI visibility, citation tracking, strategic search intelligence |
+| X / Twitter | Submit bearer credentials in `/onboarding` | Mention monitoring and replies |
 | Preferences | Set in `/onboarding` | Review mode, focus topics, report channel |
 
-RC's **secrets** (Slack bot token, CMS API key, Charts API key) are stored as **Convex environment variables** (server-side only). They are never stored in the `agentConfig` database table, never returned by any client query, and never visible in the operator dashboard. The operator never sees them. RC can revoke any connection at any time via the onboarding page.
+RC connector payloads are submitted through the onboarding route, signed server-side, verified in Convex, and stored encrypted. The operator sees statuses and labels, not raw secret values. Some connectors still support only `manual_verification` until RC-specific API details or admin access are available.
 
 RC's **preferences** (review mode, focus topics, channel name) are stored in the `agentConfig` table. These are non-secret and safe for client-side access.
 
@@ -2182,7 +2405,7 @@ RC's **preferences** (review mode, focus topics, channel name) are stored in the
 | Panel SSE endpoint | Token auth | `GROWTHCAT_PANEL_TOKEN` checked in `app/api/panel/session/route.ts`. Empty = open in dev. |
 | Slack event webhook | HMAC-SHA256 | `SLACK_SIGNING_SECRET` verified in `app/api/slack/events/route.ts`. Timing-safe comparison + 5-minute replay protection. |
 | Convex HTTP actions | Slack signature verification | Slack webhook receiver in `convex/http.ts` verifies HMAC-SHA256 signature. Health check endpoint is public. |
-| Onboarding secrets | Server-only storage | RC secrets sent to Next.js API route → Convex internal action → stored as Convex environment variables. Never stored in `agentConfig` table. Never exposed to client-side code or queries. |
+| Onboarding secrets | Signed server route + encrypted internal storage | Connector payloads flow through `/api/onboarding/secrets`, are signed with `GROWTHCAT_INTERNAL_SECRET`, verified in Convex, encrypted into `connectorSecrets`, and never exposed via client queries. |
 | Onboarding preferences | Convex mutation | Non-secret preferences (review mode, focus topics, channel name) stored in `agentConfig` table via standard Convex mutation. Safe for client-side access. |
 
 All endpoints reject unauthenticated requests. Secrets are never committed (`.env.local` is gitignored). Kill switch (`@GrowthRat stop` or `agentConfig.paused = true`) halts all side effects and checkpoints active runs.
@@ -2200,7 +2423,7 @@ All endpoints reject unauthenticated requests. Secrets are never committed (`.en
 - [ ] Embedding model choice: OpenAI `text-embedding-3-small` (1536 dims, $0.02/1M tokens) vs other options
 - [ ] How to handle Charts API if no REST endpoint exists (dashboard-only access post-hire)
 - [ ] Cross-thread memory scope: per-week vs all-time vs sliding window (Convex Agent `searchOtherThreads` config)
-- [ ] Onboarding secret storage mechanism: programmatic `npx convex env set` via admin API, or server-only Convex table with no client-facing queries
+- [ ] Secret rotation and revocation UX for connector payloads stored in `connectorSecrets`
 
 ---
 
@@ -2212,7 +2435,7 @@ All endpoints reject unauthenticated requests. Secrets are never committed (`.en
 | contextHandler not implemented = no custom doc RAG | High: Convex Agent only searches thread messages automatically, NOT custom tables | The engineer must write the contextHandler explicitly. Without it, the agent answers from system prompt + conversation history only — no ingested docs. |
 | Generic content | High: LLM-generated content without DataForSEO grounding is generic | DataForSEO keyword targeting, novelty gate, benchmark gate all prevent generic output. |
 | Publishing doesn't render | High: articles published to GitHub but not visible on site | VS-B1 fixes this: PRIMARY publishing is Convex `status: "published"`. Article pages query Convex. GitHub is SECONDARY (backup/SEO). |
-| Secrets exposed to client | High: API tokens in agentConfig table readable by any client query | VS-B5 fixes this: secrets stored as Convex env vars (server-only), NOT in agentConfig table. agentConfig has preferences only. |
+| Secrets exposed to client | High: API tokens in a client-readable table would be a security bug | VS-B5 fixes this: raw connector payloads are stored encrypted in `connectorSecrets`, visible status lives in `connectorConnections`, and `agentConfig` contains preferences only. |
 | Wrong API names in code | Medium: code won't compile if using wrong Convex Agent constructor params | All code examples use correct names: `languageModel`, `textEmbeddingModel`, `searchOptions` with `textSearch`/`vectorSearch`/`messageRange`. Import from `@convex-dev/agent` (not `@convex-dev/agents`). |
 | Weak growth strategies | Medium: vanity metrics masquerading as growth | Evidence-backed opportunity scoring with explicit baseline, target, confidence, stop condition (in `lib/config/strategy.ts`). |
 | Slack app setup complexity | Medium: OAuth scopes, event subscriptions, signing secret | Document exact Slack app manifest. Use `socket_mode` for dev if needed. |
