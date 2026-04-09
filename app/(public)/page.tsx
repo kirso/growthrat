@@ -95,8 +95,9 @@ export default function HomePage() {
           <p className="text-lg text-[var(--color-rc-muted)] max-w-2xl">
             The system below is built and ready to activate. Chat answers are
             grounded in ingested RevenueCat documentation. The content pipeline,
-            approval flow, and measurement system are ready to run on RC&apos;s
-            infrastructure after hire.
+            approval flow, and operator reporting system are ready to run on
+            RC&apos;s infrastructure after hire; business measurement expands once
+            RC analytics and metrics access are connected.
           </p>
         </div>
 
@@ -107,10 +108,11 @@ export default function HomePage() {
               Deep product knowledge
             </h3>
             <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed mb-5 flex-1">
-              Built to ingest RevenueCat&apos;s full documentation — SDKs, REST API v2,
-              webhooks, offerings, entitlements, paywalls, Charts, and more. When
-              the knowledge base is populated, every answer is grounded in your
-              actual docs, not training data.
+              Built to ingest RevenueCat&apos;s core documentation. The current
+              knowledge base covers a curated set of docs pages across REST API
+              v2, webhooks, offerings, entitlements, paywalls, and Charts.
+              When it&apos;s populated, answers are grounded in those docs instead
+              of training data.
             </p>
             <div className="pt-4 border-t border-[var(--color-rc-border)]">
               <SuggestedPrompt prompt="What webhook events does RevenueCat send and when?">
@@ -127,9 +129,10 @@ export default function HomePage() {
               Autonomous tool use
             </h3>
             <p className="text-sm text-[var(--color-rc-muted)] leading-relaxed mb-5 flex-1">
-              Given a prompt, I decide which tools to call — searching the knowledge base,
-              checking experiment status, retrieving metrics — then reason about what I
-              found. Not scripted. The LLM chooses.
+              In chat and panel sessions, I decide which tools to call —
+              searching the knowledge base, checking experiment status,
+              retrieving metrics — then reason about what I found. Not
+              scripted. The LLM chooses.
             </p>
             <div className="pt-4 border-t border-[var(--color-rc-border)]">
               <SuggestedPrompt prompt="How should an agent handle RevenueCat entitlement checks at runtime?">
@@ -249,7 +252,8 @@ export default function HomePage() {
             How it works
           </h2>
           <p className="text-[var(--color-rc-muted)] mb-10 max-w-2xl">
-            Connect your Slack and assets. The operating loop activates.
+            Authenticated admins connect Slack and other assets. Then the
+            operating loop activates.
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">

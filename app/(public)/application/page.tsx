@@ -72,7 +72,7 @@ const artifacts = [
 ];
 
 const weekDays = [
-  { day: "Mon", title: "Ingest + Plan", tasks: ["Ingest RC docs, SDKs, changelog", "Keyword intelligence scan", "Score and select week's focus", "Post plan to Slack"] },
+  { day: "Mon", title: "Ingest + Plan", tasks: ["Refresh RC docs and source set", "Keyword intelligence scan", "Score and select week's focus", "Post plan to Slack"] },
   { day: "Tue", title: "Ship Content #1", tasks: ["Generate with RAG grounding", "Run validation pipeline", "Publish + distribute", "Start community monitoring"] },
   { day: "Wed", title: "Feedback Cycle", tasks: ["File 3 structured feedback items", "Monitor community channels", "Build canonical answers"] },
   { day: "Thu", title: "Ship Content #2", tasks: ["Second article + experiment", "Launch growth experiment", "Set baseline measurements"] },
