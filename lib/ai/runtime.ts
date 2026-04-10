@@ -1,12 +1,20 @@
 import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import { generateObject, generateText } from "ai";
 
 export type AiTaskClass = "reasoning" | "generation" | "fast";
+type AiProvider = "anthropic" | "openai";
 
 export const AI_MODEL_IDS = {
   reasoning: process.env.ANTHROPIC_REASONING_MODEL ?? "claude-opus-4-20250514",
   generation: process.env.ANTHROPIC_GENERATION_MODEL ?? "claude-sonnet-4-20250514",
   fast: process.env.ANTHROPIC_FAST_MODEL ?? "claude-3-5-haiku-20241022",
+} as const;
+
+export const OPENAI_MODEL_IDS = {
+  reasoning: process.env.OPENAI_REASONING_MODEL ?? "gpt-4.1",
+  generation: process.env.OPENAI_GENERATION_MODEL ?? "gpt-4.1",
+  fast: process.env.OPENAI_FAST_MODEL ?? "gpt-4.1-mini",
 } as const;
 
 type UsageLoggerInput = {
@@ -53,8 +61,21 @@ const PRICING_PER_MILLION: Record<string, { input: number; output: number }> = {
   [AI_MODEL_IDS.fast]: { input: 0.8, output: 4 },
 };
 
-function getModelId(taskClass: AiTaskClass) {
-  return AI_MODEL_IDS[taskClass];
+function getModelId(taskClass: AiTaskClass, provider: AiProvider) {
+  return provider === "openai" ? OPENAI_MODEL_IDS[taskClass] : AI_MODEL_IDS[taskClass];
+}
+
+function getPreferredProvider(): AiProvider {
+  return process.env.AI_PROVIDER === "openai" ? "openai" : "anthropic";
+}
+
+function hasOpenAiFallback() {
+  return Boolean(process.env.OPENAI_API_KEY);
+}
+
+function getModel(taskClass: AiTaskClass, provider: AiProvider) {
+  const modelId = getModelId(taskClass, provider);
+  return provider === "openai" ? openai(modelId) : anthropic(modelId);
 }
 
 function getAnthropicOptions(taskClass: AiTaskClass, enableThinking = false) {
@@ -68,12 +89,35 @@ function getAnthropicOptions(taskClass: AiTaskClass, enableThinking = false) {
   };
 }
 
+function getProviderOptions(provider: AiProvider, taskClass: AiTaskClass, enableThinking = false) {
+  if (provider === "anthropic") {
+    return getAnthropicOptions(taskClass, enableThinking);
+  }
+  return undefined;
+}
+
+function shouldFallbackToOpenAi(error: unknown) {
+  if (!hasOpenAiFallback()) return false;
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return message.includes("credit balance is too low")
+    || message.includes("plans & billing")
+    || message.includes("insufficient credit")
+    || message.includes("insufficient_balance");
+}
+
 function estimateAnthropicUsd(model: string, usage?: UsageShape | null) {
   const pricing = PRICING_PER_MILLION[model];
   if (!pricing) return 0;
   const inputTokens = usage?.inputTokens ?? 0;
   const outputTokens = usage?.outputTokens ?? 0;
   return (inputTokens / 1_000_000) * pricing.input + (outputTokens / 1_000_000) * pricing.output;
+}
+
+function estimateUsd(provider: AiProvider, model: string, usage?: UsageShape | null) {
+  if (provider === "anthropic") {
+    return estimateAnthropicUsd(model, usage);
+  }
+  return 0;
 }
 
 async function logResultUsage(
@@ -90,52 +134,73 @@ async function logResultUsage(
     ...base,
     inputTokens,
     outputTokens,
-    estimatedUsd: estimateAnthropicUsd(base.model, usage),
+    estimatedUsd: estimateUsd(base.provider as AiProvider, base.model, usage),
     success,
     ...(errorCode ? { errorCode } : {}),
   });
 }
 
 export async function runTextTask(args: TextTaskArgs) {
-  const modelId = getModelId(args.taskClass);
   const startedAt = Date.now();
+  const preferredProvider = getPreferredProvider();
 
-  try {
+  async function execute(provider: AiProvider) {
+    const modelId = getModelId(args.taskClass, provider);
     const result = await generateText({
-      model: anthropic(modelId),
+      model: getModel(args.taskClass, provider),
       ...(args.system ? { system: args.system } : {}),
       prompt: args.prompt,
       maxOutputTokens: args.maxOutputTokens ?? 2048,
       ...(args.enableThinking ? {} : { temperature: args.temperature ?? 0.3 }),
-      providerOptions: getAnthropicOptions(args.taskClass, args.enableThinking),
+      ...(getProviderOptions(provider, args.taskClass, args.enableThinking)
+        ? { providerOptions: getProviderOptions(provider, args.taskClass, args.enableThinking) }
+        : {}),
     });
+    return { provider, modelId, result };
+  }
+
+  try {
+    let provider = preferredProvider;
+    let modelId = getModelId(args.taskClass, provider);
+    let result;
+    try {
+      ({ provider, modelId, result } = await execute(provider));
+    } catch (error) {
+      if (provider === "anthropic" && shouldFallbackToOpenAi(error)) {
+        ({ provider, modelId, result } = await execute("openai"));
+      } else {
+        throw error;
+      }
+    }
 
     await logResultUsage(args.logUsage, {
       feature: args.feature,
       workflowType: args.workflowType,
-      provider: "anthropic",
+      provider,
       model: modelId,
       latencyMs: Date.now() - startedAt,
       metadata: {
         taskClass: args.taskClass,
         thinkingEnabled: Boolean(args.enableThinking),
-        cacheEnabled: true,
+        cacheEnabled: provider === "anthropic",
         ...(args.metadata ?? {}),
       },
     }, result.usage, true);
 
     return result;
   } catch (error) {
+    const provider = preferredProvider;
+    const modelId = getModelId(args.taskClass, provider);
     await logResultUsage(args.logUsage, {
       feature: args.feature,
       workflowType: args.workflowType,
-      provider: "anthropic",
+      provider,
       model: modelId,
       latencyMs: Date.now() - startedAt,
       metadata: {
         taskClass: args.taskClass,
         thinkingEnabled: Boolean(args.enableThinking),
-        cacheEnabled: true,
+        cacheEnabled: provider === "anthropic",
         ...(args.metadata ?? {}),
       },
     }, undefined, false, error instanceof Error ? error.name : "unknown_error");
@@ -144,48 +209,69 @@ export async function runTextTask(args: TextTaskArgs) {
 }
 
 export async function runStructuredTask<TSchema>(args: StructuredTaskArgs<TSchema>) {
-  const modelId = getModelId(args.taskClass);
   const startedAt = Date.now();
+  const preferredProvider = getPreferredProvider();
 
-  try {
+  async function execute(provider: AiProvider) {
+    const modelId = getModelId(args.taskClass, provider);
     const result = await generateObject({
-      model: anthropic(modelId),
+      model: getModel(args.taskClass, provider),
       schema: args.schema as any,
       ...(args.system ? { system: args.system } : {}),
       prompt: args.prompt,
       maxOutputTokens: args.maxOutputTokens ?? 1500,
       ...(args.enableThinking ? {} : { temperature: args.temperature ?? 0.2 }),
-      providerOptions: getAnthropicOptions(args.taskClass, args.enableThinking),
+      ...(getProviderOptions(provider, args.taskClass, args.enableThinking)
+        ? { providerOptions: getProviderOptions(provider, args.taskClass, args.enableThinking) }
+        : {}),
     });
+    return { provider, modelId, result };
+  }
+
+  try {
+    let provider = preferredProvider;
+    let modelId = getModelId(args.taskClass, provider);
+    let result;
+    try {
+      ({ provider, modelId, result } = await execute(provider));
+    } catch (error) {
+      if (provider === "anthropic" && shouldFallbackToOpenAi(error)) {
+        ({ provider, modelId, result } = await execute("openai"));
+      } else {
+        throw error;
+      }
+    }
 
     await logResultUsage(args.logUsage, {
       feature: args.feature,
       workflowType: args.workflowType,
-      provider: "anthropic",
+      provider,
       model: modelId,
       latencyMs: Date.now() - startedAt,
       metadata: {
         taskClass: args.taskClass,
         structured: true,
         thinkingEnabled: Boolean(args.enableThinking),
-        cacheEnabled: true,
+        cacheEnabled: provider === "anthropic",
         ...(args.metadata ?? {}),
       },
     }, result.usage, true);
 
     return result;
   } catch (error) {
+    const provider = preferredProvider;
+    const modelId = getModelId(args.taskClass, provider);
     await logResultUsage(args.logUsage, {
       feature: args.feature,
       workflowType: args.workflowType,
-      provider: "anthropic",
+      provider,
       model: modelId,
       latencyMs: Date.now() - startedAt,
       metadata: {
         taskClass: args.taskClass,
         structured: true,
         thinkingEnabled: Boolean(args.enableThinking),
-        cacheEnabled: true,
+        cacheEnabled: provider === "anthropic",
         ...(args.metadata ?? {}),
       },
     }, undefined, false, error instanceof Error ? error.name : "unknown_error");
@@ -194,11 +280,12 @@ export async function runStructuredTask<TSchema>(args: StructuredTaskArgs<TSchem
 }
 
 export function getRouteModel(taskClass: AiTaskClass) {
-  return anthropic(getModelId(taskClass));
+  const provider = getPreferredProvider();
+  return getModel(taskClass, provider);
 }
 
 export function getRouteProviderOptions(taskClass: AiTaskClass, enableThinking = false) {
-  return getAnthropicOptions(taskClass, enableThinking);
+  return getProviderOptions(getPreferredProvider(), taskClass, enableThinking);
 }
 
 export function getEstimatedAnthropicUsd(model: string, usage?: UsageShape | null) {
