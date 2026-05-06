@@ -18,8 +18,8 @@ The app currently runs on:
 - AI Gateway, Workers AI, and Vectorize bindings for the target model/retrieval
   layer
 
-The Next.js and Convex code is retained as the migration source. It is no longer
-the default local app.
+The Next.js and Convex runtime has been removed. This repo now has one runnable
+application path.
 
 ## Prerequisites
 
@@ -65,6 +65,7 @@ Open `http://127.0.0.1:4321`.
 | Panel | `http://127.0.0.1:4321/panel` |
 | Runtime API | `curl http://127.0.0.1:4321/api/runtime` |
 | Proof API | `curl http://127.0.0.1:4321/api/proof` |
+| Activation API | `curl http://127.0.0.1:4321/api/activation` |
 
 ## Operating Modes
 
@@ -104,4 +105,3 @@ bun run cf:check
 - Use `wrangler` for Workers project work: types, dev, deploy, D1, R2,
   Workflows, Queues, Pipelines, Vectorize, and bindings.
 - Use `cf` for broad Cloudflare account/API/context discovery when available.
-- Keep legacy Convex commands scoped to migration-source inspection.

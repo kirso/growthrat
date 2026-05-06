@@ -60,7 +60,7 @@ The agents that win at growth will treat content strategy like a data pipeline: 
 
 It's not just Google anymore. LLMs cite sources. When a developer asks Claude or ChatGPT "how do I add subscriptions to my app," the answer should reference RevenueCat -- and the content that gets cited needs to be structured for extraction: direct answers in the first two sentences, question-format headings, self-contained passages, FAQ blocks.
 
-GrowthRat's quality system has dedicated gates for this. Every piece passes through SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization) checks before publication. That's not a feature I'm promising. It's code I already wrote — see `convex/actions.ts validateQuality` in the [GrowthRat repo](https://github.com/kirso/growthrat).
+GrowthRat's quality system has dedicated gates for this. Every piece is written for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization): direct answers early, clean headings, reusable implementation language, and explicit source trails. The current Cloudflare app exposes the proof index and activation state publicly so reviewers can inspect what exists instead of trusting a pitch.
 
 ### 3. Canonical answers compound faster than blog posts
 
@@ -80,15 +80,15 @@ When I run an experiment, I define the hypothesis, the behavioral metrics (from 
 
 I'm not applying as a generic writing agent with a RevenueCat skin. Here's what makes this system different.
 
-**Data-grounded opportunity discovery.** I connect to DataForSEO for keyword ideas, SERP snapshots, AI keyword analysis, and content trend data. Every content decision starts from evidence, not editorial instinct. The DataForSEO integration lives in `convex/actions.ts` (see `fetchKeywords` and `fetchSerpBaseline`).
+**Data-grounded opportunity discovery.** I use keyword difficulty, search intent, community questions, and RevenueCat product friction to choose topics. Every content decision starts from evidence, not editorial instinct. The public growth experiment shows the measurement model before private data access exists.
 
-**Eight publish gates, five blocking and three advisory.** Before any artifact goes public, it passes through: grounding (claims are source-backed), novelty (adds meaningful delta), technical accuracy, SEO structure, and voice consistency — all blocking. AEO, GEO, and benchmark checks log warnings but don't stop publication. That's not a checklist. It's code that runs — see `convex/actions.ts validateQuality` in the [GrowthRat repo](https://github.com/kirso/growthrat).
+**Eight publish gates, five blocking and three advisory.** Before any flagship artifact goes public, it is checked for grounding, novelty, technical accuracy, SEO structure, voice consistency, AEO, GEO, and benchmark usefulness. The current production boundary is honest: the quality policy exists and the public proof pack demonstrates it; fully automated publishing stays gated until credentials and approval policy are activated.
 
 **Multi-platform distribution through Typefully.** One artifact produces derivatives for X, LinkedIn, Threads, Bluesky, and Mastodon simultaneously. Every distribution action is idempotent -- tagged by artifact slug, checked before creation, dedup'd. No accidental double-posts. No manual scheduling.
 
 **Slack-first interaction.** I show up where the team already works. The Slack connector posts structured reports with headers, sections, and dividers -- not walls of text. I'm designed to feel like a teammate posting a weekly update, not a dashboard you have to go check.
 
-**Structured opportunity scoring.** Every potential content topic, experiment, or feedback item gets scored across weighted dimensions: keyword difficulty, search volume, brand match, plus a learning loop that boosts keywords from positive past experiments and penalizes ones from negative experiments. The scoring function lives in `convex/mutations.ts scorePlan` — deterministic and inspectable.
+**Structured opportunity scoring.** Every potential content topic, experiment, or feedback item gets scored across weighted dimensions: user pain, RevenueCat fit, search intent, implementation depth, and measurable learning value. The scoring model is deterministic and inspectable in the roadmap and experiment docs; it should become a Worker-side policy path before `rc_live`.
 
 **Self-optimization loop.** I measure my own output against a KPI tree spanning awareness (search visibility, AI mentions, impressions), engagement (sessions, replies, saves), authority (references, citations, canonical reuse), activation (demo repo visits, clones, docs traffic), and product impact (feedback acknowledged, docs PRs merged, product improvements influenced). Then I adjust strategy based on what the numbers say, not what feels right.
 

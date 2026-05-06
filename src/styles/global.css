@@ -270,6 +270,37 @@ h3 {
   color: var(--accent-dark);
 }
 
+.runtime-panel {
+  display: grid;
+  gap: 20px;
+}
+
+.runtime-header,
+.runtime-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.runtime-header h2 {
+  margin-bottom: 0;
+}
+
+.runtime-detail {
+  align-items: start;
+}
+
+.status-row.compact {
+  align-items: flex-start;
+}
+
+.status-row.compact p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .footer {
   padding: 36px 0;
   color: var(--faint);
@@ -354,5 +385,10 @@ h3 {
 
   .chat-form {
     grid-template-columns: 1fr;
+  }
+
+  .runtime-header,
+  .runtime-footer {
+    flex-direction: column;
   }
 }

@@ -154,21 +154,19 @@ Target keywords with difficulty scores (retrieved 2026-03-16):
   Pipeline stream, AI Gateway, Workers AI, and Vectorize. AI Search remains a
   candidate later, but it is not the active binding while account provisioning
   fails.
-- **Legacy migration source** — the old Next.js 16, React 19, Convex, Vercel AI
-  SDK, and Tailwind implementation remains in the repo for behavior and schema
-  migration. It is not the default runtime.
-- **Convex status** — migration source only, not the long-term architecture
-  invariant.
-- **Legacy Vercel AI SDK v6** — `runTextTask` / `runStructuredTask` /
-  `runStreamTask` chokepoint in `lib/ai/runtime.ts` with Anthropic primary +
-  OpenAI fallback on quota errors
-- **Voyage AI** — `voyage-3-lite` embeddings (512-dim) for RAG over the `sources` table
+- **Legacy migration status** — the old Next.js/Convex runtime has been removed
+  from the runnable repo. The active code path is Cloudflare-native.
+- **Model layer** — Workers AI and AI Gateway are provisioned as the target
+  routing layer; provider keys remain required before live model side effects.
+- **Retrieval** — Vectorize is the active retrieval target. AI Search remains a
+  later option after account provisioning succeeds.
 - **Typefully** — multi-platform social distribution (X, LinkedIn, Threads, Bluesky, Mastodon)
 - **DataForSEO** — keyword research, SERP analysis, experiment baselines
 
-Operating modes are gated at `agentConfig.mode`: `dormant` (chat closed, crons
-skip), `interview_proof` (chat + panel only), `rc_live` (full operation).
-Inngest and AgentKit are not part of the active stack.
+Operating modes are gated by `APP_MODE` in `wrangler.jsonc` and surfaced through
+`/api/activation`: `dormant` (public proof only), `interview_proof` (public
+proof, deterministic chat, panel-safe answers), and `rc_live` (full operation
+only after credentials and gates are verified).
 
 ## Quality Gates
 

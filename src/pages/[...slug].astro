@@ -1,12 +1,15 @@
 ---
 import { getArticle } from "@/content/articles";
 import { getPage } from "@/content/pages";
+import RuntimeStatus from "@/components/RuntimeStatus.svelte";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 
 const slug = Astro.params.slug ?? "";
 const articleSlug = slug.startsWith("articles/") ? slug.replace("articles/", "") : "";
 const article = articleSlug ? getArticle(articleSlug) : undefined;
 const page = article ? undefined : getPage(slug);
+const showRuntimeStatus =
+  !article && page && ["dashboard", "go-live", "pipeline", "interview-truth"].includes(page.slug);
 
 if (!article && !page) {
   return Astro.redirect("/");
@@ -30,6 +33,14 @@ if (!article && !page) {
       )}
     </div>
   </section>
+
+  {showRuntimeStatus && (
+    <section class="section">
+      <div class="shell">
+        <RuntimeStatus client:load />
+      </div>
+    </section>
+  )}
 
   {article ? (
     <section class="section">

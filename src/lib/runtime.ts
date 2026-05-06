@@ -1,4 +1,4 @@
-import { articles } from "@/content/articles";
+import { articles } from "../content/articles";
 
 export type RuntimeSnapshot = {
   mode: string;
@@ -81,7 +81,7 @@ export function buildChatAnswer(message: string): string {
   const normalized = message.toLowerCase();
 
   if (normalized.includes("cloudflare") || normalized.includes("d1")) {
-    return "The migration target is Astro with Svelte islands on Cloudflare Workers. D1 owns relational operational records, Durable Objects own hot agent state, R2 owns immutable proof bundles, Queues handle backpressure, Workflows own long-running loops, and Pipelines capture event data.";
+    return "The active target is Astro with Svelte islands on Cloudflare Workers. Account-backed D1, R2, Queues, Vectorize, a Pipeline stream, and AI Gateway are provisioned; Durable Objects and Workflows are wired in the Worker config and become observable after the growthrat Worker is deployed. AI Search is deferred because account provisioning failed, so Vectorize is the retrieval path.";
   }
 
   if (normalized.includes("revenuecat") || normalized.includes("subscription")) {
@@ -89,7 +89,7 @@ export function buildChatAnswer(message: string): string {
   }
 
   if (normalized.includes("interview") || normalized.includes("pass")) {
-    return "The strongest interview stance is honest separation: the public application package and proof artifacts are real; live RevenueCat operation still requires Slack, CMS, Charts, GitHub, and social credentials plus approval and budget gates.";
+    return "The strongest interview stance is honest separation: the public application package, D1-backed proof data, Cloudflare resource provisioning, and activation dashboard are real; live RevenueCat operation still requires production Worker deployment, connector secrets, Slack, CMS, Charts, GitHub, and social credentials plus approval, rate, budget, and kill-switch gates.";
   }
 
   return "GrowthRat is built to prove the RevenueCat Agentic AI and Growth Advocate role through public work: technical content, growth experiments, structured product feedback, community answers, and weekly reports. The current migration moves that proof surface onto Astro, Svelte, and Cloudflare-native agent infrastructure.";

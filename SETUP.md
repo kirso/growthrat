@@ -1,7 +1,6 @@
 # GrowthRat Setup
 
-This guide describes the active Astro/Svelte/Cloudflare runtime and the legacy
-Next/Convex migration source.
+This guide describes the active Astro/Svelte/Cloudflare runtime.
 
 ## Local Setup
 
@@ -126,6 +125,8 @@ APIs:
 - `/api/runtime`
 - `/api/proof`
 - `/api/chat`
+- `/api/activation`
+- `/api/workflows/weekly-dry-run`
 
 Agent route:
 
@@ -151,15 +152,7 @@ Observed non-fatal warnings in local pre-production:
 - The Agents SDK currently emits a Vite warning about `zod/v3` and
   `fromJSONSchema`; the build still completes.
 
-## Legacy Runtime
+## Activation Checklist
 
-The old Next/Convex app is preserved as a migration source:
-
-```bash
-bun run dev:next
-bunx convex dev
-```
-
-Do not treat the legacy runtime as the active architecture. New public pages,
-Cloudflare endpoints, and agent infrastructure should land under `src/`,
-`migrations/`, and `wrangler.jsonc`.
+Use [docs/ops/cloudflare-activation-checklist.md](docs/ops/cloudflare-activation-checklist.md)
+before changing `APP_MODE` from `interview_proof` to `rc_live`.

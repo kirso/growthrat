@@ -21,8 +21,9 @@ The active app shell is now:
 - Cloudflare Workflows
 - D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 
-The old Next.js and Convex implementation still exists under `app/`, `lib/`,
-and `convex/` as the migration source. It is no longer the default served app.
+The old Next.js and Convex implementation has been removed from the runnable
+repo. Historical behavior now lives in docs and migration notes only; the code
+has one runtime path.
 
 ## Why This Stack
 
@@ -71,9 +72,6 @@ wrangler.jsonc          Cloudflare binding source of truth
 worker-configuration.d.ts
                         Generated Cloudflare runtime types
 
-app/                    Legacy Next.js migration source
-convex/                 Legacy Convex backend and data-model source
-lib/                    Legacy shared modules and tests
 docs/                   Product, ops, interview, and public proof docs
 ```
 
@@ -90,8 +88,12 @@ docs/                   Product, ops, interview, and public proof docs
 | `/interview-truth` | Proven vs. requires activation |
 | `/panel` | Live panel surface |
 | `/dashboard` | Operator status |
+| `/go-live` | Activation checklist surface |
+| `/pipeline` | Weekly loop surface |
 | `/api/runtime` | Runtime and binding snapshot |
 | `/api/proof` | Proof artifact index |
+| `/api/activation` | Resource, secret, and gate snapshot |
+| `/api/workflows/weekly-dry-run` | Protected manual weekly Workflow dry run |
 
 ## Cloudflare Resource Model
 
@@ -107,6 +109,9 @@ docs/                   Product, ops, interview, and public proof docs
 | Event firehose | Pipeline stream |
 | Model execution and gateway | Workers AI and AI Gateway |
 | RevenueCat docs retrieval | Vectorize now; AI Search later if account provisioning succeeds |
+
+The activation gate lives in
+[docs/ops/cloudflare-activation-checklist.md](docs/ops/cloudflare-activation-checklist.md).
 
 ## Platform References
 

@@ -8,9 +8,6 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@legacy/*": [
-        "./*"
       ]
     },
     "experimentalDecorators": true
@@ -24,8 +21,6 @@
   ],
   "exclude": [
     "node_modules",
-    "app",
-    "convex",
     ".next",
     "dist",
     ".wrangler",

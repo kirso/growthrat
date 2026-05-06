@@ -9,28 +9,42 @@
 
 GrowthRat is an autonomous developer advocacy and growth agent built specifically for RevenueCat's Agentic AI & Growth Advocate role. It's not a chatbot with a personality — it's a working system with:
 
-- **1,700+ embedded knowledge chunks** from RevenueCat's complete documentation (343 pages)
-- **Autonomous tool calling** — the agent decides when to search the knowledge base, check experiment status, or look up metrics
-- **Content pipeline** — generates articles grounded in real product documentation, validates quality, publishes to the database
+- **Public proof package** — application letter, articles, feedback, experiment,
+  weekly report, readiness review, and activation truth surface
+- **Cloudflare-native runtime** — Astro, Svelte islands, Workers, Agents,
+  Durable Objects, Workflows, D1, R2, Queues, Pipeline stream, AI Gateway, and
+  Vectorize
+- **Content pipeline target** — generates articles grounded in real product
+  documentation, validates quality, and waits for approval before publishing
 - **Growth experiment framework** — hypothesis, baseline measurement, execution, 7-day measurement
 - **Structured product feedback** — uses RevenueCat as an agent developer, identifies friction, files reports
 - **Multi-platform distribution** — built for X, LinkedIn, Threads, Bluesky, Mastodon (activates with credentials)
-- **Slack integration** — plans, approvals, reports, commands (activates with bot token)
+- **Slack integration target** — plans, approvals, reports, and commands after
+  RevenueCat provides a bot token and approval policy
 
 ## 2. Architecture (30-second version)
 
-- **Database + workflows + RAG**: Reactive database with durable workflows that survive restarts, retry on failure. Vector search for RAG with 512-dimension embeddings.
-- **LLM**: Claude Sonnet 4 for content generation, chat, and panel responses. All responses grounded in retrieved documentation.
-- **Frontend**: Server-rendered application with static and dynamic pages. Chat widget on every public page.
-- **Connectors**: Slack, social platforms, code repositories, keyword intelligence APIs. All degrade gracefully without credentials.
+- **Web/runtime**: Astro with Svelte islands on Cloudflare Workers.
+- **State and jobs**: D1 for operational records, Durable Objects for hot agent
+  state, R2 for proof bundles, Queues for backpressure, Workflows for durable
+  weekly loops.
+- **AI/retrieval**: AI Gateway and Workers AI bindings are provisioned; Vectorize
+  is the active retrieval target while AI Search remains deferred.
+- **Connectors**: Slack, social platforms, code repositories, keyword
+  intelligence APIs, and RevenueCat private APIs activate only after credentials
+  and approval gates are in place.
 
 ## 3. Safety Model
 
 ### Trust Boundaries
-- **Content review**: Default mode is "draft only" — content generates but waits for Slack approval before publishing
-- **Slack reactions**: Thumbs up publishes, thumbs down rejects. Full audit trail in approval log
-- **Kill switch**: `@GrowthRat stop` pauses all side effects (needs Slack connection)
-- **Fail-closed**: Every connector checks for credentials. Missing credentials = skip (log warning), never crash
+- **Content review**: Default mode is proof-only. Publishing waits for explicit
+  approval policy before activation.
+- **Approval trail**: Approval records belong in D1 and proof bundles belong in
+  R2 before any external side effect is enabled.
+- **Kill switch**: side effects stay disabled outside `rc_live`; Slack command
+  control activates only after Slack credentials exist
+- **Fail-closed**: protected Worker endpoints return `503` when internal auth is
+  not configured and `401` when tokens do not match
 
 ### What GrowthRat Cannot Do
 - Access dashboards or GUIs — needs API endpoints
@@ -46,7 +60,8 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 ## 4. Business Case
 
 ### Cost Model
-- **Compute budget**: ~$200/month (LLM API, embeddings, hosting, database)
+- **Compute budget**: expected to stay small pre-hire; Cloudflare resources are
+  provisioned and LLM/social costs remain gated until credentials exist
 - **Contract**: $60K / 6 months = $10K/month
 - **What RC gets**: 2 content pieces/week, 1 experiment/week, 3 feedback items/week, 1 weekly report, community monitoring
 - **Comparison**: A human developer advocate in this role would cost $150-200K/year salary + benefits. GrowthRat delivers the content cadence at a fraction of the cost, operates 24/7, and doesn't need onboarding time.
@@ -63,7 +78,7 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 - Kill switch available at all times
 - Full audit trail of every action
 - Graceful degradation — if any service disconnects, others continue
-- No data lock-in — all content is in RC's own database
+- No data lock-in — metadata is in D1 and proof bundles are in R2
 
 ## 5. Should the Role Continue, Expand, or Evolve?
 
@@ -88,7 +103,7 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
    — Tool calling. GrowthRat autonomously decides to search documentation, check experiment status, and retrieve metrics. It reasons about what it finds, not just generates text.
 
 2. **"How do you ensure quality?"**
-   — Validation pipeline checks grounding (claims backed by docs), voice consistency, and content thresholds. Additional gates for novelty, SEO, AEO, GEO are defined and strengthen with usage data. Slack approval is the human checkpoint.
+   — The quality model checks grounding, voice consistency, novelty, SEO, AEO, GEO, and technical usefulness. Slack or CMS approval becomes the human checkpoint after credentials are activated.
 
 3. **"What happens if something goes wrong?"**
    — Fail-closed architecture. Missing credentials = skip, not crash. Kill switch pauses everything. Full audit trail. Draft-only mode by default.

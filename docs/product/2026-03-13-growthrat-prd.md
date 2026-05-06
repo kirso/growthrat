@@ -229,8 +229,9 @@ Current repo state:
 - AI Search later if Cloudflare managed-resource provisioning succeeds
 - Browser Rendering, Sandbox, or Containers only when validation requires them
 
-The old Next.js and Convex implementation remains as migration source code. It
-is not the active architecture or long-term platform invariant.
+The old Next.js and Convex implementation has been removed from the runnable
+codebase. The product and data lessons remain in this PRD, public artifacts,
+and Cloudflare migration docs.
 
 ## Convex vs. D1 Decision
 

@@ -1,5 +1,6 @@
 ---
 import ChatIsland from "@/components/ChatIsland.svelte";
+import RuntimeStatus from "@/components/RuntimeStatus.svelte";
 import { articles } from "@/content/articles";
 import { capabilityRows, proofStats } from "@/content/pages";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -30,10 +31,9 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <h2>A working proof surface, not a pitch</h2>
       <p class="lead">
-        The active runtime has moved from Next and Convex to Astro, Svelte
-        islands, and Cloudflare Workers. The public proof package remains the
-        product: useful RevenueCat content, feedback, growth experiments, and
-        weekly reporting discipline.
+        The active runtime is Astro, Svelte islands, and Cloudflare Workers.
+        The public proof package remains the product: useful RevenueCat content,
+        feedback, growth experiments, and weekly reporting discipline.
       </p>
       <div class="grid" style="margin-top: 28px;">
         {proofStats.map((stat) => (
@@ -77,6 +77,12 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
           </a>
         ))}
       </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <RuntimeStatus client:load />
     </div>
   </section>
 

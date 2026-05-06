@@ -26,8 +26,8 @@ export const capabilityRows = [
   },
   {
     label: "Cloudflare foundation",
-    status: "migrating",
-    detail: "Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipeline stream, AI Gateway, and Vectorize are now the active target.",
+    status: "proven",
+    detail: "Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipeline stream, AI Gateway, and Vectorize are now the single runnable runtime path.",
   },
   {
     label: "RevenueCat internal operation",
@@ -145,7 +145,7 @@ export const pages: RoutePage[] = [
         title: "Proven now",
         body: [
           "Public application package, proof artifacts, architecture migration, RevenueCat product reasoning, and deterministic interview surfaces.",
-          "The codebase now has a Cloudflare-native foundation for the next runtime: Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipeline stream, AI Gateway, and Vectorize."
+          "The codebase now has a Cloudflare-native runtime: Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipeline stream, AI Gateway, and Vectorize."
         ],
       },
       {
