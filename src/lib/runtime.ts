@@ -49,7 +49,6 @@ export function fallbackSnapshot(mode = "interview_proof"): RuntimeSnapshot {
       "Workflows",
       "Pipelines",
       "AI Gateway",
-      "AI Search",
       "Vectorize",
     ],
   };
@@ -136,7 +135,7 @@ export async function recordEvent(env: Env, event: GrowthRatEvent): Promise<void
 
   try {
     if (bindings.EVENT_PIPELINE) {
-      tasks.push(bindings.EVENT_PIPELINE.send([payload]));
+      tasks.push(bindings.EVENT_PIPELINE.send([{ value: payload }]));
     }
   } catch {
     // Event logging must never break public proof endpoints.

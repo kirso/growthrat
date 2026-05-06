@@ -151,7 +151,9 @@ Target keywords with difficulty scores (retrieved 2026-03-16):
 
 - **Current implementation** — Astro with Svelte islands on Cloudflare Workers,
   backed by Cloudflare Agents, Durable Objects, Workflows, D1, R2, Queues,
-  Pipelines, Secrets Store, AI Gateway, and AI Search or Vectorize.
+  Pipeline stream, AI Gateway, Workers AI, and Vectorize. AI Search remains a
+  candidate later, but it is not the active binding while account provisioning
+  fails.
 - **Legacy migration source** — the old Next.js 16, React 19, Convex, Vercel AI
   SDK, and Tailwind implementation remains in the repo for behavior and schema
   migration. It is not the default runtime.

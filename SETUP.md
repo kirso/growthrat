@@ -14,8 +14,8 @@ Open `http://127.0.0.1:4321`.
 
 The dev server uses the Cloudflare workerd runtime through the Astro Cloudflare
 adapter. Some bindings are remote-only products, so local runs may warn about
-AI, AI Search, and Vectorize. Those warnings are expected until production
-Cloudflare resources are created and credentials are connected.
+AI and Vectorize. Those warnings are expected because those products use remote
+Cloudflare resources even during local development.
 
 ## Required Cloudflare Files
 
@@ -51,27 +51,28 @@ WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 execute growthrat --local --comm
 If D1 is not initialized, public pages still render and API endpoints fall back
 to seeded in-code proof counts.
 
-## Cloudflare Resources To Create
+## Cloudflare Resources
 
-Remote deployment requires real Cloudflare resources matching `wrangler.jsonc`:
+The current account-backed resources are:
 
-```bash
-WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 create growthrat
-WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler r2 bucket create growthrat-artifacts
-WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler queues create growthrat-jobs
-WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler vectorize create growthrat-doc-index --dimensions 1536 --metric cosine
-WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler pipelines setup --name growthrat-events
-```
+- D1 `growthrat` — `ed57e939-16a5-4426-b650-1bb9f34f6abf`
+- R2 `growthrat-artifacts`
+- Queue `growthrat-jobs`
+- Vectorize `growthrat-doc-index`
+- Pipeline stream `growthrat_events` — `f2a8a2111c5741f8a388f955c581382e`
+- AI Gateway `growthrat`
+- Secrets Store uses the account default store. A dedicated store could not be
+  created because the account has reached the current store quota.
 
-After creating the D1 database, add the generated `database_id` to
-`wrangler.jsonc`, rerun `bun run cf:types`, then apply remote migrations:
+Remote D1 has already been migrated and seeded. To re-apply the idempotent
+migration manually:
 
 ```bash
 WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 migrations apply growthrat --remote
 ```
 
-AI Search and Secrets Store should be created from the Cloudflare dashboard or
-the current Wrangler/API commands available in the account.
+AI Search provisioning currently fails for this account with Cloudflare managed
+resource provisioning errors, so the active retrieval binding is Vectorize.
 
 ## Required Secrets
 
@@ -144,10 +145,9 @@ Observed non-fatal warnings in local pre-production:
 
 - Missing required secrets until `.dev.vars`, `.env`, or Wrangler secrets are
   populated.
-- AI, AI Search, and Vectorize warn because they are remote-backed Cloudflare
-  products.
+- AI and Vectorize warn because they are remote-backed Cloudflare products.
 - Wrangler may generate generic Pipeline types if the account auth token cannot
-  fetch the live Pipeline schema.
+  fetch the live Pipeline stream schema.
 - The Agents SDK currently emits a Vite warning about `zod/v3` and
   `fromJSONSchema`; the build still completes.
 

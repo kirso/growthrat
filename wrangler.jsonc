@@ -15,8 +15,14 @@
   },
   "vars": {
     "APP_MODE": "interview_proof",
+    "AI_GATEWAY_ID": "growthrat",
     "PUBLIC_SITE_URL": "https://growthrat.com",
     "REVENUECAT_ROLE": "agentic-ai-growth-advocate"
+  },
+  "triggers": {
+    "crons": [
+      "0 9 * * MON"
+    ]
   },
   "secrets": {
     "required": [
@@ -32,6 +38,7 @@
     {
       "binding": "DB",
       "database_name": "growthrat",
+      "database_id": "ed57e939-16a5-4426-b650-1bb9f34f6abf",
       "migrations_dir": "migrations"
     }
   ],
@@ -83,19 +90,13 @@
   "pipelines": [
     {
       "binding": "EVENT_PIPELINE",
-      "pipeline": "growthrat-events"
+      "pipeline": "f2a8a2111c5741f8a388f955c581382e"
     }
   ],
   "vectorize": [
     {
       "binding": "DOC_INDEX",
       "index_name": "growthrat-doc-index"
-    }
-  ],
-  "ai_search": [
-    {
-      "binding": "REVENUECAT_SEARCH",
-      "instance_name": "growthrat-revenuecat-docs"
     }
   ],
   "ai": {

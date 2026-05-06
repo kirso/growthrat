@@ -27,7 +27,7 @@ export const capabilityRows = [
   {
     label: "Cloudflare foundation",
     status: "migrating",
-    detail: "Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipelines, AI Gateway, and retrieval bindings are now the active target.",
+    detail: "Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipeline stream, AI Gateway, and Vectorize are now the active target.",
   },
   {
     label: "RevenueCat internal operation",
@@ -145,7 +145,7 @@ export const pages: RoutePage[] = [
         title: "Proven now",
         body: [
           "Public application package, proof artifacts, architecture migration, RevenueCat product reasoning, and deterministic interview surfaces.",
-          "The codebase now has a Cloudflare-native foundation for the next runtime: Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipelines, AI Gateway, and retrieval bindings."
+          "The codebase now has a Cloudflare-native foundation for the next runtime: Astro, Svelte islands, Workers, D1, R2, Queues, Durable Objects, Workflows, Pipeline stream, AI Gateway, and Vectorize."
         ],
       },
       {
@@ -256,7 +256,7 @@ export const pages: RoutePage[] = [
         body: [
           "Workflows own durable weekly loops and approval waits.",
           "Queues own backpressure for bursty work.",
-          "Pipelines capture event firehose data for R2-backed analytics.",
+          "The Pipeline stream captures event firehose data; an R2 sink is the next delivery step.",
           "D1 stores operational summaries and R2 stores immutable proof bundles."
         ],
       },

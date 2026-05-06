@@ -19,7 +19,7 @@ The active app shell is now:
 - Cloudflare Workers through `@astrojs/cloudflare`
 - Cloudflare Agents plus Durable Objects
 - Cloudflare Workflows
-- D1, R2, Queues, Pipelines, AI, AI Search, and Vectorize bindings
+- D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 
 The old Next.js and Convex implementation still exists under `app/`, `lib/`,
 and `convex/` as the migration source. It is no longer the default served app.
@@ -104,9 +104,9 @@ docs/                   Product, ops, interview, and public proof docs
 | Relational state | D1 |
 | Large immutable artifacts | R2 |
 | Async jobs | Queues |
-| Event firehose | Pipelines |
+| Event firehose | Pipeline stream |
 | Model execution and gateway | Workers AI and AI Gateway |
-| RevenueCat docs retrieval | AI Search or Vectorize |
+| RevenueCat docs retrieval | Vectorize now; AI Search later if account provisioning succeeds |
 
 ## Platform References
 

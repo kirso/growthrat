@@ -221,10 +221,12 @@ Current repo state:
 - Durable Object SQLite for hot per-agent state
 - R2 for immutable proof artifacts and snapshots
 - Queues for async work
-- Pipelines for event firehose delivery to R2
-- Secrets Store for connector credentials
+- Pipeline stream for event ingestion
+- Secrets Store for connector credentials once account quota allows a dedicated
+  store
 - AI Gateway for model routing, controls, logs, and spend management
-- AI Search or Vectorize for RevenueCat docs and artifact retrieval
+- Vectorize for RevenueCat docs and artifact retrieval
+- AI Search later if Cloudflare managed-resource provisioning succeeds
 - Browser Rendering, Sandbox, or Containers only when validation requires them
 
 The old Next.js and Convex implementation remains as migration source code. It
@@ -261,8 +263,9 @@ R2 should own immutable large artifacts:
 - content packages
 - run bundles
 
-Pipelines should own event firehose delivery into R2. It should not be the source
-of truth for operational decisions.
+Pipelines should own event ingestion. R2 delivery is the next sink step once the
+Pipeline sink is configured. It should not be the source of truth for
+operational decisions.
 
 ## Safety Requirements
 

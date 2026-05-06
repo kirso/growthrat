@@ -26,7 +26,7 @@ The active codebase now runs on:
 - Cloudflare Workers through `@astrojs/cloudflare`
 - Cloudflare Agents plus Durable Objects
 - Cloudflare Workflows
-- D1, R2, Queues, Pipelines, AI, AI Search, and Vectorize bindings
+- D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 - a custom Worker entrypoint in `src/worker.ts`
 - D1 migration and seed data in `migrations/0001_growthrat_core.sql`
 
@@ -63,10 +63,12 @@ The strategic target is:
 - Durable Object SQLite for hot per-agent state and coordination
 - R2 for immutable artifacts, source snapshots, proof receipts, and run bundles
 - Queues for async jobs and backpressure
-- Pipelines for event ingestion and analytics delivery to R2
-- Secrets Store for connector credentials
+- Pipeline stream for Worker-side event ingestion
+- Secrets Store for connector credentials once account quota allows a dedicated
+  store, with Wrangler secrets as the current deploy path
 - AI Gateway for model routing, policy, observability, and spend controls
-- AI Search or Vectorize for RevenueCat docs and artifact retrieval
+- Vectorize for RevenueCat docs and artifact retrieval
+- AI Search later if Cloudflare managed-resource provisioning succeeds
 - Browser Rendering, Sandbox, or Containers for validation where needed
 
 Convex is a legacy implementation and migration source. It is not the target
@@ -112,8 +114,8 @@ split:
 | Relational operational records | D1 |
 | Live agent session and coordination state | Durable Objects |
 | Large immutable artifacts and snapshots | R2 |
-| High-volume event firehose | Pipelines to R2 |
-| Retrieval index | AI Search or Vectorize |
+| High-volume event firehose | Pipeline stream now; R2 sink later |
+| Retrieval index | Vectorize now; AI Search later if provisionable |
 
 Convex should be kept only while its schema, workflows, and useful behavior are
 being migrated.
@@ -205,8 +207,8 @@ Completed slice:
 - added Cloudflare adapter
 - added `wrangler.jsonc`
 - added D1 schema and first migration
-- added bindings for D1, R2, Durable Objects, Queues, Workflows, Pipelines, AI,
-  AI Search, and Vectorize
+- added bindings for D1, R2, Durable Objects, Queues, Workflows, Pipeline
+  stream, Workers AI, AI Gateway, and Vectorize
 - migrated public and operator URLs into Astro pages
 - migrated one interactive Svelte island
 - exposed read-only proof and runtime endpoints
@@ -228,11 +230,11 @@ Purpose: move from Convex tables to Cloudflare-native ownership.
 Map current Convex data:
 
 - artifacts -> D1 rows plus R2 bodies for large content
-- sources -> D1 metadata plus R2 snapshots plus AI Search or Vectorize index
+- sources -> D1 metadata plus R2 snapshots plus Vectorize index
 - experiments -> D1
 - feedback -> D1
 - weekly reports -> D1 metadata plus R2 rendered report
-- usage events -> Pipelines to R2, with D1 summaries only if operationally needed
+- usage events -> Pipeline stream, with D1 summaries only if operationally needed
 - chat sessions -> Durable Objects plus D1/R2 transcripts where required
 - connector state -> D1 metadata plus Secrets Store references
 
@@ -250,12 +252,12 @@ Target flow:
 
 1. Agent receives prompt, cron tick, Slack command, or workflow callback.
 2. Agent reads current state from Durable Object and D1.
-3. Agent retrieves sources from AI Search or Vectorize.
+3. Agent retrieves sources from Vectorize.
 4. Agent calls models through AI Gateway.
 5. Agent writes artifacts to R2 and metadata to D1.
 6. Workflows manage waits, retries, approvals, and weekly cadence.
 7. Queues handle slow or bursty jobs.
-8. Pipelines capture analytics events for later analysis.
+8. Pipeline streams capture analytics events for later analysis.
 
 Exit criteria:
 
@@ -302,7 +304,7 @@ Reason:
 
 ## Open Decisions
 
-- Use AI Search first or Vectorize first for RevenueCat docs retrieval?
+- Retry AI Search provisioning later or stay on Vectorize for retrieval?
 - How much of the current Next UI should be migrated versus redesigned?
 - Which public proof pages need permanent URLs before submission?
 - Which current Convex data should be exported before migration?

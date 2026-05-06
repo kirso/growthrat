@@ -15,8 +15,8 @@ operation.
 - D1 for relational operational state
 - R2 for large artifacts
 - Queues for async jobs
-- Pipelines for event ingestion
-- Workers AI, AI Gateway, AI Search, and Vectorize for model/retrieval paths
+- Pipeline stream for event ingestion
+- Workers AI, AI Gateway, and Vectorize for model/retrieval paths
 
 The legacy Next.js and Convex app remains in `app/`, `lib/`, and `convex/` as a
 migration source. It is not the default runtime.

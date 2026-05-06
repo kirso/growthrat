@@ -14,8 +14,9 @@ The app currently runs on:
 - D1 for relational operational state
 - R2 for immutable proof artifacts
 - Queues for async work
-- Pipelines for event ingestion
-- AI, AI Search, and Vectorize bindings for the target model/retrieval layer
+- Pipeline stream for event ingestion
+- AI Gateway, Workers AI, and Vectorize bindings for the target model/retrieval
+  layer
 
 The Next.js and Convex code is retained as the migration source. It is no longer
 the default local app.
@@ -101,6 +102,6 @@ bun run cf:check
 ## Tooling Boundary
 
 - Use `wrangler` for Workers project work: types, dev, deploy, D1, R2,
-  Workflows, Queues, Pipelines, Vectorize, AI Search, and bindings.
+  Workflows, Queues, Pipelines, Vectorize, and bindings.
 - Use `cf` for broad Cloudflare account/API/context discovery when available.
 - Keep legacy Convex commands scoped to migration-source inspection.
