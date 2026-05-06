@@ -1,19 +1,11 @@
 import { env } from "cloudflare:workers";
 import { articles } from "@/content/articles";
-import { getRuntimeSnapshot, recordEvent } from "@/lib/runtime";
+import { getRuntimeSnapshot } from "@/lib/runtime";
 
 export const prerender = false;
 
 export async function GET() {
   const snapshot = await getRuntimeSnapshot(env);
-
-  await recordEvent(env, {
-    type: "proof_index",
-    path: "/api/proof",
-    detail: {
-      articles: articles.length,
-    },
-  });
 
   return Response.json({
     generatedAt: new Date().toISOString(),

@@ -5,6 +5,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
+import { generateSourceGroundedDraft } from "./lib/content-draft";
 import { ensureWeeklyExperiment } from "./lib/experiments";
 
 type AgentState = {
@@ -123,6 +124,13 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
       ],
     }));
 
+    const draft = await step.do("generate source-grounded draft", async () =>
+      generateSourceGroundedDraft(
+        this.env,
+        "Testing agent-built subscription flows with RevenueCat Test Store, CustomerInfo, webhooks, and Charts",
+      ),
+    );
+
     const r2Key = await step.do("write weekly proof bundle", async () => {
       const key = `weekly-runs/${week.start}/plan.json`;
       await this.env.ARTIFACT_BUCKET.put(
@@ -132,6 +140,7 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
             workflowId: event.instanceId,
             generatedAt: now,
             plan,
+            draft,
           },
           null,
           2,
@@ -154,14 +163,14 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
           "weekly_loop",
           "planned",
           JSON.stringify(event.payload),
-          JSON.stringify({ ...plan, r2Key }),
+          JSON.stringify({ ...plan, draft, r2Key }),
           new Date().toISOString(),
           new Date().toISOString(),
         )
         .run();
     });
 
-    return { ...plan, r2Key };
+    return { ...plan, draft, r2Key };
   }
 }
 

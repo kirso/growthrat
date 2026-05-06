@@ -18,7 +18,7 @@ Developer Advocacy and Growth work for RevenueCat:
 The roadmap favors public proof, safety, and platform simplicity over preserving
 old implementation choices.
 
-## Current State: 2026-05-06
+## Current State: 2026-05-07
 
 The repo now has one runnable runtime:
 
@@ -30,6 +30,7 @@ The repo now has one runnable runtime:
 - custom Worker entrypoint in `src/worker.ts`
 - D1 migrations and seed data in `migrations/0001_growthrat_core.sql` and
   `migrations/0002_experiment_operations.sql`
+- agent runtime safety schema in `migrations/0003_agent_runtime_safety.sql`
 
 The old Next.js and Convex runtime has been deleted. Historical behavior lives
 only in the PRD, roadmap, public artifacts, and migration notes.
@@ -48,31 +49,38 @@ The current app has useful surfaces:
 - go-live and pipeline surfaces
 - deterministic Cloudflare API endpoints
 - Svelte chat and runtime-status components
+- source ingestion and source-grounded chat endpoints
+- policy endpoint for kill switch and model-chat toggles
 - Cloudflare Agent and Workflow classes
 - protected manual weekly dry-run endpoint
 - experiment APIs for create, metric import, RevenueCat chart snapshot, readout,
   public event capture, and tracking redirects
 
-The current app is still pre-production. It is not yet safe to treat as a fully
-autonomous public agent because production Worker deployment, secrets, live
-RevenueCat access, connector activation, and approval/rate/budget/kill-switch
-gates still need to be verified.
+The current app is a gated production-capable proof system. It is not yet a
+RevenueCat-owned live advocate because RevenueCat access, Slack/CMS/GitHub/social
+credentials, and connector-specific approval rules are still post-hire
+dependencies.
 
 ## Cloudflare Resource State
 
-Verified in the Cloudflare account on 2026-05-06:
+Verified in the Cloudflare account on 2026-05-06 and updated locally on
+2026-05-07:
 
 - D1 `growthrat` is provisioned and seeded.
 - R2 `growthrat-artifacts` is provisioned.
 - Queue `growthrat-jobs` is provisioned.
-- Vectorize `growthrat-doc-index` is provisioned.
+- Vectorize `growthrat-doc-index-bge-base` is provisioned with the 768-dimensional `@cf/baai/bge-base-en-v1.5` preset.
 - Pipeline stream `growthrat_events` is provisioned.
 - AI Gateway `growthrat` is provisioned.
+- Workers AI calls now route through the `growthrat` AI Gateway from the chat
+  and weekly-draft paths.
+- Rate-limit bindings are declared for chat, model calls, and public event
+  writes.
 - AI Search provisioning failed, so Vectorize is the active retrieval path.
 - A dedicated Secrets Store is blocked by account store quota; Wrangler secrets
   are the current production path.
-- The `growthrat` Worker and `growthrat-weekly-loop` Workflow are declared but
-  must be deployed with Wrangler before they appear as live account resources.
+- The `growthrat` Worker and `growthrat-weekly-loop` Workflow are deployed on
+  workers.dev.
 
 ## Why Astro And Svelte
 
@@ -126,19 +134,28 @@ Completed:
 - old runnable Next/Convex code has been removed.
 - D1 migration maps the core operational tables.
 - remote D1 is migrated and seeded.
+- production Worker is deployed at `https://growthrat.kirso.workers.dev`.
+- `growthrat-weekly-loop` is deployed with the Worker.
 - public routes resolve.
 - Svelte chat and runtime-status components exist.
 - read-only proof/runtime/activation APIs exist.
 - experiment register, tracking redirects, event capture, manual metric import,
   RevenueCat chart snapshots, and readouts exist.
 - protected manual weekly dry-run API exists.
+- source corpus ingest API exists at `/api/sources/ingest`.
+- production source seed has been ingested into D1 and Vectorize.
+- chat retrieves indexed sources, cites them, and uses Workers AI through AI
+  Gateway behind policy gates.
+- model calls have edge rate limits, D1 daily budget counters, and kill-switch
+  controls.
+- public event writes have edge rate limits and D1 daily budget counters.
 - Wrangler dry-run recognizes the declared bindings.
 
 Remaining:
 
-- set production Wrangler secrets
-- deploy the `growthrat` Worker
-- verify the `growthrat-weekly-loop` Workflow appears in Cloudflare
+- configure production secrets for RevenueCat, Slack, CMS, GitHub, and Typefully
+  before calling connector paths live
+- configure a custom domain if `growthrat.com` should be the public URL
 - trigger one protected dry run and confirm D1/R2 receipts, including the weekly
   experiment tracking links
 - run one live public tracking-link click and confirm the event appears in D1
@@ -152,7 +169,7 @@ Remaining:
 
 Required checks:
 
-- public write and LLM paths fail closed on auth and mode
+- public write and LLM paths fail closed on policy, budget, and rate checks
 - budget and rate gates run before provider calls
 - connector loss cannot silently approve, publish, or report success
 - approval policy is explicit and test-covered
@@ -160,6 +177,8 @@ Required checks:
 - missing secrets and remote-only Cloudflare products are documented as
   pre-production warnings
 - protected dry run writes a weekly plan to R2 and a workflow row to D1
+- protected dry run writes a source-grounded draft or a clear source/model gate
+  reason to R2
 - an experiment can be created, measured, and closed without direct database
   edits
 
@@ -188,13 +207,14 @@ Tasks:
 
 - keep `/api/activation` truthful
 - keep `/api/workflows/weekly-dry-run` protected and fail-closed
-- put future LLM calls behind one enforced policy path
-- require auth and mode checks for public write surfaces
+- put LLM calls behind one enforced policy path
+- require policy checks for public write surfaces
 - make Slack approval fail closed when Slack is unavailable
 - add tests for dormant, interview proof, and rc live modes
 - keep missing-secret and remote-binding warnings visible in setup docs
 
-Do this before enabling `rc_live`.
+Status: core runtime path implemented. Connector-specific approval remains before
+`rc_live`.
 
 ## Work Package 3: Agent Runtime
 
@@ -215,7 +235,8 @@ Exit criteria:
 
 - weekly planner runs in dry mode
 - experiment variants and tracking links are created by the weekly plan
-- content draft can be produced with source receipts
+- content draft can be produced with source receipts or a clear source/model gate
+  reason
 - approval wait survives restart
 - report bundle is written to R2
 - operator can inspect run state without database edits

@@ -3,7 +3,7 @@
 ## Metadata
 
 - Status: active
-- Updated: 2026-05-06
+- Updated: 2026-05-07
 - Owner: kirso
 - Original date: 2026-03-13
 
@@ -63,6 +63,7 @@ Required:
 GrowthRat adds:
 
 - live chat and panel surfaces
+- source-grounded chat through Vectorize and AI Gateway
 - operator replay
 - readiness review
 - weekly-report sample
@@ -155,6 +156,12 @@ Current implementation status:
 - `/api/events` records public experiment events, including tracked page views
 - weekly Workflow now ensures a weekly experiment exists and writes tracking
   links into the proof bundle
+- source ingestion writes RevenueCat/GrowthRat source chunks into D1 and
+  Vectorize
+- chat and weekly draft generation retrieve sources, cite them, and call Workers
+  AI through AI Gateway behind policy gates
+- rate-limit bindings, D1 budget counters, model-chat toggle, and kill switch
+  protect public chat/model/event paths
 
 ### P2: RevenueCat-Connected Operation
 
@@ -234,6 +241,7 @@ Current repo state:
 - R2 for immutable proof artifacts and snapshots
 - Queues for async work
 - Pipeline stream for event ingestion
+- Rate Limit bindings for chat, model calls, and public event writes
 - Secrets Store for connector credentials once account quota allows a dedicated
   store
 - AI Gateway for model routing, controls, logs, and spend management
@@ -290,6 +298,9 @@ operational decisions.
 - Kill switch halts side effects and checkpoints active runs.
 - Public write endpoints require auth, mode, rate, budget, and approval checks.
 - LLM actions route through a single policy chokepoint.
+- Public chat and model calls must fail closed if D1 policy counters are
+  unavailable.
+- The runtime kill switch and model-chat toggle must work without redeploy.
 - Every externally visible artifact has a source trail.
 
 ## Quality Requirements
@@ -347,6 +358,8 @@ Supporting docs:
 - `docs/interviews/` - interview preparation and knowledge base
 - `docs/public/` - public proof artifacts
 - `migrations/0002_experiment_operations.sql` - experiment operations schema
+- `migrations/0003_agent_runtime_safety.sql` - source, policy, and runtime flag
+  schema
 
 Removed superseded docs:
 

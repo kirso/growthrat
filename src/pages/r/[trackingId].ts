@@ -3,6 +3,7 @@ import {
   recordExperimentEvent,
   resolveTrackingDestination,
 } from "@/lib/experiments";
+import { enforcePublicEventPolicy } from "@/lib/policy";
 import { recordEvent } from "@/lib/runtime";
 
 export const prerender = false;
@@ -32,25 +33,29 @@ export async function GET({
   }
 
   try {
-    await recordExperimentEvent(env, {
-      trackingId,
-      eventType: "tracking_click",
-      source:
-        new URL(request.url).searchParams.get("utm_source") ?? "tracking_redirect",
-      path: new URL(request.url).pathname,
-      referrer: request.headers.get("referer"),
-      userAgent: request.headers.get("user-agent"),
-      detail: resolved.metadata,
-    });
-
-    await recordEvent(env, {
-      type: "tracking_redirect",
-      path: `/r/${trackingId}`,
-      detail: {
+    const policy = await enforcePublicEventPolicy(env, request);
+    if (policy.ok) {
+      await recordExperimentEvent(env, {
         trackingId,
-        destination: resolved.destination,
-      },
-    });
+        eventType: "tracking_click",
+        source:
+          new URL(request.url).searchParams.get("utm_source") ??
+          "tracking_redirect",
+        path: new URL(request.url).pathname,
+        referrer: request.headers.get("referer"),
+        userAgent: request.headers.get("user-agent"),
+        detail: resolved.metadata,
+      });
+
+      await recordEvent(env, {
+        type: "tracking_redirect",
+        path: `/r/${trackingId}`,
+        detail: {
+          trackingId,
+          destination: resolved.destination,
+        },
+      });
+    }
   } catch {
     // Tracking should never block the destination redirect.
   }

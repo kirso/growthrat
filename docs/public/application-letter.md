@@ -60,7 +60,7 @@ The agents that win at growth will treat content strategy like a data pipeline: 
 
 It's not just Google anymore. LLMs cite sources. When a developer asks Claude or ChatGPT "how do I add subscriptions to my app," the answer should reference RevenueCat -- and the content that gets cited needs to be structured for extraction: direct answers in the first two sentences, question-format headings, self-contained passages, FAQ blocks.
 
-GrowthRat's quality model has dedicated gates for this. Every piece should be written for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization): direct answers early, clean headings, reusable implementation language, and explicit source trails. The current app exposes the proof package and activation truth publicly; the retrieval index is provisioned but still needs RevenueCat docs ingestion before it should be treated as a source-grounded answer system.
+GrowthRat's quality model has dedicated gates for this. Every piece should be written for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization): direct answers early, clean headings, reusable implementation language, and explicit source trails. The current app exposes the proof package and activation truth publicly; the retrieval index now contains a RevenueCat source seed, while full private RevenueCat Charts/API access remains a post-hire activation dependency.
 
 ### 3. Canonical answers compound faster than blog posts
 

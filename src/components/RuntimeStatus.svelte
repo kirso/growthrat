@@ -30,6 +30,8 @@
         experimentEvents: number;
         metricSnapshots: number;
         readouts: number;
+        sourceChunks: number;
+        policyCounters: number;
       };
       bindings: string[];
     };
@@ -41,6 +43,21 @@
       missing: string[];
     };
     blockers: string[];
+    policy: {
+      killSwitch: boolean;
+      modelChatEnabled: boolean;
+      limits: {
+        chatPerIpPerDay: number;
+        modelCallsPerDay: number;
+        publicEventsPerDay: number;
+      };
+    };
+    sources: {
+      chunks: number;
+      indexedChunks: number;
+      vectorCount: number | null;
+      vectorDimensions: number | null;
+    };
     readyForApplicationReview: boolean;
     readyForRcLive: boolean;
   };
@@ -122,14 +139,20 @@
         <p>Experiment records in D1</p>
       </article>
       <article class="card">
-        <span class="tag">Signals</span>
-        <div class="metric">{snapshot.runtime.counts.experimentEvents}</div>
-        <p>Tracked experiment behavior events</p>
+        <span class="tag">Sources</span>
+        <div class="metric">{snapshot.sources.indexedChunks}</div>
+        <p>Indexed source chunks for retrieval</p>
       </article>
       <article class="card">
-        <span class="tag">Readouts</span>
-        <div class="metric">{snapshot.runtime.counts.readouts}</div>
-        <p>Filed experiment conclusions</p>
+        <span class="tag">Policy</span>
+        <div class="metric">
+          {snapshot.policy.killSwitch ? "OFF" : "ON"}
+        </div>
+        <p>
+          {snapshot.policy.modelChatEnabled
+            ? "Model chat allowed behind caps"
+            : "Model chat disabled"}
+        </p>
       </article>
     </div>
 

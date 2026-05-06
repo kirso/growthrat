@@ -1,7 +1,6 @@
 # Local Development
 
-This runbook is for the active pre-production Astro, Svelte, and Cloudflare
-runtime.
+This runbook is for the active gated Astro, Svelte, and Cloudflare runtime.
 
 ## Current Runtime
 
@@ -18,6 +17,8 @@ The app currently runs on:
 - Pipeline stream for event ingestion
 - AI Gateway, Workers AI, and Vectorize bindings for the target model/retrieval
   layer
+- Rate Limit bindings plus D1 counters for chat, model calls, and public events
+- runtime flags for kill switch and model-chat toggles
 - D1 experiment operations for variants, tracking links, behavior events, metric
   snapshots, RevenueCat chart snapshots, and readouts
 
@@ -29,13 +30,13 @@ application path.
 - Bun 1.3+
 - Wrangler 4.88+ from the project dev dependency
 - Cloudflare account for remote resource creation
-- Optional provider keys for activated surfaces:
-  - `ANTHROPIC_API_KEY`
-  - `OPENAI_API_KEY`
+- Optional connector keys for activated surfaces:
   - `REVENUECAT_API_KEY`
   - `REVENUECAT_PROJECT_ID`
   - `SLACK_BOT_TOKEN`
   - `TYPEFULLY_API_KEY`
+  - `GITHUB_TOKEN`
+  - `CMS_API_TOKEN`
 
 ## Bootstrap
 
@@ -71,6 +72,8 @@ Open `http://127.0.0.1:4321`.
 | Runtime API | `curl http://127.0.0.1:4321/api/runtime` |
 | Proof API | `curl http://127.0.0.1:4321/api/proof` |
 | Activation API | `curl http://127.0.0.1:4321/api/activation` |
+| Policy API | `curl http://127.0.0.1:4321/api/policy` |
+| Source API | `curl http://127.0.0.1:4321/api/sources` |
 | Experiment API | `curl http://127.0.0.1:4321/api/experiments` |
 | Tracking redirect | `http://127.0.0.1:4321/r/week-one-reference` |
 
@@ -96,7 +99,7 @@ The loop is:
 | Mode | Meaning |
 | --- | --- |
 | `dormant` | Public proof only, no runtime side effects |
-| `interview_proof` | Public proof, deterministic chat, panel-safe answers |
+| `interview_proof` | Public proof, gated source-grounded chat, panel-safe answers |
 | `rc_live` | Full weekly operation after credentials and gates are verified |
 
 Before `rc_live`, every write, model call, connector action, community action,

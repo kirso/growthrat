@@ -2,6 +2,8 @@
   type Message = {
     role: "user" | "assistant";
     content: string;
+    citations?: Array<{ title: string; url: string | null }>;
+    source?: string;
   };
 
   let input = "What is proven vs post-hire activation?";
@@ -35,8 +37,20 @@
         throw new Error(`Chat request failed with ${response.status}`);
       }
 
-      const data = (await response.json()) as { answer: string };
-      messages = [...messages, { role: "assistant", content: data.answer }];
+      const data = (await response.json()) as {
+        answer: string;
+        source?: string;
+        citations?: Array<{ title: string; url: string | null }>;
+      };
+      messages = [
+        ...messages,
+        {
+          role: "assistant",
+          content: data.answer,
+          source: data.source,
+          citations: data.citations ?? [],
+        },
+      ];
     } catch (err) {
       error = err instanceof Error ? err.message : "Chat request failed.";
     } finally {
@@ -50,6 +64,17 @@
     {#each messages as message}
       <div class={`message ${message.role === "user" ? "user" : ""}`}>
         {message.content}
+        {#if message.citations?.length}
+          <div class="message-sources">
+            {#each message.citations as citation, index}
+              {#if citation.url}
+                <a href={citation.url}>{index + 1}. {citation.title}</a>
+              {:else}
+                <span>{index + 1}. {citation.title}</span>
+              {/if}
+            {/each}
+          </div>
+        {/if}
       </div>
     {/each}
   </div>

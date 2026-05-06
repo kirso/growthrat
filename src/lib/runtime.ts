@@ -12,6 +12,8 @@ export type RuntimeSnapshot = {
     experimentEvents: number;
     metricSnapshots: number;
     readouts: number;
+    sourceChunks: number;
+    policyCounters: number;
   };
   bindings: string[];
 };
@@ -31,6 +33,8 @@ const countTables = [
   ["experimentEvents", "experiment_events"],
   ["metricSnapshots", "experiment_metric_snapshots"],
   ["readouts", "experiment_readouts"],
+  ["sourceChunks", "source_chunks"],
+  ["policyCounters", "policy_counters"],
 ] as const;
 
 export function fallbackSnapshot(mode = "interview_proof"): RuntimeSnapshot {
@@ -46,10 +50,12 @@ export function fallbackSnapshot(mode = "interview_proof"): RuntimeSnapshot {
       experimentEvents: 0,
       metricSnapshots: 0,
       readouts: 0,
+      sourceChunks: 0,
+      policyCounters: 0,
     },
     bindings: [
       "Astro",
-      "Svelte islands",
+      "Svelte components",
       "Workers",
       "D1",
       "R2",
@@ -90,18 +96,18 @@ export function buildChatAnswer(message: string): string {
   const normalized = message.toLowerCase();
 
   if (normalized.includes("cloudflare") || normalized.includes("d1")) {
-    return "The infrastructure foundation is a Cloudflare-hosted proof app with state, artifacts, queues, workflow wiring, model routing, and a provisioned Vectorize index. The product claim should stay higher level: GrowthRat is an autonomous advocate loop. Important truth: the Vectorize index is not populated yet, so live source-grounded RevenueCat answers still need docs ingestion and citations.";
+    return "The infrastructure foundation is a Cloudflare-hosted advocate loop with D1 state, R2 artifacts, Queues, Workflows, Durable Object agent state, Pipelines, Vectorize retrieval, and Workers AI routed through AI Gateway. The important boundary is access: RevenueCat-owned Slack, CMS, GitHub, social, and private analytics credentials still need post-hire activation.";
   }
 
   if (normalized.includes("revenuecat") || normalized.includes("subscription")) {
-    return "The RevenueCat thesis is that agents need billing primitives they can reason about: products, offerings, entitlements, CustomerInfo, webhooks, Test Store, Charts, and Metrics API access. GrowthRat has public proof artifacts around those primitives, but the live agent still needs indexed docs and RevenueCat credentials before it should answer as an authoritative source.";
+    return "The RevenueCat thesis is that agents need billing primitives they can reason about: products, offerings, entitlements, CustomerInfo, webhooks, Test Store, Charts, and Metrics API access. GrowthRat now has a source-ingestion and citation path for those primitives; it still needs RevenueCat credentials before it can pull private Charts data or act inside RevenueCat-owned channels.";
   }
 
   if (normalized.includes("interview") || normalized.includes("pass")) {
-    return "The strongest interview stance is honest separation: the public application package, proof artifacts, product reasoning, and activation dashboard are real; live RevenueCat operation still requires production deployment, docs ingestion, connector secrets, Slack, CMS, Charts, GitHub, social credentials, approval policy, rate limits, budget controls, and a tested kill switch.";
+    return "The strongest interview stance is honest separation: the public application package, proof artifacts, deployed Worker, experiment loop, AI Gateway chat path, retrieval ingestion endpoint, budget/rate limits, and kill switch are real; live RevenueCat operation still requires RevenueCat-owned connector secrets and approved external channel access.";
   }
 
-  return "GrowthRat is built to prove the RevenueCat Agentic AI and Growth Advocate role through public work: technical content, growth experiments, structured product feedback, community answers, and weekly reports. It is a credible pre-production advocate system, but it is not fully autonomous live operation until retrieval, deployment, connectors, approvals, and analytics are finished.";
+  return "GrowthRat is built to prove the RevenueCat Agentic AI and Growth Advocate role through public work: technical content, growth experiments, structured product feedback, community answers, and weekly reports. It is a deployed gated advocate system; the remaining live-operation boundary is RevenueCat-owned access and connector approval.";
 }
 
 export async function recordEvent(env: Env, event: GrowthRatEvent): Promise<void> {

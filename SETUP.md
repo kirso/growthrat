@@ -57,7 +57,7 @@ The current account-backed resources are:
 - D1 `growthrat` — `ed57e939-16a5-4426-b650-1bb9f34f6abf`
 - R2 `growthrat-artifacts`
 - Queue `growthrat-jobs`
-- Vectorize `growthrat-doc-index`
+- Vectorize `growthrat-doc-index-bge-base`
 - Pipeline stream `growthrat_events` — `f2a8a2111c5741f8a388f955c581382e`
 - AI Gateway `growthrat`
 - Secrets Store uses the account default store. A dedicated store could not be

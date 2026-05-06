@@ -1,9 +1,14 @@
 import { env } from "cloudflare:workers";
-import { buildChatAnswer, recordEvent } from "@/lib/runtime";
+import { answerAgentChat } from "@/lib/agent-chat";
 
 export const prerender = false;
 
 export async function POST({ request }: { request: Request }) {
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > 4096) {
+    return Response.json({ error: "request body is too large" }, { status: 413 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as { message?: unknown };
   const message = typeof body.message === "string" ? body.message : "";
 
@@ -11,20 +16,7 @@ export async function POST({ request }: { request: Request }) {
     return Response.json({ error: "message is required" }, { status: 400 });
   }
 
-  const answer = buildChatAnswer(message);
+  const result = await answerAgentChat(env, request, message);
 
-  await recordEvent(env, {
-    type: "chat_message",
-    path: "/api/chat",
-    detail: {
-      messageLength: message.length,
-      mode: env.APP_MODE,
-    },
-  });
-
-  return Response.json({
-    answer,
-    mode: env.APP_MODE,
-    source: "public-proof",
-  });
+  return Response.json(result.body, { status: result.status });
 }

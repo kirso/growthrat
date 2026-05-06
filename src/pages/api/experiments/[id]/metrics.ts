@@ -12,7 +12,7 @@ export async function POST({
   request: Request;
   params: { id?: string };
 }) {
-  const authorization = authorizeInternalRequest(request, env);
+  const authorization = await authorizeInternalRequest(request, env);
   if (!authorization.ok) {
     return Response.json(
       { error: authorization.error },

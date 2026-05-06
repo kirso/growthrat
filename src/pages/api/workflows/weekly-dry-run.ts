@@ -9,7 +9,7 @@ export async function GET() {
 }
 
 export async function POST({ request }: { request: Request }) {
-  const authorization = authorizeInternalRequest(request, env);
+  const authorization = await authorizeInternalRequest(request, env);
   if (!authorization.ok) {
     return Response.json(
       { error: authorization.error },

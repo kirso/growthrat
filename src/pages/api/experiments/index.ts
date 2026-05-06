@@ -9,14 +9,6 @@ export async function GET() {
   try {
     const experiments = await listExperiments(env);
 
-    await recordEvent(env, {
-      type: "experiments_index",
-      path: "/api/experiments",
-      detail: {
-        experiments: experiments.length,
-      },
-    });
-
     return Response.json({
       generatedAt: new Date().toISOString(),
       source: "d1",
@@ -36,7 +28,7 @@ export async function GET() {
 }
 
 export async function POST({ request }: { request: Request }) {
-  const authorization = authorizeInternalRequest(request, env);
+  const authorization = await authorizeInternalRequest(request, env);
   if (!authorization.ok) {
     return Response.json(
       { error: authorization.error },

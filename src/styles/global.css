@@ -503,6 +503,22 @@ a.card {
   color: var(--dark);
 }
 
+.message-sources {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.message-sources a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .chat-form {
   display: grid;
   grid-template-columns: 1fr auto;

@@ -10,7 +10,9 @@ operate with bounded autonomy.
 
 ## Current Status
 
-This repository is pre-production.
+This repository is a gated production-capable proof system. It is still not a
+RevenueCat-owned live advocate until post-hire connector credentials and
+approvals exist.
 
 The active app shell is now:
 
@@ -22,6 +24,8 @@ The active app shell is now:
 - D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 - experiment operations for variants, tracking links, behavioral events, metric
   snapshots, RevenueCat chart pulls, and readouts
+- source ingestion into Vectorize and source-grounded chat
+- rate, budget, and kill-switch policy gates for chat/model/event paths
 
 The old Next.js and Convex implementation has been removed from the runnable
 repo. Historical behavior now lives in docs and migration notes only; the code
@@ -96,6 +100,9 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/runtime` | Runtime and binding snapshot |
 | `/api/proof` | Proof artifact index |
 | `/api/activation` | Resource, secret, and gate snapshot |
+| `/api/policy` | Runtime policy and protected kill-switch/model toggle updates |
+| `/api/sources` | Source/retrieval index status |
+| `/api/sources/ingest` | Protected source corpus ingestion into Vectorize |
 | `/api/experiments` | Experiment register and authenticated create endpoint |
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot |
@@ -119,6 +126,7 @@ docs/                   Product, ops, interview, and public proof docs
 | Model execution and gateway | Workers AI and AI Gateway |
 | RevenueCat docs retrieval | Vectorize now; AI Search later if account provisioning succeeds |
 | Growth experiment measurement | D1 experiment tables plus Pipeline event stream |
+| Runtime safety | Rate Limit bindings plus D1 policy counters and runtime flags |
 
 The activation gate lives in
 [docs/ops/cloudflare-activation-checklist.md](docs/ops/cloudflare-activation-checklist.md).
@@ -138,6 +146,19 @@ GrowthRat now has a pre-production experiment operating system:
 
 This is enough to prove the weekly growth-experiment discipline before
 RevenueCat grants Slack, CMS, GitHub, social, and private Charts access.
+
+## Runtime Safety
+
+All public chat/model paths now pass through one policy layer:
+
+1. edge rate-limit binding
+2. D1 daily counter
+3. runtime kill switch
+4. model-chat toggle
+5. AI Gateway metadata/logging
+
+Protected operator mutations require `GROWTHRAT_INTERNAL_SECRET`. The policy
+endpoint can toggle `kill_switch` and `model_chat_enabled` without redeploying.
 
 ## Platform References
 

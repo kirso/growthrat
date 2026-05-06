@@ -11,7 +11,7 @@
     "typecheck": "astro check && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "cf:types": "WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler types",
+    "cf:types": "WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler types --env-file wrangler-types.env",
     "cf:check": "WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler deploy --dry-run",
     "deploy": "astro build && WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler deploy"
   },

@@ -15,7 +15,7 @@ export const proofStats = [
   { value: "6", label: "public work samples mapped to the role" },
   { value: "3", label: "structured RevenueCat feedback artifacts" },
   { value: "1", label: "seeded growth experiment with tracking links" },
-  { value: "0", label: "RevenueCat docs currently indexed for retrieval" },
+  { value: "9", label: "source documents in the ingestion seed corpus" },
 ];
 
 export const capabilityRows = [
@@ -41,8 +41,8 @@ export const capabilityRows = [
   },
   {
     label: "Source-grounded RevenueCat answers",
-    status: "not complete",
-    detail: "Context7 verification exists for core claims, but the production retrieval index is empty. Docs ingestion and citations are required before live panel use.",
+    status: "wired",
+    detail: "The chat path now retrieves indexed source chunks, shows citations, and uses Workers AI through AI Gateway behind rate, budget, and kill-switch policy.",
   },
   {
     label: "Community engagement loop",
@@ -56,8 +56,8 @@ export const capabilityRows = [
   },
   {
     label: "Autonomous side effects",
-    status: "guarded",
-    detail: "External actions still need approval policy, rate limits, budget controls, audit logs, and a tested kill switch before the agent can operate unattended.",
+    status: "fail-closed",
+    detail: "Model calls and public writes now pass through policy gates. External publishing and community actions remain disabled until post-hire connectors and approval rules exist.",
   },
 ];
 
@@ -91,7 +91,7 @@ export const advocateWorkflow = [
 export const pages: RoutePage[] = [
   {
     slug: "application",
-    title: "I already did the job. Here is the proof.",
+    title: "I built the proof loop. Here is the evidence.",
     eyebrow: "Application letter",
     summary:
       "GrowthRat is applying to RevenueCat's Agentic AI and Growth Advocate role by publishing a public body of work, not just a claim.",
@@ -117,7 +117,7 @@ export const pages: RoutePage[] = [
         body: [
           "GrowthRat already shipped the public application package: technical content, feedback reports, a growth experiment, a sample weekly report, and an agent-builder readiness review.",
           "The system is built around evidence, bounded autonomy, explicit activation states, and source-backed artifacts. That is the role, not a mascot layer around the role.",
-          "The honest boundary is that public proof exists today, while live autonomous operation still requires source ingestion, production deployment, connector credentials, and approval controls.",
+          "The honest boundary is that public proof and the gated runtime exist today, while live RevenueCat operation still requires RevenueCat-owned credentials, channel access, and connector approvals.",
         ],
       },
     ],
@@ -134,7 +134,7 @@ export const pages: RoutePage[] = [
         body: [
           "GrowthRat is an autonomous developer advocacy and growth agent for RevenueCat-style work: source-grounded technical content, growth experiments, community answers, product feedback, and weekly reporting.",
           "The product is not the framework, the hosting stack, or a chatbot demo. The product is the operating loop that turns developer friction into useful public work and measurable learning.",
-          "The current app is the public proof and operator surface for that loop. It is not yet a fully autonomous live employee because several external systems are not connected.",
+          "The current app is the public proof and operator surface for that loop. It can run source-grounded chat and weekly dry-run artifacts, but it is not yet a live employee because RevenueCat-owned external systems are not connected.",
         ],
       },
       {
@@ -149,19 +149,18 @@ export const pages: RoutePage[] = [
       {
         title: "Missing before it is a live autonomous advocate",
         body: [
-          "RevenueCat docs and API references must be ingested into the retrieval index with source URLs, timestamps, and citation metadata.",
-          "The chat and panel console must retrieve from that source base, show citations, and refuse or ask for verification when sources are stale or missing.",
-          "The production Worker must be deployed and observed on Cloudflare with required secrets configured.",
+          "The production Vectorize index contains the RevenueCat source seed; it is not a complete mirror of every RevenueCat doc page.",
+          "The production Worker is deployed on Cloudflare workers.dev; live operation still needs required connector secrets and RevenueCat-owned channel activation.",
           "Slack, blog CMS, GitHub, X, forums, Discord, RevenueCat Charts/Metrics, and social publishing connectors must be activated.",
-          "Approval policy, rate limits, budget caps, audit logs, and kill-switch behavior must be tested before any external action can run unattended.",
+          "Approval policy, rate limits, budget caps, audit logs, and kill-switch behavior are now wired for the runtime path; external publishing still needs connector-specific approval rules.",
           "Live analytics must measure the weekly content and growth loop instead of relying on sample artifacts.",
         ],
       },
       {
         title: "Verdict",
         body: [
-          "GrowthRat is a credible pre-production autonomous advocate system and a strong application proof package.",
-          "It is not yet a completed live autonomous developer advocate. The gap is specific and fixable: source-grounded retrieval, deployment, connectors, and safe side effects.",
+          "GrowthRat is a credible gated autonomous advocate system and a strong application proof package.",
+          "It is not yet a RevenueCat-owned live advocate. The remaining gap is access: RevenueCat private data, Slack/CMS/GitHub/social credentials, and approved external side effects.",
         ],
       },
     ],
@@ -248,7 +247,7 @@ export const pages: RoutePage[] = [
         title: "Requires RevenueCat access",
         body: [
           "Slack workspace, blog CMS, Charts access, private product context, GitHub org access, approved social distribution, and production connector activation.",
-          "RevenueCat docs also need to be indexed into the retrieval layer before the panel console should claim source-grounded live answering.",
+          "The retrieval layer has a RevenueCat source seed, but it is not a complete mirror of every RevenueCat doc page.",
           "Any claim that those are already live would be an overclaim.",
         ],
       },
@@ -272,7 +271,7 @@ export const pages: RoutePage[] = [
         body: [
           "I shipped a public application package, produced technical and growth artifacts, filed structured product feedback, and documented the operating loop.",
           "What I learned is that RevenueCat's primitives are strong for agents, but the agent path needs a tighter reference sequence and source-grounded answers.",
-          "The next useful work is activation: ingest RevenueCat docs, connect approved private surfaces, run the first live weekly loop, and keep side effects behind explicit approval gates.",
+          "The next useful work is activation: expand the source corpus, connect approved private surfaces, run the first live weekly loop, and keep side effects behind explicit approval gates.",
         ],
       },
     ],

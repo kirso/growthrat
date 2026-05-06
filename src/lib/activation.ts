@@ -1,4 +1,6 @@
 import { getRuntimeSnapshot, type RuntimeSnapshot } from "./runtime";
+import { getRuntimePolicySnapshot, type RuntimePolicySnapshot } from "./policy";
+import { getSourceStats, type SourceStats } from "./sources";
 
 export type ActivationStatus = "ready" | "gated" | "blocked";
 
@@ -33,17 +35,19 @@ export type ActivationSnapshot = {
     checks: SecretCheck[];
   };
   blockers: string[];
+  policy: RuntimePolicySnapshot;
+  sources: SourceStats;
   readyForApplicationReview: boolean;
   readyForRcLive: boolean;
 };
 
 export const requiredSecretKeys = [
   "GROWTHRAT_INTERNAL_SECRET",
-  "ANTHROPIC_API_KEY",
-  "OPENAI_API_KEY",
   "REVENUECAT_API_KEY",
   "SLACK_BOT_TOKEN",
   "TYPEFULLY_API_KEY",
+  "GITHUB_TOKEN",
+  "CMS_API_TOKEN",
 ] as const;
 
 function hasBinding(env: Env, key: keyof Env) {
@@ -63,8 +67,18 @@ function hasConfigValue(env: Env, key: string) {
 export async function getActivationSnapshot(
   env: Env,
 ): Promise<ActivationSnapshot> {
-  const runtime = await getRuntimeSnapshot(env);
+  const [runtime, policy, sources] = await Promise.all([
+    getRuntimeSnapshot(env),
+    getRuntimePolicySnapshot(env),
+    getSourceStats(env),
+  ]);
   const mode = String(env.APP_MODE || "interview_proof");
+  const productionWorkerObserved =
+    hasConfigValue(env, "PRODUCTION_WORKER_OBSERVED") &&
+    String(
+      (env as unknown as Partial<Record<"PRODUCTION_WORKER_OBSERVED", string>>)
+        .PRODUCTION_WORKER_OBSERVED,
+    ) === "true";
 
   const secretChecks = requiredSecretKeys.map((key) => ({
     key,
@@ -130,15 +144,26 @@ export async function getActivationSnapshot(
     {
       key: "vectorize",
       label: "Vectorize",
-      status: hasBinding(env, "DOC_INDEX") ? "ready" : "blocked",
+      status:
+        hasBinding(env, "DOC_INDEX") && sources.indexedChunks > 0
+          ? "ready"
+          : hasBinding(env, "DOC_INDEX")
+            ? "gated"
+            : "blocked",
       detail:
-        "Retrieval index is provisioned; RevenueCat docs ingestion is still required.",
+        sources.indexedChunks > 0
+          ? `${sources.indexedChunks} source chunks are indexed for retrieval.`
+          : "Retrieval index is provisioned; RevenueCat docs ingestion is still required.",
     },
     {
       key: "ai_gateway",
       label: "AI Gateway",
-      status: env.AI_GATEWAY_ID === "growthrat" ? "ready" : "gated",
-      detail: "Model routing target is the growthrat gateway.",
+      status:
+        hasBinding(env, "AI") && env.AI_GATEWAY_ID === "growthrat"
+          ? "ready"
+          : "gated",
+      detail:
+        "Model calls use the Workers AI binding with the growthrat AI Gateway policy path.",
     },
     {
       key: "ai_search",
@@ -165,7 +190,7 @@ export async function getActivationSnapshot(
       status: missingSecrets.length === 0 ? "ready" : "blocked",
       detail:
         missingSecrets.length === 0
-          ? "All required connector and model secrets are configured."
+          ? "All required connector secrets are configured."
           : `${missingSecrets.length} required secrets are not configured.`,
     },
     {
@@ -186,6 +211,19 @@ export async function getActivationSnapshot(
       detail:
         "Publishing, Slack, and social side effects remain disabled until approval, rate, budget, and kill-switch checks are tested.",
     },
+    {
+      key: "rate_budget_kill",
+      label: "Rate, budget, kill switch",
+      status:
+        !policy.killSwitch &&
+        policy.limits.chatPerIpPerDay > 0 &&
+        policy.limits.modelCallsPerDay > 0
+          ? "ready"
+          : "blocked",
+      detail: policy.killSwitch
+        ? "Runtime kill switch is enabled."
+        : `Chat is capped at ${policy.limits.chatPerIpPerDay}/client/day and model calls at ${policy.limits.modelCallsPerDay}/day.`,
+    },
   ];
 
   const blockers = [
@@ -204,10 +242,13 @@ export async function getActivationSnapshot(
     mode,
     deployment: {
       workerName: "growthrat",
-      publicSiteUrl: env.PUBLIC_SITE_URL || "https://growthrat.com",
-      productionWorkerObserved: false,
+      publicSiteUrl:
+        env.PUBLIC_SITE_URL || "https://growthrat.kirso.workers.dev",
+      productionWorkerObserved,
       detail:
-        "Cloudflare account resources exist, but production Worker deployment must be observed after Wrangler authentication is available.",
+        productionWorkerObserved
+          ? "Production Worker deployment has been observed on Cloudflare workers.dev."
+          : "Cloudflare account resources exist, but production Worker deployment must be observed after Wrangler authentication is available.",
     },
     runtime,
     resources,
@@ -219,6 +260,8 @@ export async function getActivationSnapshot(
       checks: secretChecks,
     },
     blockers,
+    policy,
+    sources,
     readyForApplicationReview:
       resources.filter((resource) => resource.status === "ready").length >= 7 &&
       runtime.counts.artifacts >= 6 &&
@@ -231,7 +274,27 @@ export async function getActivationSnapshot(
   };
 }
 
-export function authorizeInternalRequest(request: Request, env: Env) {
+async function timingSafeEqual(actual: string, expected: string) {
+  const encoder = new TextEncoder();
+  const actualBytes = encoder.encode(actual);
+  const expectedBytes = encoder.encode(expected);
+
+  if (actualBytes.byteLength !== expectedBytes.byteLength) return false;
+
+  const actualDigest = await crypto.subtle.digest("SHA-256", actualBytes);
+  const expectedDigest = await crypto.subtle.digest("SHA-256", expectedBytes);
+  const actualHash = new Uint8Array(actualDigest);
+  const expectedHash = new Uint8Array(expectedDigest);
+
+  let mismatch = 0;
+  for (const [index, value] of actualHash.entries()) {
+    mismatch |= value ^ expectedHash[index];
+  }
+
+  return mismatch === 0;
+}
+
+export async function authorizeInternalRequest(request: Request, env: Env) {
   const expected = (env as Partial<Record<"GROWTHRAT_INTERNAL_SECRET", string>>)
     .GROWTHRAT_INTERNAL_SECRET;
 
@@ -250,7 +313,7 @@ export function authorizeInternalRequest(request: Request, env: Env) {
   const headerToken = request.headers.get("x-growthrat-secret") ?? "";
   const token = bearer || headerToken;
 
-  if (token !== expected) {
+  if (!(await timingSafeEqual(token, expected))) {
     return {
       ok: false,
       status: 401,
