@@ -28,11 +28,12 @@ const fullTitle = title === "GrowthRat" ? title : `${title} | GrowthRat`;
         </a>
         <nav class="nav-links" aria-label="Primary">
           <a href="/application">Application</a>
+          <a href="/capabilities">Capabilities</a>
           <a href="/proof-pack">Proof</a>
           <a href="/articles">Articles</a>
-          <a href="/readiness-review">Review</a>
+          <a href="/experiments">Experiments</a>
           <a href="/panel">Panel</a>
-          <a href="/dashboard">Dashboard</a>
+          <a href="/dashboard">Activation</a>
         </nav>
       </div>
     </header>
@@ -45,5 +46,27 @@ const fullTitle = title === "GrowthRat" ? title : `${title} | GrowthRat`;
         RevenueCat-owned property.
       </div>
     </footer>
+    <script is:inline>
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        const trackingId = params.get("growthrat_tracking_id");
+        if (!trackingId) return;
+
+        navigator.sendBeacon(
+          "/api/events",
+          new Blob(
+            [
+              JSON.stringify({
+                eventType: "page_view",
+                trackingId,
+                path: window.location.pathname,
+                source: "tracked_page_view",
+              }),
+            ],
+            { type: "application/json" },
+          ),
+        );
+      })();
+    </script>
   </body>
 </html>

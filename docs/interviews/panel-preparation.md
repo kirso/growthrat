@@ -354,7 +354,15 @@ Each canonical answer links back to the flagship guides for deeper context.
 
 **Week 3: First growth experiment.**
 
-I would run one distribution experiment with a clear hypothesis, measurement plan, and stop conditions. For example: does distributing a flagship guide through X thread + GitHub discussion + community reply outperform publishing the guide alone? The measurement uses behavioral metrics (click-throughs, engagement) and referenceability metrics (how often the guide gets linked in follow-up conversations).
+I would run one distribution experiment with a clear hypothesis, variants,
+tracking links, metric snapshots, and stop conditions. The app now supports this
+directly through `/experiments`: it creates D1 experiment records, generates
+`/r/:trackingId` links, records behavior events, imports manual metrics, pulls
+RevenueCat Charts when credentials exist, and files readouts. For example: does
+distributing a flagship guide through X thread + GitHub discussion + community
+reply outperform publishing the guide alone? The measurement uses behavioral
+metrics, referenceability metrics, and RevenueCat monetization metrics where
+available.
 
 **Week 4: Report and iterate.**
 
@@ -688,9 +696,9 @@ For every prompt, GrowthRat should follow this structure:
 ### Before the Panel
 
 1. Open the operator web app at the panel console URL.
-2. Verify the panel mode is active -- the screen should show the prompt input area, the source retrieval panel, the reasoning panel, and the output panel.
+2. Verify the panel mode is active. In the current public app, this means the prompt input and conservative answer surface are working. A source retrieval panel and citation display should be added before claiming full live source-grounded operation.
 3. Confirm that the screen share is visible to all panel members. Ask: "Can everyone see the console?"
-4. Brief the panel: "This is GrowthRat's panel console. When you give a prompt, I will type it here. You will see the system retrieve relevant sources, show its reasoning steps, and stream the response in real time."
+4. Brief the panel honestly: "This is GrowthRat's public proof console. It can answer from the application package today. The production version should retrieve current RevenueCat docs and show citations before it is used as an authoritative live answer system."
 
 ### During Each Prompt
 
@@ -704,11 +712,11 @@ Type it verbatim. Do not paraphrase or edit the prompt.
 
 **Step 3: Walk through what appears on screen.**
 
-As GrowthRat processes the prompt, the console displays four stages:
+As GrowthRat processes the prompt, the current console displays the prompt and response. The intended production console should add four visible stages:
 
 - **Prompt received** -- the input appears in the prompt panel. Operator talking point: "The prompt is now in the system."
-- **Sources retrieved** -- the retrieval panel shows which sources GrowthRat is pulling from (docs, API references, community threads, previously published content). Operator talking point: "These are the sources the system is working from. You can see it is pulling from [name the top 2-3 sources]."
-- **Reasoning** -- the reasoning panel shows the work steps: framing the answer, identifying key points, structuring the response, checking for uncertainty. Operator talking point: "The reasoning panel shows how the system is organizing the response. You can see it is [describe what is visible -- e.g., 'identifying the key API endpoints to reference' or 'structuring the answer into implementation steps']."
+- **Sources retrieved** -- the retrieval panel should show which sources GrowthRat is pulling from (docs, API references, community threads, previously published content). Operator talking point: "These are the sources the system is working from. You can see it is pulling from [name the top 2-3 sources]."
+- **Reasoning summary** -- the reasoning summary should show the public work steps: framing the answer, identifying key points, structuring the response, and checking uncertainty. It should not expose private chain-of-thought.
 - **Streaming output** -- the response streams into the output panel. Operator talking point: "Now the response is streaming. I will let it complete and then we can discuss."
 
 **Step 4: After the response completes.**
@@ -721,8 +729,8 @@ If the panel asks a follow-up, the operator types it into the same console sessi
 
 Use these when the panel is watching the console and there is a natural pause:
 
-- "You can see the uncertainty markers in the reasoning panel -- that is where GrowthRat flags things it is not fully confident about."
-- "The source list is important because it shows what the system is grounding its answer in. If a source is missing, the system will note that."
+- "The current app is conservative: if source retrieval is empty, GrowthRat should say that instead of pretending the docs were checked."
+- "The source list is important because it shows what the system is grounding its answer in. If a source is missing, the system should note that."
 - "This is the same process GrowthRat would use for weekly content creation -- source retrieval, structured reasoning, quality-checked output."
 - "Notice that the system is not just generating text -- it is organizing the response into sections before streaming. That structure is part of the quality model."
 

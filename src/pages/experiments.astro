@@ -1,0 +1,62 @@
+---
+import ExperimentConsole from "@/components/ExperimentConsole.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Experiments"
+  description="GrowthRat experiment operating surface for planning, tracking, measuring, and reporting growth loops."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Growth experiments</p>
+      <h1>Experiment operating system</h1>
+      <p class="lead">
+        The role asks for one new growth experiment every week. This surface
+        turns that requirement into a measurable loop: variants, tracking links,
+        behavioral events, RevenueCat metric snapshots, and readouts.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/r/week-one-reference">Try a tracking link</a>
+        <a class="button" href="/pipeline">See weekly loop</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="grid">
+        <article class="card">
+          <span class="tag">Plan</span>
+          <h3>Hypothesis before output</h3>
+          <p>
+            Every experiment starts with a specific audience, channel, variant,
+            expected movement, and stop condition.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">Measure</span>
+          <h3>Behavior plus monetization</h3>
+          <p>
+            Product events explain the funnel. RevenueCat Charts explain
+            subscription outcomes when project access is configured.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">Learn</span>
+          <h3>Readout or it did not happen</h3>
+          <p>
+            A run ends with a decision, a learning, and the next action. Volume
+            without a readout does not count.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="shell">
+      <ExperimentConsole client:load />
+    </div>
+  </section>
+</BaseLayout>

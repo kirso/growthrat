@@ -42,6 +42,8 @@ Assets launched:
 - growth flagship page
 - proof-pack page
 - operator replay page
+- tracking links for the reference architecture, Test Store/readiness, and
+  Charts bridge variants
 
 Primary success signals:
 
@@ -51,7 +53,8 @@ Primary success signals:
 
 ## Metrics To Review
 
-This is still a week-one public run, so the review focuses on setup quality and early signal quality.
+This is still a week-one public run, so the review focuses on setup quality,
+tracking quality, and early signal quality.
 
 ### Distribution metrics
 
@@ -77,7 +80,10 @@ This is still a week-one public run, so the review focuses on setup quality and 
 
 ## What Needs Improvement Next Week
 
-- convert the week-one experiment from a hypothesis artifact into a measured readout with first-party metrics
+- drive real distribution through approved public channels so the D1-backed
+  experiment loop receives live events instead of only seed data
+- import the first metric snapshot and file the first readout from the operator
+  console
 - add more canonical-answer style assets for repeated agent-builder questions
 - expand the public application package from proof of competence to proof of repeatable weekly operation
 

@@ -144,6 +144,18 @@ Primary internal users:
 - connector health and mode controls
 - audit trail for side effects
 
+Current implementation status:
+
+- experiment register, variants, tracking assets, behavior events, metric
+  snapshots, RevenueCat chart snapshot endpoint, and readouts are wired in D1
+- `/experiments` provides the operator surface for creating experiments,
+  importing metrics, recording events, pulling RevenueCat charts, and filing
+  readouts
+- `/r/:trackingId` records experiment clicks and redirects to the tracked asset
+- `/api/events` records public experiment events, including tracked page views
+- weekly Workflow now ensures a weekly experiment exists and writes tracking
+  links into the proof bundle
+
 ### P2: RevenueCat-Connected Operation
 
 - Slack-first interaction model
@@ -214,7 +226,7 @@ Convex the architecture requirement. That is no longer true.
 
 Current repo state:
 
-- Astro with Svelte islands on Cloudflare Workers
+- Astro with focused Svelte interaction on Cloudflare Workers
 - Cloudflare Agents and Durable Objects for stateful agent sessions
 - Cloudflare Workflows for durable long-running runs
 - D1 for relational operational state
@@ -334,6 +346,7 @@ Supporting docs:
 - `docs/context/2026-03-06-revenuecat-role-brief.md` - source role brief
 - `docs/interviews/` - interview preparation and knowledge base
 - `docs/public/` - public proof artifacts
+- `migrations/0002_experiment_operations.sql` - experiment operations schema
 
 Removed superseded docs:
 

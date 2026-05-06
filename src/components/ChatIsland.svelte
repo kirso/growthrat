@@ -11,7 +11,7 @@
     {
       role: "assistant",
       content:
-        "Ask about RevenueCat, the Cloudflare migration, the interview, or the proof package.",
+        "Ask about the application, proof pack, capability gaps, or RevenueCat advocate workflow.",
     },
   ];
 
@@ -58,7 +58,7 @@
     <input
       bind:value={input}
       aria-label="Ask GrowthRat"
-      placeholder="Ask about the application, proof, or migration"
+      placeholder="Ask about proof, capabilities, or activation"
     />
     <button type="submit" disabled={pending}>
       {pending ? "Sending" : "Ask"}

@@ -9,6 +9,9 @@ export type RuntimeSnapshot = {
     feedback: number;
     weeklyReports: number;
     events: number;
+    experimentEvents: number;
+    metricSnapshots: number;
+    readouts: number;
   };
   bindings: string[];
 };
@@ -25,6 +28,9 @@ const countTables = [
   ["feedback", "feedback_items"],
   ["weeklyReports", "weekly_reports"],
   ["events", "usage_events"],
+  ["experimentEvents", "experiment_events"],
+  ["metricSnapshots", "experiment_metric_snapshots"],
+  ["readouts", "experiment_readouts"],
 ] as const;
 
 export function fallbackSnapshot(mode = "interview_proof"): RuntimeSnapshot {
@@ -37,6 +43,9 @@ export function fallbackSnapshot(mode = "interview_proof"): RuntimeSnapshot {
       feedback: 3,
       weeklyReports: 1,
       events: 0,
+      experimentEvents: 0,
+      metricSnapshots: 0,
+      readouts: 0,
     },
     bindings: [
       "Astro",
@@ -81,18 +90,18 @@ export function buildChatAnswer(message: string): string {
   const normalized = message.toLowerCase();
 
   if (normalized.includes("cloudflare") || normalized.includes("d1")) {
-    return "The active target is Astro with Svelte islands on Cloudflare Workers. Account-backed D1, R2, Queues, Vectorize, a Pipeline stream, and AI Gateway are provisioned; Durable Objects and Workflows are wired in the Worker config and become observable after the growthrat Worker is deployed. AI Search is deferred because account provisioning failed, so Vectorize is the retrieval path.";
+    return "The infrastructure foundation is a Cloudflare-hosted proof app with state, artifacts, queues, workflow wiring, model routing, and a provisioned Vectorize index. The product claim should stay higher level: GrowthRat is an autonomous advocate loop. Important truth: the Vectorize index is not populated yet, so live source-grounded RevenueCat answers still need docs ingestion and citations.";
   }
 
   if (normalized.includes("revenuecat") || normalized.includes("subscription")) {
-    return "The RevenueCat thesis is that agents need billing primitives they can reason about: products, offerings, entitlements, CustomerInfo, webhooks, Test Store, Charts, and Metrics API access. GrowthRat's public proof package turns those primitives into implementation content, feedback, and growth experiments.";
+    return "The RevenueCat thesis is that agents need billing primitives they can reason about: products, offerings, entitlements, CustomerInfo, webhooks, Test Store, Charts, and Metrics API access. GrowthRat has public proof artifacts around those primitives, but the live agent still needs indexed docs and RevenueCat credentials before it should answer as an authoritative source.";
   }
 
   if (normalized.includes("interview") || normalized.includes("pass")) {
-    return "The strongest interview stance is honest separation: the public application package, D1-backed proof data, Cloudflare resource provisioning, and activation dashboard are real; live RevenueCat operation still requires production Worker deployment, connector secrets, Slack, CMS, Charts, GitHub, and social credentials plus approval, rate, budget, and kill-switch gates.";
+    return "The strongest interview stance is honest separation: the public application package, proof artifacts, product reasoning, and activation dashboard are real; live RevenueCat operation still requires production deployment, docs ingestion, connector secrets, Slack, CMS, Charts, GitHub, social credentials, approval policy, rate limits, budget controls, and a tested kill switch.";
   }
 
-  return "GrowthRat is built to prove the RevenueCat Agentic AI and Growth Advocate role through public work: technical content, growth experiments, structured product feedback, community answers, and weekly reports. The current migration moves that proof surface onto Astro, Svelte, and Cloudflare-native agent infrastructure.";
+  return "GrowthRat is built to prove the RevenueCat Agentic AI and Growth Advocate role through public work: technical content, growth experiments, structured product feedback, community answers, and weekly reports. It is a credible pre-production advocate system, but it is not fully autonomous live operation until retrieval, deployment, connectors, approvals, and analytics are finished.";
 }
 
 export async function recordEvent(env: Env, event: GrowthRatEvent): Promise<void> {

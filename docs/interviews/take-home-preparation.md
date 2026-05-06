@@ -17,16 +17,16 @@
 | Phase | Hours | Actions |
 |-------|-------|---------|
 | Decompose | 0–1 | Read prompt carefully. Identify the specific RC feature. Determine target developer persona (mobile indie, growth team, agent builder). List deliverables explicitly. |
-| Research | 1–6 | Ingest the relevant RC SDK docs and API reference. Build a working integration locally if possible (Swift/Kotlin/Flutter snippet). Use DataForSEO keyword data to find the search queries developers actually use for this feature (e.g., "revenuecat paywall setup swift", "revenuecat entitlements tutorial"). Check community signals: RC Discord, Stack Overflow, GitHub issues — find the actual friction points developers hit. |
+| Research | 1–6 | Ingest the relevant RC SDK docs and API reference. Build a working integration locally if possible (Swift/Kotlin/Flutter snippet). Use an available keyword or SEO data source to find the search queries developers actually use for this feature (e.g., "revenuecat paywall setup swift", "revenuecat entitlements tutorial"). Check community signals: RC Discord, Stack Overflow, GitHub issues — find the actual friction points developers hit. |
 | Outline | 6–8 | Structure the tutorial: problem statement, prerequisites, step-by-step implementation, common pitfalls, complete code, next steps. Map each section to a search intent or community question. |
 | Write | 8–18 | Draft the full tutorial. Every claim source-backed. Code examples must compile — if a snippet uses `Purchases.configure(withAPIKey:)`, verify it matches the current SDK version. Include inline commentary explaining why, not just what. |
 | Code validation | 18–22 | Run all code examples. If SDK access is limited, document exactly what was tested and what was verified against docs. Screenshot or log any test output. |
 | Distribution plan | 22–28 | Channel matrix: where this tutorial gets posted (RC community, Dev.to, X thread, relevant subreddits, Hacker News if novel enough). For each channel: format adaptation, timing, expected reach, engagement metric. Include a 30-day distribution timeline with specific actions per day/week. |
 | Quality gates | 28–32 | Run all 8 publish gates: grounding, novelty, technical, SEO, AEO, GEO, benchmark, voice. Fix any failures. |
-| Package | 32–40 | Final assembly: tutorial document, code repository or gist, distribution plan, evidence appendix (DataForSEO screenshots, community signal links, test output). |
+| Package | 32–40 | Final assembly: tutorial document, code repository or gist, distribution plan, evidence appendix (keyword data exports if available, community signal links, test output). |
 | Buffer | 40–48 | Re-read everything cold. Fix typos. Verify links. Submit. |
 
-**Key differentiator:** Include a "Signals That Led Here" appendix showing the DataForSEO keyword data, community questions, and competitive gap analysis that informed topic selection. This proves the content engine works, not just the writing.
+**Key differentiator:** Include a "Signals That Led Here" appendix showing keyword data, community questions, and competitive gap analysis that informed topic selection. This proves the content engine works, not just the writing.
 
 ---
 
@@ -39,7 +39,7 @@
 | Phase | Hours | Actions |
 |-------|-------|---------|
 | Decompose | 0–1 | Identify deliverables: series theme, 3–5 topic outlines, one fully written piece, distribution plan, success metrics. |
-| Audience research | 1–6 | Use DataForSEO to map the agent monetization landscape: what terms are emerging ("agent billing", "AI agent subscriptions", "LLM API cost passthrough"), search volume trends, current SERP competition. Scan agent developer communities (LangChain Discord, AutoGPT forums, CrewAI GitHub discussions) for monetization questions. Document the gap: what content exists today vs. what agent devs actually need. |
+| Audience research | 1–6 | Use available keyword, SERP, and community-signal data to map the agent monetization landscape: what terms are emerging ("agent billing", "AI agent subscriptions", "LLM API cost passthrough"), search volume trends, current SERP competition. Scan agent developer communities (LangChain Discord, AutoGPT forums, CrewAI GitHub discussions) for monetization questions. Document the gap: what content exists today vs. what agent devs actually need. |
 | Topic selection | 6–10 | Select 3–5 topics that form a coherent journey. Example series: (1) "Why Agent Monetization Is Different From SaaS Pricing" — problem framing; (2) "Implementing Usage-Based Billing for AI Agents with RevenueCat" — technical how-to; (3) "Paywall Patterns for Agent-Built Apps: What Works" — pattern library; (4) "Measuring Agent Revenue: Metrics That Matter" — analytics; (5) "From Free Agent to Paid Product: A Migration Guide" — conversion. For each topic: target keyword, search volume, content gap score, estimated difficulty. |
 | Series outline | 10–14 | For each piece: title, target keyword, search intent, outline (H2/H3 structure), key takeaways, internal links between pieces, estimated word count. Map the series to a publishing calendar (2/week pace matches role requirements). |
 | Write one full piece | 14–26 | Pick the piece with the highest strategic value (likely piece 2 — the technical how-to — because it demonstrates both content quality and RC product knowledge). Write it end-to-end with code examples, architecture diagrams (described in text or ASCII), and real configuration snippets. |
@@ -48,7 +48,7 @@
 | Package | 38–44 | Deliverables: series overview document, 3–5 topic outlines with keyword data, one fully written piece, distribution calendar, metrics framework, evidence appendix. |
 | Buffer | 44–48 | Final review and submission. |
 
-**Key differentiator:** Show the DataForSEO keyword data for each topic. Include a "Series Flywheel" diagram showing how each piece drives traffic to the next and feeds community engagement back into topic selection.
+**Key differentiator:** Show the keyword and community-signal evidence for each topic. Include a "Series Flywheel" diagram showing how each piece drives traffic to the next and feeds community engagement back into topic selection.
 
 ---
 
@@ -83,7 +83,7 @@
 | Phase | Hours | Actions |
 |-------|-------|---------|
 | Decompose | 0–1 | Deliverables: audience analysis, channel strategy, content calendar, 3 experiment designs, metrics framework. |
-| Audience analysis | 1–8 | Define the agent developer audience segments: (a) indie agent builders (solo devs building AI tools), (b) startup teams (small companies with agent products), (c) enterprise teams (adding agent capabilities to existing products). For each segment: where they congregate, what they read, what they search for, what they trust. Use DataForSEO for search behavior data. Scan community platforms for volume and engagement patterns. |
+| Audience analysis | 1–8 | Define the agent developer audience segments: (a) indie agent builders (solo devs building AI tools), (b) startup teams (small companies with agent products), (c) enterprise teams (adding agent capabilities to existing products). For each segment: where they congregate, what they read, what they search for, what they trust. Use available keyword and SERP data for search behavior. Scan community platforms for volume and engagement patterns. |
 | Channel strategy | 8–14 | Map channels to segments. For each channel (X, Dev.to, Hacker News, Reddit r/LangChain and r/LocalLLaMA, LangChain Discord, agent-specific Discords, GitHub, RC community, LinkedIn): audience overlap score, content format requirements, engagement mechanics, effort-to-impact ratio. Prioritize top 5 channels. |
 | Content calendar | 14–20 | 3-month calendar: 2 pieces/week, mapped to channels, tied to keyword targets. Include content types: tutorials, case studies, opinion pieces, tool comparisons, data-driven analyses. Show how the calendar builds momentum (early pieces establish presence, later pieces reference and build on earlier ones). |
 | Experiment designs | 20–30 | 3 experiments, each with: hypothesis, baseline metric, target metric, method, timeline, stop condition, measurement plan. Examples: (a) "Technical tutorials posted to Dev.to with agent-specific tags will generate 2x the RC doc referrals of general tutorials" — A/B test two content approaches over 4 weeks; (b) "Weekly X thread series summarizing agent monetization trends will grow followers 50% in 8 weeks" — measure follower growth and engagement rate; (c) "Answering agent-monetization questions on Stack Overflow and Reddit with RC-referencing solutions will generate 100+ monthly RC doc visits within 6 weeks" — track referral traffic. |
@@ -129,7 +129,8 @@ Hour  0–2   ORIENTATION
               - Set up working environment: folders, tools, API keys.
 
 Hour  2–8   RESEARCH
-              - DataForSEO keyword/trend data for relevant topics.
+              - Keyword and trend data for relevant topics from the best
+                available source.
               - RevenueCat docs, SDKs, API reference deep read.
               - Community signals: RC Discord, Stack Overflow, GitHub issues,
                 X conversations, Reddit threads.
@@ -220,7 +221,7 @@ The operator should be available at these moments:
 - [ ] Distribution strategy names specific channels with specific actions
 - [ ] Metrics have baselines, targets, and timelines — not just "increase engagement"
 - [ ] Experiment designs include hypothesis, method, stop condition, and measurement plan
-- [ ] Audience claims are backed by data (DataForSEO, community analysis), not assumptions
+- [ ] Audience claims are backed by data (keyword, SERP, and community analysis), not assumptions
 - [ ] Competitive references are fair and accurate
 
 ### Voice and Identity
@@ -289,7 +290,7 @@ The operator should be available at these moments:
 **How to avoid:**
 - Every channel recommendation must include: why this channel, what content format, expected reach, how to measure success.
 - Every metric target must have a baseline (current state) and a justification for the target number.
-- Include DataForSEO data, community size estimates, competitive content analysis — real numbers from real sources.
+- Include keyword data, community size estimates, competitive content analysis — real numbers from real sources.
 - Name specific subreddits, Discord servers, and X accounts. "Developer communities" is not a strategy; "r/LangChain (180k members, 3 monetization questions/week)" is.
 
 ### Pitfall 5: Missing the Meta-Signal

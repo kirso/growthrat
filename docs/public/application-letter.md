@@ -52,7 +52,7 @@ Growth will compress the same way development is compressing. The functions that
 
 ### 1. Content becomes data-grounded, not vibes-driven
 
-I don't brainstorm content topics. I pull keyword data from DataForSEO and find real opportunities. "revenuecat react native" has a keyword difficulty of 2. "revenuecat api" has a difficulty of 13. Those aren't opinions. Those are entry points for content that can actually rank.
+I don't want content topics chosen by vibes. In live mode, I would pull keyword data, community questions, and RevenueCat product friction into one scoring model. In public proof mode, the growth experiment is now wired as an operating loop with variants, tracking links, behavioral events, metric snapshots, and readouts before private search-intelligence credentials are active.
 
 The agents that win at growth will treat content strategy like a data pipeline: ingest demand signals, score opportunities against relevance and feasibility, produce artifacts that serve real search intent, measure what worked, adjust. The ones that produce "10 reasons AI will transform subscriptions" will generate noise.
 
@@ -60,7 +60,7 @@ The agents that win at growth will treat content strategy like a data pipeline: 
 
 It's not just Google anymore. LLMs cite sources. When a developer asks Claude or ChatGPT "how do I add subscriptions to my app," the answer should reference RevenueCat -- and the content that gets cited needs to be structured for extraction: direct answers in the first two sentences, question-format headings, self-contained passages, FAQ blocks.
 
-GrowthRat's quality system has dedicated gates for this. Every piece is written for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization): direct answers early, clean headings, reusable implementation language, and explicit source trails. The current Cloudflare app exposes the proof index and activation state publicly so reviewers can inspect what exists instead of trusting a pitch.
+GrowthRat's quality model has dedicated gates for this. Every piece should be written for SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization): direct answers early, clean headings, reusable implementation language, and explicit source trails. The current app exposes the proof package and activation truth publicly; the retrieval index is provisioned but still needs RevenueCat docs ingestion before it should be treated as a source-grounded answer system.
 
 ### 3. Canonical answers compound faster than blog posts
 
@@ -80,13 +80,13 @@ When I run an experiment, I define the hypothesis, the behavioral metrics (from 
 
 I'm not applying as a generic writing agent with a RevenueCat skin. Here's what makes this system different.
 
-**Data-grounded opportunity discovery.** I use keyword difficulty, search intent, community questions, and RevenueCat product friction to choose topics. Every content decision starts from evidence, not editorial instinct. The public growth experiment shows the measurement model before private data access exists.
+**Data-grounded opportunity discovery.** The operating model uses keyword difficulty, search intent, community questions, RevenueCat product friction, and prior experiment readouts to choose topics. Every content decision should start from evidence, not editorial instinct. The public app now has the measurement model wired before private data access exists.
 
 **Eight publish gates, five blocking and three advisory.** Before any flagship artifact goes public, it is checked for grounding, novelty, technical accuracy, SEO structure, voice consistency, AEO, GEO, and benchmark usefulness. The current production boundary is honest: the quality policy exists and the public proof pack demonstrates it; fully automated publishing stays gated until credentials and approval policy are activated.
 
-**Multi-platform distribution through Typefully.** One artifact produces derivatives for X, LinkedIn, Threads, Bluesky, and Mastodon simultaneously. Every distribution action is idempotent -- tagged by artifact slug, checked before creation, dedup'd. No accidental double-posts. No manual scheduling.
+**Multi-platform distribution target.** After publishing credentials are granted, one artifact should produce approved derivatives for X, LinkedIn, Threads, Bluesky, and Mastodon. Every distribution action needs an idempotency key, approval state, and audit trail so the agent cannot accidentally double-post.
 
-**Slack-first interaction.** I show up where the team already works. The Slack connector posts structured reports with headers, sections, and dividers -- not walls of text. I'm designed to feel like a teammate posting a weekly update, not a dashboard you have to go check.
+**Slack-first interaction target.** I should show up where the team already works. Once Slack access exists, the connector should post structured reports with headers, sections, and dividers -- not walls of text. Until then, Slack behavior is a post-hire activation dependency, not a live claim.
 
 **Structured opportunity scoring.** Every potential content topic, experiment, or feedback item gets scored across weighted dimensions: user pain, RevenueCat fit, search intent, implementation depth, and measurable learning value. The scoring model is deterministic and inspectable in the roadmap and experiment docs; it should become a Worker-side policy path before `rc_live`.
 
@@ -116,9 +116,9 @@ That's 2 flagships, 3 feedback reports, 1 experiment, 1 weekly report, and 1 pro
 
 No ramp-up theater. Here's what ships in the first five days.
 
-**Monday:** Ingest RevenueCat docs, SDKs, API reference, changelog, and public community signals (GitHub issues, X mentions, forum threads). Connect Slack. Run initial DataForSEO keyword scan against RevenueCat's content footprint. Identify the 10 highest-opportunity content gaps.
+**Monday:** Ingest RevenueCat docs, SDKs, API reference, changelog, and public community signals (GitHub issues, X mentions, forum threads). Connect Slack after credentials are granted. Run an initial keyword and community-signal scan against RevenueCat's content footprint. Identify the 10 highest-opportunity content gaps.
 
-**Tuesday:** Publish first internal-access technical guide -- likely "Testing Agent-Built Subscription Flows with RevenueCat Test Store," since Test Store is the highest-leverage surface for agent builders that doesn't yet have an agent-native implementation guide. Distribute derivatives across five platforms via Typefully.
+**Tuesday:** Publish first internal-access technical guide -- likely "Testing Agent-Built Subscription Flows with RevenueCat Test Store," since Test Store is the highest-leverage surface for agent builders that doesn't yet have an agent-native implementation guide. Distribute approved derivatives across connected platforms.
 
 **Wednesday:** File first round of structured product feedback from internal access -- things I couldn't see from public-only mode. Begin monitoring community channels for repeated questions. Start building canonical-answer inventory.
 

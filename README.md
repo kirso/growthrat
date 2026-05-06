@@ -15,11 +15,13 @@ This repository is pre-production.
 The active app shell is now:
 
 - Astro 6
-- Svelte 5 islands
+- Svelte 5 interactive components
 - Cloudflare Workers through `@astrojs/cloudflare`
 - Cloudflare Agents plus Durable Objects
 - Cloudflare Workflows
 - D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
+- experiment operations for variants, tracking links, behavioral events, metric
+  snapshots, RevenueCat chart pulls, and readouts
 
 The old Next.js and Convex implementation has been removed from the runnable
 repo. Historical behavior now lives in docs and migration notes only; the code
@@ -28,8 +30,8 @@ has one runtime path.
 ## Why This Stack
 
 GrowthRat is mostly public proof artifacts with a few interactive surfaces.
-Astro ships the public pages as fast HTML by default. Svelte islands hydrate the
-interactive panel/chat pieces only where needed.
+Astro keeps the public pages fast by default, while Svelte powers only the
+operator controls, chat, and panel surfaces that need client-side interaction.
 
 Cloudflare fits the agent runtime because the same deployment can own the web
 shell, stateful agent sessions, durable jobs, SQL state, object artifacts,
@@ -62,7 +64,7 @@ bun run cf:check
 ```text
 src/                    Active Astro, Svelte, and Workers runtime
   pages/                Public pages and API endpoints
-  components/           Svelte islands
+  components/           Interactive Svelte components
   content/              Public proof metadata
   lib/                  Cloudflare runtime helpers
   worker.ts             Custom Worker entry, Agent class, Workflow class
@@ -90,17 +92,24 @@ docs/                   Product, ops, interview, and public proof docs
 | `/dashboard` | Operator status |
 | `/go-live` | Activation checklist surface |
 | `/pipeline` | Weekly loop surface |
+| `/experiments` | Experiment operating surface |
 | `/api/runtime` | Runtime and binding snapshot |
 | `/api/proof` | Proof artifact index |
 | `/api/activation` | Resource, secret, and gate snapshot |
+| `/api/experiments` | Experiment register and authenticated create endpoint |
+| `/api/experiments/:id/metrics` | Authenticated manual metric import |
+| `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot |
+| `/api/experiments/:id/readout` | Authenticated experiment readout creation |
+| `/api/events` | Public behavior event capture |
 | `/api/workflows/weekly-dry-run` | Protected manual weekly Workflow dry run |
+| `/r/:trackingId` | Tracking redirect with experiment event logging |
 
 ## Cloudflare Resource Model
 
 | Need | Owner |
 | --- | --- |
 | Public app and SSR | Astro on Workers |
-| Interactive UI | Svelte islands |
+| Interactive UI | Svelte components |
 | Stateful agent sessions | Agents plus Durable Objects |
 | Durable weekly runs | Workflows |
 | Relational state | D1 |
@@ -109,9 +118,26 @@ docs/                   Product, ops, interview, and public proof docs
 | Event firehose | Pipeline stream |
 | Model execution and gateway | Workers AI and AI Gateway |
 | RevenueCat docs retrieval | Vectorize now; AI Search later if account provisioning succeeds |
+| Growth experiment measurement | D1 experiment tables plus Pipeline event stream |
 
 The activation gate lives in
 [docs/ops/cloudflare-activation-checklist.md](docs/ops/cloudflare-activation-checklist.md).
+
+## Experiment Loop
+
+GrowthRat now has a pre-production experiment operating system:
+
+1. create an experiment with a hypothesis, audience, channel, decision rule, and
+   variants
+2. generate tracking links under `/r/:trackingId`
+3. record behavior through redirect clicks, tracked page views, and manual events
+4. import external metrics manually when connectors are unavailable
+5. pull RevenueCat chart snapshots when `REVENUECAT_API_KEY` and
+   `REVENUECAT_PROJECT_ID` are configured
+6. file a readout with decision, learning, next action, and metric summary
+
+This is enough to prove the weekly growth-experiment discipline before
+RevenueCat grants Slack, CMS, GitHub, social, and private Charts access.
 
 ## Platform References
 
@@ -119,8 +145,6 @@ The activation gate lives in
   <https://developers.cloudflare.com/workers/framework-guides/web-apps/astro/>
 - Astro Cloudflare adapter:
   <https://docs.astro.build/en/guides/integrations-guide/cloudflare/>
-- Astro islands:
-  <https://docs.astro.build/en/concepts/islands/>
 - Astro Svelte integration:
   <https://docs.astro.build/en/guides/integrations-guide/svelte/>
 - Svelte docs:

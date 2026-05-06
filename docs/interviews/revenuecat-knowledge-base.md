@@ -133,9 +133,11 @@ Events sent via POST to registered webhook URLs.
 4. **No agent-specific error messages** — errors assume human developer context
 5. **Project creation requires dashboard** — can't create projects via API
 
-## DataForSEO Keyword Intelligence
+## Historical Keyword Intelligence
 
-Target keywords with difficulty scores (retrieved 2026-03-16):
+Target keywords with difficulty scores from the old prototype snapshot
+(retrieved 2026-03-16). Treat these as interview context, not current live
+keyword data until a keyword/SERP connector is activated:
 
 | Keyword | Difficulty | Search Intent |
 |---------|-----------|---------------|
@@ -149,19 +151,24 @@ Target keywords with difficulty scores (retrieved 2026-03-16):
 
 ## GrowthRat Architecture
 
-- **Current implementation** — Astro with Svelte islands on Cloudflare Workers,
-  backed by Cloudflare Agents, Durable Objects, Workflows, D1, R2, Queues,
-  Pipeline stream, AI Gateway, Workers AI, and Vectorize. AI Search remains a
-  candidate later, but it is not the active binding while account provisioning
-  fails.
+- **Current implementation** — public proof app plus operator activation
+  surface, backed by Cloudflare Workers infrastructure. Keep framework details
+  in technical docs; public product copy should lead with the advocate loop.
 - **Legacy migration status** — the old Next.js/Convex runtime has been removed
   from the runnable repo. The active code path is Cloudflare-native.
 - **Model layer** — Workers AI and AI Gateway are provisioned as the target
   routing layer; provider keys remain required before live model side effects.
-- **Retrieval** — Vectorize is the active retrieval target. AI Search remains a
-  later option after account provisioning succeeds.
-- **Typefully** — multi-platform social distribution (X, LinkedIn, Threads, Bluesky, Mastodon)
-- **DataForSEO** — keyword research, SERP analysis, experiment baselines
+- **Retrieval** — Vectorize is provisioned but currently empty. RevenueCat docs
+  ingestion and citation metadata are required before source-grounded live
+  answering is complete. AI Search remains a later option after account
+  provisioning succeeds.
+- **Experiment operations** — D1 stores experiments, variants, tracking assets,
+  behavior events, metric snapshots, RevenueCat chart snapshots, and readouts.
+  External channel distribution still requires approved credentials.
+- **Typefully** — target connector for multi-platform social distribution after
+  credentials and approval policy exist.
+- **Keyword/SERP connector** — target connector for keyword research, SERP
+  analysis, and experiment baselines after credentials exist.
 
 Operating modes are gated by `APP_MODE` in `wrangler.jsonc` and surfaced through
 `/api/activation`: `dormant` (public proof only), `interview_proof` (public

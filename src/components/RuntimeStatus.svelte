@@ -27,6 +27,9 @@
         feedback: number;
         weeklyReports: number;
         events: number;
+        experimentEvents: number;
+        metricSnapshots: number;
+        readouts: number;
       };
       bindings: string[];
     };
@@ -79,7 +82,7 @@
   <div class="runtime-header">
     <div>
       <p class="eyebrow">Runtime proof</p>
-      <h2>Cloudflare activation state</h2>
+      <h2>Activation state</h2>
     </div>
     {#if snapshot}
       <span class="pill {snapshot.readyForRcLive ? 'ok' : ''}">
@@ -104,7 +107,7 @@
       <article class="card">
         <span class="tag">Runtime</span>
         <div class="metric">{snapshot.runtime.source.toUpperCase()}</div>
-        <p>D1 or fallback proof data source</p>
+        <p>Proof data source</p>
       </article>
       <article class="card">
         <span class="tag">Secrets</span>
@@ -112,6 +115,21 @@
           {snapshot.secrets.configured}/{snapshot.secrets.required}
         </div>
         <p>Required production secrets configured</p>
+      </article>
+      <article class="card">
+        <span class="tag">Experiments</span>
+        <div class="metric">{snapshot.runtime.counts.experiments}</div>
+        <p>Experiment records in D1</p>
+      </article>
+      <article class="card">
+        <span class="tag">Signals</span>
+        <div class="metric">{snapshot.runtime.counts.experimentEvents}</div>
+        <p>Tracked experiment behavior events</p>
+      </article>
+      <article class="card">
+        <span class="tag">Readouts</span>
+        <div class="metric">{snapshot.runtime.counts.readouts}</div>
+        <p>Filed experiment conclusions</p>
       </article>
     </div>
 

@@ -25,6 +25,8 @@ Remote D1 seed counts:
 - 1 experiment
 - 3 feedback items
 - 1 weekly report
+- 3 seeded experiment variants and tracking assets after
+  `migrations/0002_experiment_operations.sql`
 - 0 workflow runs until the Worker is deployed and a dry run is triggered
 
 ## Runtime Proof URLs
@@ -34,7 +36,13 @@ Remote D1 seed counts:
 | `/api/runtime` | Returns source, mode, binding names, and proof counts |
 | `/api/proof` | Returns public proof artifact index |
 | `/api/activation` | Returns resource, secret, and gate state without secret values |
+| `/api/experiments` | Returns experiment register; authenticated POST creates experiments |
+| `/api/experiments/:id/metrics` | Authenticated manual metric import |
+| `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot import |
+| `/api/experiments/:id/readout` | Authenticated readout creation |
+| `/api/events` | Public behavior event capture |
 | `/api/workflows/weekly-dry-run` | Protected POST that creates a dry weekly Workflow run |
+| `/r/:trackingId` | Tracking redirect that records experiment clicks |
 
 The manual workflow endpoint must be called with either:
 
@@ -56,16 +64,21 @@ token does not match, it returns `401`.
 - Deploy the `growthrat` Worker with Wrangler.
 - Confirm Cloudflare lists the `growthrat` Worker and `growthrat-weekly-loop`
   Workflow.
-- Set all required Wrangler secrets:
+- Set all required Wrangler secrets and config values:
   - `GROWTHRAT_INTERNAL_SECRET`
   - `ANTHROPIC_API_KEY`
   - `OPENAI_API_KEY`
   - `REVENUECAT_API_KEY`
+  - `REVENUECAT_PROJECT_ID`
   - `SLACK_BOT_TOKEN`
   - `TYPEFULLY_API_KEY`
 - Trigger one protected weekly dry run.
 - Confirm the dry run writes a `weekly-runs/<week>/plan.json` object to R2.
 - Confirm `workflow_runs` receives a planned workflow row.
+- Confirm the dry run creates or reuses a weekly experiment with tracking links.
+- Click one `/r/:trackingId` link and confirm `experiment_events` receives a
+  `tracking_click` and tracked `page_view`.
+- Import one manual metric and file one readout from `/experiments`.
 - Confirm public reads keep working if D1 is temporarily unavailable.
 - Confirm publishing, Slack, and social side effects are still disabled in
   `interview_proof`.

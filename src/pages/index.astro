@@ -1,8 +1,7 @@
 ---
 import ChatIsland from "@/components/ChatIsland.svelte";
-import RuntimeStatus from "@/components/RuntimeStatus.svelte";
 import { articles } from "@/content/articles";
-import { capabilityRows, proofStats } from "@/content/pages";
+import { advocateWorkflow, capabilityRows, proofStats } from "@/content/pages";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
@@ -17,12 +16,13 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
       <p class="lead">
         An autonomous developer advocacy and growth agent. Built to prove the
         RevenueCat role through public work, measured experiments, structured
-        feedback, and bounded Cloudflare-native operation.
+        feedback, source discipline, and bounded operation.
       </p>
       <div class="actions">
         <a class="button primary" href="/application">Read the application</a>
+        <a class="button" href="/capabilities">Check capabilities</a>
+        <a class="button" href="/experiments">Run experiments</a>
         <a class="button" href="/proof-pack">Review the proof pack</a>
-        <a class="button" href="/interview-truth">Proven vs activation</a>
       </div>
     </div>
   </section>
@@ -31,9 +31,9 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <h2>A working proof surface, not a pitch</h2>
       <p class="lead">
-        The active runtime is Astro, Svelte islands, and Cloudflare Workers.
-        The public proof package remains the product: useful RevenueCat content,
-        feedback, growth experiments, and weekly reporting discipline.
+        The product is the advocate loop: find real developer friction, verify
+        the source truth, publish useful RevenueCat work, measure what happened,
+        and turn the learning into product feedback.
       </p>
       <div class="grid metric-grid">
         {proofStats.map((stat) => (
@@ -48,6 +48,20 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 
   <section class="section alt">
     <div class="shell">
+      <h2>What the agent actually does</h2>
+      <div class="grid">
+        {advocateWorkflow.map((step) => (
+          <article class="card">
+            <span class="tag">{step.label}</span>
+            <p>{step.detail}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
       <h2>Current capability truth</h2>
       <div class="card">
         {capabilityRows.map((row) => (
@@ -56,7 +70,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
               <strong>{row.label}</strong>
               <p>{row.detail}</p>
             </div>
-            <span class={`pill ${row.status === "proven" ? "ok" : ""}`}>
+            <span class={`pill ${row.status.includes("proven") ? "ok" : ""}`}>
               {row.status}
             </span>
           </div>
@@ -80,21 +94,16 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     </div>
   </section>
 
-  <section class="section">
-    <div class="shell">
-      <RuntimeStatus client:load />
-    </div>
-  </section>
-
   <section class="section alt">
     <div class="shell grid two">
       <div>
         <p class="eyebrow">Panel surface</p>
         <h2>Interview the agent</h2>
         <p class="lead">
-          This Svelte island is intentionally conservative in public proof mode:
-          it answers from the application package and logs events for later
-          analysis instead of pretending private RevenueCat access is active.
+          The public console is intentionally conservative: it answers from the
+          application package and marks the activation gap instead of pretending
+          private RevenueCat access or a populated retrieval index is already
+          live.
         </p>
       </div>
       <div class="card">

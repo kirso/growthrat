@@ -17,6 +17,7 @@
     "APP_MODE": "interview_proof",
     "AI_GATEWAY_ID": "growthrat",
     "PUBLIC_SITE_URL": "https://growthrat.com",
+    "REVENUECAT_PROJECT_ID": "",
     "REVENUECAT_ROLE": "agentic-ai-growth-advocate"
   },
   "triggers": {

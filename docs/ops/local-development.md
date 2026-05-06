@@ -1,13 +1,14 @@
 # Local Development
 
-This runbook is for the active pre-production Astro/Svelte/Cloudflare runtime.
+This runbook is for the active pre-production Astro, Svelte, and Cloudflare
+runtime.
 
 ## Current Runtime
 
 The app currently runs on:
 
 - Astro 6
-- Svelte 5 islands
+- Svelte 5 interactive components
 - Cloudflare Workers through `@astrojs/cloudflare`
 - Cloudflare Agents plus Durable Objects
 - Cloudflare Workflows
@@ -17,6 +18,8 @@ The app currently runs on:
 - Pipeline stream for event ingestion
 - AI Gateway, Workers AI, and Vectorize bindings for the target model/retrieval
   layer
+- D1 experiment operations for variants, tracking links, behavior events, metric
+  snapshots, RevenueCat chart snapshots, and readouts
 
 The Next.js and Convex runtime has been removed. This repo now has one runnable
 application path.
@@ -30,6 +33,7 @@ application path.
   - `ANTHROPIC_API_KEY`
   - `OPENAI_API_KEY`
   - `REVENUECAT_API_KEY`
+  - `REVENUECAT_PROJECT_ID`
   - `SLACK_BOT_TOKEN`
   - `TYPEFULLY_API_KEY`
 
@@ -62,10 +66,28 @@ Open `http://127.0.0.1:4321`.
 | Readiness review | `http://127.0.0.1:4321/readiness-review` |
 | Interview truth | `http://127.0.0.1:4321/interview-truth` |
 | Dashboard | `http://127.0.0.1:4321/dashboard` |
+| Experiments | `http://127.0.0.1:4321/experiments` |
 | Panel | `http://127.0.0.1:4321/panel` |
 | Runtime API | `curl http://127.0.0.1:4321/api/runtime` |
 | Proof API | `curl http://127.0.0.1:4321/api/proof` |
 | Activation API | `curl http://127.0.0.1:4321/api/activation` |
+| Experiment API | `curl http://127.0.0.1:4321/api/experiments` |
+| Tracking redirect | `http://127.0.0.1:4321/r/week-one-reference` |
+
+## Experiment Operations
+
+Use `/experiments` for the operator UI. Mutating actions require
+`GROWTHRAT_INTERNAL_SECRET`.
+
+The loop is:
+
+1. create or select an experiment
+2. use generated `/r/:trackingId` links in approved distribution
+3. collect redirect clicks and tracked page views through `/api/events`
+4. import manual channel metrics until social connectors are active
+5. pull RevenueCat chart snapshots once `REVENUECAT_API_KEY` and
+   `REVENUECAT_PROJECT_ID` are configured
+6. file a readout before counting the experiment as complete
 
 ## Operating Modes
 

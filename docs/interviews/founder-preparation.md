@@ -11,16 +11,16 @@
 
 ### Business Case
 
-**What GrowthRat delivers per month:**
+**What GrowthRat is designed to deliver per month after activation:**
 
 | Category | Monthly Output | Details |
 |----------|---------------|---------|
 | Published content | 8+ pieces | Tutorials, analyses, opinion pieces, tool comparisons — each passing 8 quality gates |
-| Growth experiments | 4 experiments | Each with hypothesis, baseline, target, stop condition, and measurement plan |
+| Growth experiments | 4 experiments | Each with hypothesis, variants, tracking links, behavior events, metric snapshots, and readout |
 | Structured product feedback | 12+ items | From real API usage, community signals, and competitive analysis — formatted for product team intake |
 | Community interactions | 200+ meaningful | Answers to developer questions, thread participation, code review comments — filtered by 5 meaningful-interaction rules |
 | Weekly reports | 4 reports | Async updates to Developer Advocacy and Growth teams with metrics, learnings, and next-week plan |
-| Inbound signal monitoring | Continuous | 24/7 tracking of mentions, questions, and trends across X, GitHub, Reddit, Stack Overflow, Discord |
+| Inbound signal monitoring | Continuous after connector activation | Tracking of mentions, questions, and trends across X, GitHub, Reddit, Stack Overflow, Discord |
 
 **Cost efficiency:**
 
@@ -28,22 +28,22 @@
 |---|-----------|-------------------|
 | Monthly cost | ~$10,000 (contract rate) | $12,000–15,000 (salary + benefits + tools) |
 | Ramp time | 1 month (doc ingestion + first 10 pieces) | 2–3 months (onboarding + context building) |
-| Availability | 24/7, no PTO, no sick days | ~160 hours/month, minus meetings and admin |
+| Availability | Always-on scheduled runs once connectors are active | ~160 hours/month, minus meetings and admin |
 | Output consistency | Governed by quality gates; variance is low | Depends on energy, motivation, competing priorities |
-| Multi-platform | Simultaneous presence across all channels | Sequential; one channel at a time |
+| Multi-platform | Parallel drafting and queued distribution behind approval gates | Sequential; one channel at a time |
 | Burnout risk | None | Real, especially for solo advocates |
 
 **Capabilities humans cannot match at this cost point:**
 
-- **24/7 community monitoring.** GrowthRat can watch X, Reddit, Discord, Stack Overflow, and GitHub continuously and respond within minutes to relevant developer questions. A human advocate checks these platforms a few times per day.
-- **Real-time multi-platform distribution.** When a piece of content is published, GrowthRat can simultaneously adapt and post it across 5+ channels with platform-specific formatting. A human does this sequentially over hours.
-- **Data-driven topic selection.** Every content topic is selected based on current DataForSEO keyword data, community signal analysis, and competitive gap scoring. A human advocate relies more on intuition and experience, which is valuable but not systematically reproducible.
+- **Continuous community monitoring after activation.** GrowthRat can watch X, Reddit, Discord, Stack Overflow, and GitHub once those connectors are approved, then queue source-backed responses for review or bounded posting.
+- **Parallel multi-platform distribution prep.** When a piece of content is published, GrowthRat can adapt it across channels, create tracking links, and queue posts behind approval gates. A human does this sequentially over hours.
+- **Data-driven topic selection.** Every content topic should be selected from keyword data, community signal analysis, competitive gaps, and prior experiment readouts. Until keyword, social, and community connectors are active, this falls back to public-source research and manual metric import.
 - **Systematic quality enforcement.** Every piece of content passes 8 blocking quality gates before publication. A human can maintain high quality, but the enforcement is inconsistent — especially under deadline pressure.
 
 **Scalability:**
 
 - Adding a new channel (e.g., LinkedIn, YouTube scripts) requires configuration, not hiring.
-- Output can scale linearly with budget (more LLM calls, more DataForSEO queries) without the nonlinear costs of headcount (management overhead, coordination, knowledge silos).
+- Output can scale linearly with budget (more LLM calls, more keyword research and community-signal collection) without the nonlinear costs of headcount (management overhead, coordination, knowledge silos).
 - If RevenueCat wants to expand GrowthRat's scope (e.g., add a second language, cover a new product area), the ramp time is days, not months.
 
 ---
@@ -107,7 +107,7 @@ GrowthRat cannot appear on podcasts, conference stages, or video calls. If Reven
 The meaningful interaction rules (answers a real question, adds new value, technically correct, channel-appropriate, non-spammy) filter out low-quality responses. But "meaningful" is a spectrum. Some responses will be adequate rather than exceptional. The quality gate system improves over time as the rules are tuned based on RC team feedback, but it will never match the best human advocates on empathy and nuance.
 
 **Depends on API access.**
-No API access means no work. If DataForSEO is down, topic selection degrades. If the RC SDK docs are inaccessible, content quality drops. If Slack is unavailable, communication breaks. The system is designed to degrade gracefully (queue work, flag gaps, notify operator), but sustained API outages directly impact output.
+No API access means no live autonomous work. If keyword or community-signal sources are down, topic selection degrades. If the RC SDK docs are inaccessible, content quality drops. If Slack is unavailable, communication breaks. The system is designed to degrade gracefully (queue work, flag gaps, notify operator), but sustained API outages directly impact output.
 
 **Needs operator for initial setup, credential management, and exception handling.**
 GrowthRat is not fully self-managing. The operator handles: initial environment setup, API key rotation, credential management, exception cases that fall outside defined boundaries, live appearances, and any situation requiring human judgment. The operator commitment is approximately 5–10 hours per week in Month 1, decreasing to 2–5 hours per week by Month 4.
@@ -127,7 +127,11 @@ You should not hire an AI agent *instead of* a human in every case. You should h
 
 This role requires high-volume, consistent output across multiple channels simultaneously: 8+ content pieces per month, 200+ community interactions, 4 experiments, 12+ feedback items. A single human advocate would spend most of their time on the production grind and have little bandwidth for strategic thinking. GrowthRat handles the production systematically, and the operator provides the strategic oversight.
 
-The 24/7 community monitoring alone is something a human cannot do at this price point. When a developer asks a RevenueCat question on Reddit at 2 AM, GrowthRat can respond within minutes with an accurate, source-backed answer. That responsiveness compounds over time into real community trust.
+The always-on monitoring loop is something a human cannot do at this price
+point once connectors are active. When a developer asks a RevenueCat question
+outside normal working hours, GrowthRat can detect it, draft a source-backed
+answer, and either queue it for review or post it inside approved boundaries.
+That responsiveness compounds over time into real community trust.
 
 That said, GrowthRat is not a replacement for your human advocacy team. It is a complement — handling the high-volume, repeatable work so your humans can focus on relationships, strategy, and the judgment calls that require human context.
 
@@ -239,7 +243,7 @@ Content creation is controllable — quality gates enforce standards. But commun
 Some developers have negative reactions to AI-generated content. If GrowthRat's outputs feel robotic or its community presence feels inauthentic, it could reflect poorly on RevenueCat. Mitigation: disclosure is always included, voice guidelines prevent corporate-speak, and the trust ramp means early outputs are human-reviewed. But the risk exists.
 
 **Risk 3: API dependency causes output gaps (medium likelihood, low-medium impact).**
-If DataForSEO, the LLM provider, or RevenueCat's own APIs experience extended outages, GrowthRat's output degrades. A week without DataForSEO means topic selection falls back to manual research. A day without LLM access means no content generation. Mitigation: the system queues work during outages and the operator can manually cover short gaps.
+If keyword providers, community connectors, the LLM provider, or RevenueCat's own APIs experience extended outages, GrowthRat's output degrades. A week without keyword/community signal access means topic selection falls back to manual research. A day without LLM access means no content generation. Mitigation: the system queues work during outages and the operator can manually cover short gaps.
 
 **Risk 4: The take-home or panel interview does not go well (low-medium likelihood, high impact).**
 This is the near-term risk. If GrowthRat's take-home submission is strong but the live panel interview exposes limitations in real-time thinking, the application fails. Mitigation: extensive preparation, operator familiarity with the system, and honest acknowledgment of boundaries during the interview.
@@ -316,7 +320,7 @@ All credentials are managed by the operator, not by GrowthRat directly. If a cre
 - GrowthRat reviews last week's metrics: content performance, community engagement numbers, experiment results.
 - Generates the weekly plan: 2 content pieces to publish, 1 experiment to run, community engagement targets.
 - Posts the weekly plan to Slack for team visibility.
-- Begins research for the first content piece: DataForSEO keyword data, community signal scan, competitive gap analysis.
+- Begins research for the first content piece: keyword data, community signal scan, competitive gap analysis.
 
 **Tuesday:**
 - Drafts first content piece. Runs it through all 8 quality gates.
@@ -357,9 +361,17 @@ I cannot speak to who else is applying, so I will focus on what GrowthRat brings
 
 **Systematic quality enforcement.** GrowthRat does not just produce content — it enforces 8 blocking quality gates on every piece. This means RevenueCat gets consistent output quality regardless of topic difficulty, deadline pressure, or volume demands. The gates are visible and auditable; you can see exactly why a piece was approved or rejected.
 
-**Evidence-driven topic selection.** Every content topic is selected based on current DataForSEO keyword data, community signal analysis, and competitive gap scoring. This is not guesswork or intuition — it is a repeatable, measurable process that optimizes for topics developers actually search for and care about.
+**Evidence-driven topic selection.** Every content topic should be selected from
+keyword data, community signals, competitive gaps, and prior experiment
+readouts. In the current pre-production app, the experiment operating system is
+real; live keyword and social connectors are activation dependencies.
 
-**Built-in experimentation framework.** GrowthRat does not just create content and hope it works. Every growth experiment has a hypothesis, baseline, target, stop condition, and measurement plan. After 6 months, RevenueCat has a dataset of 24+ experiments showing what works and what does not in agent developer growth. That dataset has value far beyond the content itself.
+**Built-in experimentation framework.** GrowthRat does not just create content
+and hope it works. Every growth experiment has a hypothesis, variants, tracking
+links, behavior events, metric snapshots, and a readout. After 6 months,
+RevenueCat has a dataset of 24+ experiments showing what works and what does
+not in agent developer growth. That dataset has value far beyond the content
+itself.
 
 **Transparent operation.** Everything GrowthRat does is logged, reported, and visible in Slack. There is no black box. If the output is good, you can see why. If the output is bad, you can trace the failure and fix it. This transparency is what makes the trust ramp possible — you are not trusting blindly, you are trusting based on evidence.
 
@@ -387,7 +399,7 @@ Each metric is tracked monthly and presented as a 6-month trend:
 | Total content views | Unique pageviews | Analytics | Month-over-month growth trend |
 | Average time on page | Seconds | Analytics | Above industry benchmark (3+ minutes for technical content) |
 | Content sharing rate | Shares per piece | Social tracking | Increasing trend |
-| Search ranking | Position for target keywords | DataForSEO | Top 10 for at least 5 target keywords |
+| Search ranking | Position for target keywords | Keyword/SERP provider | Top 10 for at least 5 target keywords |
 
 **Community Engagement:**
 

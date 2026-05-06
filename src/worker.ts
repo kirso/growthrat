@@ -5,6 +5,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
+import { ensureWeeklyExperiment } from "./lib/experiments";
 
 type AgentState = {
   mode: string;
@@ -54,7 +55,8 @@ export class GrowthRatAgent extends Agent<Env, AgentState> {
       mode: this.state.mode,
       weeklyRuns: this.state.weeklyRuns,
       target: "RevenueCat Agentic AI and Growth Advocate",
-      platform: "Astro, Svelte islands, and Cloudflare Workers",
+      product:
+        "autonomous developer advocacy loop for content, experiments, feedback, and reporting",
     };
   }
 
@@ -87,14 +89,34 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
     const now = new Date().toISOString();
     const week = currentWeekKey();
 
+    const experiment = await step.do("ensure weekly experiment", async () => {
+      const detail = await ensureWeeklyExperiment(this.env, week.start);
+      return detail
+        ? {
+            id: detail.id,
+            slug: detail.slug,
+            title: detail.title,
+            status: detail.status,
+            trackingLinks: detail.assets.map((asset) => ({
+              title: asset.title,
+              trackingId: asset.tracking_id,
+              url: `/r/${asset.tracking_id}`,
+            })),
+          }
+        : null;
+    });
+
     const plan = await step.do("plan weekly loop", async () => ({
       trigger: event.payload.trigger,
       dryRun: event.payload.dryRun ?? true,
       weekStart: week.start,
       weekEnd: week.end,
+      experiment,
       requiredOutputs: [
         "two content pieces",
-        "one growth experiment",
+        "one growth experiment with variants and tracking links",
+        "daily metric snapshots or manual imports",
+        "one experiment readout",
         "three feedback items",
         "community interactions",
         "weekly report",

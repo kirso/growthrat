@@ -69,7 +69,9 @@ a {
 
 a,
 button,
-input {
+input,
+select,
+textarea {
   transition:
     background-color 180ms ease,
     border-color 180ms ease,
@@ -80,7 +82,9 @@ input {
 
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid rgba(92, 112, 214, 0.32);
   outline-offset: 3px;
 }
@@ -117,7 +121,7 @@ main {
   gap: 10px;
   color: var(--dark);
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   text-decoration: none;
 }
 
@@ -159,6 +163,10 @@ main {
     linear-gradient(135deg, #fff 0%, #f7f8fa 52%, #eef1f4 100%);
 }
 
+.hero.compact {
+  padding: 86px 0 66px;
+}
+
 .hero::after {
   position: absolute;
   right: max(24px, calc((100vw - var(--max)) / 2));
@@ -185,7 +193,7 @@ main {
   font-size: 12px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -208,7 +216,7 @@ h1 {
   margin: 0 0 24px;
   font-size: clamp(56px, 8vw, 104px);
   font-weight: 800;
-  letter-spacing: -0.045em;
+  letter-spacing: 0;
   line-height: 0.95;
 }
 
@@ -217,7 +225,7 @@ h2 {
   margin: 0 0 18px;
   font-size: clamp(32px, 4vw, 54px);
   font-weight: 750;
-  letter-spacing: -0.034em;
+  letter-spacing: 0;
   line-height: 1.02;
 }
 
@@ -225,7 +233,7 @@ h3 {
   margin: 0 0 10px;
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   line-height: 1.2;
 }
 
@@ -335,8 +343,12 @@ a.card {
   font-size: clamp(36px, 5vw, 58px);
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
+}
+
+.metric.small {
+  font-size: 28px;
 }
 
 .tag {
@@ -350,7 +362,7 @@ a.card {
   padding: 5px 9px;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -528,6 +540,63 @@ a.card {
   transform: translateY(-1px);
 }
 
+.experiment-console {
+  display: grid;
+  gap: 24px;
+}
+
+.operator-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+  gap: 24px;
+  align-items: end;
+}
+
+.form-stack {
+  display: grid;
+  gap: 15px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  color: var(--dark);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--body);
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(92, 112, 214, 0.55);
+  box-shadow: 0 0 0 3px rgba(92, 112, 214, 0.12);
+  outline: 0;
+}
+
+.card .button {
+  width: fit-content;
+}
+
 @media (max-width: 860px) {
   .shell {
     width: min(var(--max), calc(100% - 32px));
@@ -568,6 +637,10 @@ a.card {
   }
 
   .chat-form {
+    grid-template-columns: 1fr;
+  }
+
+  .operator-panel {
     grid-template-columns: 1fr;
   }
 

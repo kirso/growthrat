@@ -11,12 +11,14 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 
 - **Public proof package** — application letter, articles, feedback, experiment,
   weekly report, readiness review, and activation truth surface
-- **Cloudflare-native runtime** — Astro, Svelte islands, Workers, Agents,
+- **Cloudflare-native runtime** — Astro, Svelte components, Workers, Agents,
   Durable Objects, Workflows, D1, R2, Queues, Pipeline stream, AI Gateway, and
   Vectorize
 - **Content pipeline target** — generates articles grounded in real product
   documentation, validates quality, and waits for approval before publishing
-- **Growth experiment framework** — hypothesis, baseline measurement, execution, 7-day measurement
+- **Growth experiment operating loop** — D1-backed hypotheses, variants,
+  tracking links, behavior events, manual metrics, RevenueCat chart snapshots,
+  and readouts
 - **Structured product feedback** — uses RevenueCat as an agent developer, identifies friction, files reports
 - **Multi-platform distribution** — built for X, LinkedIn, Threads, Bluesky, Mastodon (activates with credentials)
 - **Slack integration target** — plans, approvals, reports, and commands after
@@ -24,7 +26,7 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 
 ## 2. Architecture (30-second version)
 
-- **Web/runtime**: Astro with Svelte islands on Cloudflare Workers.
+- **Web/runtime**: Astro with focused Svelte interaction on Cloudflare Workers.
 - **State and jobs**: D1 for operational records, Durable Objects for hot agent
   state, R2 for proof bundles, Queues for backpressure, Workflows for durable
   weekly loops.
@@ -53,7 +55,9 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 - Access RC internal systems — only public docs + what RC connects via onboarding
 
 ### Autonomy Boundaries
-- **Full autonomy**: Knowledge ingestion, community monitoring, keyword research, content drafting
+- **Full autonomy after activation**: knowledge ingestion, community monitoring,
+  keyword research, content drafting, and experiment measurement inside approved
+  boundaries
 - **Requires approval**: Publishing content, posting to social platforms, filing GitHub issues
 - **Operator only**: Changing configuration, adding/removing credentials, pausing/resuming the system
 
@@ -64,13 +68,17 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
   provisioned and LLM/social costs remain gated until credentials exist
 - **Contract**: $60K / 6 months = $10K/month
 - **What RC gets**: 2 content pieces/week, 1 experiment/week, 3 feedback items/week, 1 weekly report, community monitoring
-- **Comparison**: A human developer advocate in this role would cost $150-200K/year salary + benefits. GrowthRat delivers the content cadence at a fraction of the cost, operates 24/7, and doesn't need onboarding time.
+- **Comparison**: A human developer advocate in this role would cost
+  $150-200K/year salary + benefits. GrowthRat is designed to deliver the weekly
+  content and experiment cadence at a fraction of the cost once connectors,
+  approvals, and review rules are active.
 
 ### Measurable Outcomes (Month 1 targets)
 - 10 published content pieces grounded in real RC documentation
 - 4 growth experiments with baseline measurements
 - 12 structured product feedback reports
-- Working Slack integration with weekly plans and reports
+- Working Slack integration with weekly plans and reports, after RevenueCat
+  grants workspace access and approval policy
 - Public presence on X and GitHub with RC affiliation
 
 ### Risk Mitigation
@@ -100,7 +108,9 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 ## 6. Key Talking Points for the Interview
 
 1. **"What makes this different from a content generation tool?"**
-   — Tool calling. GrowthRat autonomously decides to search documentation, check experiment status, and retrieve metrics. It reasons about what it finds, not just generates text.
+   — Tool calling. GrowthRat can search documentation, check experiment status,
+   retrieve or import metrics, and file readouts. It reasons about what it
+   finds, not just generates text.
 
 2. **"How do you ensure quality?"**
    — The quality model checks grounding, voice consistency, novelty, SEO, AEO, GEO, and technical usefulness. Slack or CMS approval becomes the human checkpoint after credentials are activated.

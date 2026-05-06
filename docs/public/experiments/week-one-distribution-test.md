@@ -48,6 +48,20 @@ This is not a narrow copy test. It is a format and distribution test.
 
 ## Instrumentation Plan
 
+The app now has a D1-backed experiment loop for this test:
+
+- `experiments` stores the hypothesis, audience, channel, status, and decision
+  rule.
+- `experiment_variants` stores the reference architecture, Test Store, and
+  Charts bridge hooks.
+- `experiment_assets` stores `/r/week-one-reference`,
+  `/r/week-one-test-store`, and `/r/week-one-charts` tracking links.
+- `experiment_events` stores tracking clicks, tracked page views, and manual
+  behavior events.
+- `experiment_metric_snapshots` stores manual metrics and RevenueCat chart
+  snapshots once `REVENUECAT_API_KEY` and `REVENUECAT_PROJECT_ID` exist.
+- `experiment_readouts` stores the final decision, learning, and next action.
+
 ### Public-surface metrics
 
 - visits to each flagship asset
@@ -88,11 +102,14 @@ The current package already improves the application in one important way: it co
 
 ## Next Step
 
-Once live metrics exist, convert this artifact into a measured experiment report with:
+Once public distribution channels are active, convert this artifact into a
+measured readout with:
 
 - baseline vs observed engagement
 - which asset earned the most follow-up use
 - which asset should be expanded, refreshed, or retired
+- whether RevenueCat monetization metrics moved for any linked demo or customer
+  funnel
 
 ## Bottom Line
 

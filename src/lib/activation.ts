@@ -55,6 +55,11 @@ function hasSecret(env: Env, key: (typeof requiredSecretKeys)[number]) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function hasConfigValue(env: Env, key: string) {
+  const value = (env as unknown as Partial<Record<string, string>>)[key];
+  return typeof value === "string" && value.trim().length > 0;
+}
+
 export async function getActivationSnapshot(
   env: Env,
 ): Promise<ActivationSnapshot> {
@@ -84,6 +89,13 @@ export async function getActivationSnapshot(
         runtime.source === "d1"
           ? "Operational tables are reachable."
           : "Falling back to static proof counts until D1 is reachable.",
+    },
+    {
+      key: "experiment_ops",
+      label: "Experiment operations",
+      status: runtime.source === "d1" && runtime.counts.experiments >= 1 ? "ready" : "gated",
+      detail:
+        "D1 stores experiments, variants, assets, tracking events, metric snapshots, and readouts.",
     },
     {
       key: "r2",
@@ -119,7 +131,8 @@ export async function getActivationSnapshot(
       key: "vectorize",
       label: "Vectorize",
       status: hasBinding(env, "DOC_INDEX") ? "ready" : "blocked",
-      detail: "RevenueCat docs and artifact retrieval index is provisioned.",
+      detail:
+        "Retrieval index is provisioned; RevenueCat docs ingestion is still required.",
     },
     {
       key: "ai_gateway",
@@ -132,7 +145,7 @@ export async function getActivationSnapshot(
       label: "AI Search",
       status: "gated",
       detail:
-        "Deferred because account provisioning failed; Vectorize is the active retrieval path.",
+        "Deferred because account provisioning failed; Vectorize is the planned retrieval path after docs ingestion.",
     },
   ];
 
@@ -158,9 +171,13 @@ export async function getActivationSnapshot(
     {
       key: "revenuecat_access",
       label: "RevenueCat private access",
-      status: hasSecret(env, "REVENUECAT_API_KEY") ? "gated" : "blocked",
+      status:
+        hasSecret(env, "REVENUECAT_API_KEY") &&
+        hasConfigValue(env, "REVENUECAT_PROJECT_ID")
+          ? "gated"
+          : "blocked",
       detail:
-        "Private Charts, Slack, CMS, GitHub, and social credentials remain post-hire activation dependencies.",
+        "RevenueCat chart snapshots require REVENUECAT_API_KEY and REVENUECAT_PROJECT_ID; private Slack, CMS, GitHub, and social credentials remain post-hire dependencies.",
     },
     {
       key: "approval_policy",

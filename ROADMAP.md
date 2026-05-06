@@ -22,13 +22,14 @@ old implementation choices.
 
 The repo now has one runnable runtime:
 
-- Astro 6 with Svelte 5 islands
+- Astro 6 with focused Svelte 5 interactive components
 - Cloudflare Workers through `@astrojs/cloudflare`
 - Cloudflare Agents plus Durable Objects
 - Cloudflare Workflows
 - D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 - custom Worker entrypoint in `src/worker.ts`
-- D1 migration and seed data in `migrations/0001_growthrat_core.sql`
+- D1 migrations and seed data in `migrations/0001_growthrat_core.sql` and
+  `migrations/0002_experiment_operations.sql`
 
 The old Next.js and Convex runtime has been deleted. Historical behavior lives
 only in the PRD, roadmap, public artifacts, and migration notes.
@@ -43,11 +44,14 @@ The current app has useful surfaces:
 - operator replay
 - panel console
 - operator dashboard
+- experiment operating surface
 - go-live and pipeline surfaces
 - deterministic Cloudflare API endpoints
-- Svelte chat and runtime-status islands
+- Svelte chat and runtime-status components
 - Cloudflare Agent and Workflow classes
 - protected manual weekly dry-run endpoint
+- experiment APIs for create, metric import, RevenueCat chart snapshot, readout,
+  public event capture, and tracking redirects
 
 The current app is still pre-production. It is not yet safe to treat as a fully
 autonomous public agent because production Worker deployment, secrets, live
@@ -70,12 +74,11 @@ Verified in the Cloudflare account on 2026-05-06:
 - The `growthrat` Worker and `growthrat-weekly-loop` Workflow are declared but
   must be deployed with Wrangler before they appear as live account resources.
 
-## Why Astro And Svelte Islands
+## Why Astro And Svelte
 
 GrowthRat is mostly public content plus a few interactive tools. Astro gives the
-public site fast HTML by default. Svelte islands keep chat, panel, dashboard,
-and operator controls interactive without making the whole application a
-client-heavy SPA.
+public site fast HTML by default. Svelte powers chat, panel, dashboard, and
+operator controls without making the whole application a client-heavy SPA.
 
 This is a better fit than carrying a full app framework when the public site,
 proof artifacts, and articles are the center of gravity.
@@ -124,8 +127,10 @@ Completed:
 - D1 migration maps the core operational tables.
 - remote D1 is migrated and seeded.
 - public routes resolve.
-- Svelte chat and runtime-status islands exist.
+- Svelte chat and runtime-status components exist.
 - read-only proof/runtime/activation APIs exist.
+- experiment register, tracking redirects, event capture, manual metric import,
+  RevenueCat chart snapshots, and readouts exist.
 - protected manual weekly dry-run API exists.
 - Wrangler dry-run recognizes the declared bindings.
 
@@ -134,7 +139,10 @@ Remaining:
 - set production Wrangler secrets
 - deploy the `growthrat` Worker
 - verify the `growthrat-weekly-loop` Workflow appears in Cloudflare
-- trigger one protected dry run and confirm D1/R2 receipts
+- trigger one protected dry run and confirm D1/R2 receipts, including the weekly
+  experiment tracking links
+- run one live public tracking-link click and confirm the event appears in D1
+- import one manual metric and file one readout from `/experiments`
 - configure Pipeline R2 sink if we want event lake persistence
 - activate RevenueCat, Slack, CMS, GitHub, and social connectors after hire
 
@@ -152,6 +160,8 @@ Required checks:
 - missing secrets and remote-only Cloudflare products are documented as
   pre-production warnings
 - protected dry run writes a weekly plan to R2 and a workflow row to D1
+- an experiment can be created, measured, and closed without direct database
+  edits
 
 Exit artifact:
 
@@ -204,6 +214,7 @@ Target flow:
 Exit criteria:
 
 - weekly planner runs in dry mode
+- experiment variants and tracking links are created by the weekly plan
 - content draft can be produced with source receipts
 - approval wait survives restart
 - report bundle is written to R2
