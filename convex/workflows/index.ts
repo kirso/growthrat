@@ -9,7 +9,7 @@
  */
 
 import { WorkflowManager } from "@convex-dev/workflow";
-import { components, internal } from "../_generated/api";
+import { api, components, internal } from "../_generated/api";
 import { v } from "convex/values";
 import { Id } from "../_generated/dataModel";
 
@@ -144,7 +144,7 @@ export const contentGenWorkflow = workflow.define({
         internal.slackCommandQueries.getAgentConfig, {}
       );
 
-      // Post to Slack for approval (auto-approves if no Slack token)
+      // Post to Slack for approval. Missing Slack blocks publication.
       const approval = await step.runAction(
         internal.slackApproval.postForApproval,
         {
@@ -157,27 +157,25 @@ export const contentGenWorkflow = workflow.define({
         { retry: true }
       );
 
-      if (approval.autoApproved) {
-        // No Slack configured — auto-publish immediately
-        const publishResult = await step.runAction(internal.actions.publishToCMS, { artifactId }, { retry: true });
-        await step.runAction(internal.actions.distributeViaTypefully, { artifactId, topic }, { retry: true });
-        const githubResult = await step.runAction(
-          internal.actions.distributeViaGitHub,
-          { artifactId: draft.artifactId as Id<"artifacts">, title: topic, slug: targetKeyword.replace(/\s+/g, "-"), content: draft.content },
-          { retry: true }
+      if (approval.approvalBlocked) {
+        await step.runMutation(
+          internal.mutations.updateArtifactStatus,
+          { id: artifactId, status: "pending_approval" }
         );
-        if (publishResult.published || githubResult.committed) {
-          await step.runMutation(internal.mutations.updateArtifactStatus, { id: artifactId, status: "published" });
-        }
-      } else if (config?.reviewMode === "draft_only") {
-        // Draft-only mode: wait for Slack reaction before publishing.
+      } else if (approval.autoApproved) {
+        await step.runMutation(
+          internal.mutations.updateArtifactStatus,
+          { id: artifactId, status: "pending_approval" }
+        );
+      } else if (config?.reviewMode === "draft_only" || config?.budgetPolicy?.allowAutoPublish !== true) {
+        // Draft-only or auto-publish-disabled mode: wait for Slack reaction before publishing.
         // The Slack reaction handler (slackApproval.handleReaction) triggers distribution.
         await step.runMutation(
           internal.mutations.updateArtifactStatus,
           { id: artifactId, status: "pending_approval" }
         );
       } else {
-        // Semi-auto or bounded autonomy — publish after Slack notification
+        // Explicit auto-publish mode after Slack notification.
         const publishResult = await step.runAction(internal.actions.publishToCMS, { artifactId }, { retry: true });
         await step.runAction(internal.actions.distributeViaTypefully, { artifactId, topic }, { retry: true });
         const githubResult = await step.runAction(
@@ -244,13 +242,27 @@ export const weeklyReportWorkflow = workflow.define({
 export const knowledgeIngestWorkflow = workflow.define({
   args: {},
   handler: async (step): Promise<{ totalChunks?: number; signalsFound?: number; engaged?: number }> => {
-    const result = await step.runAction(
-      internal.actions.ingestKnowledge,
+    // Step 1: Fetch all doc URLs from RC sitemap
+    const sitemap = await step.runAction(
+      api.ingest.fetchSitemap,
       {},
       { retry: true }
     );
 
-    return result;
+    // Step 2: Ingest pages in batches of 10
+    let totalStored = 0;
+    const batchSize = 10;
+    for (let i = 0; i < sitemap.urls.length; i += batchSize) {
+      const batch = sitemap.urls.slice(i, i + batchSize);
+      const result = await step.runAction(
+        api.ingest.ingestBatch,
+        { urls: batch },
+        { retry: true }
+      );
+      totalStored += result.totalStored;
+    }
+
+    return { totalChunks: totalStored, signalsFound: 0, engaged: 0 };
   },
 });
 

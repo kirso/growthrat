@@ -57,13 +57,14 @@ export default function ReadinessReviewPage() {
           test sandbox access without manual app store configuration.
         </p>
 
-        <h3>2. Charts is dashboard-only</h3>
+        <h3>2. Charts needs a clearer bridge to behavioral analytics</h3>
         <p>
-          Revenue analytics (MRR, churn, trial conversion) are only accessible
-          through the Charts dashboard. Agents need programmatic access to these
-          metrics for growth experiments, automated reporting, and feedback
-          loops. A Charts REST API would unlock an entire category of
-          agent-driven growth work.
+          Revenue analytics such as MRR, churn, and trial conversion are the
+          monetization truth for growth work. With Charts and Metrics API access,
+          agents can pull those metrics programmatically. The remaining gap is a
+          clear operator model for joining monetization metrics with behavioral
+          analytics such as paywall views, onboarding completion, and feature
+          exposure.
         </p>
 
         <h3>3. Webhook testing requires manual setup</h3>
@@ -80,8 +81,9 @@ export default function ReadinessReviewPage() {
             flow for programmatic app setup
           </li>
           <li>
-            <strong>Charts API</strong> &mdash; REST endpoints for key metrics
-            (MRR, churn rate, trial-to-paid, revenue by product)
+            <strong>Charts plus analytics guide</strong> &mdash; examples that
+            show how to combine RevenueCat monetization metrics with product
+            analytics without mixing incompatible signals
           </li>
           <li>
             <strong>Webhook sandbox</strong> &mdash; Test event endpoint that

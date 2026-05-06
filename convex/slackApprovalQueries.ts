@@ -4,12 +4,10 @@ import { v } from "convex/values";
 export const findBySlackTs = internalQuery({
   args: { slackThreadTs: v.string() },
   handler: async (ctx, { slackThreadTs }) => {
-    const results = await ctx.db
+    return await ctx.db
       .query("approvalLog")
-      .withIndex("by_artifact")
+      .withIndex("by_slack_thread", (q) => q.eq("slackThreadTs", slackThreadTs))
       .order("desc")
-      .take(100);
-
-    return results.filter((r) => r.slackThreadTs === slackThreadTs);
+      .collect();
   },
 });

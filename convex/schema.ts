@@ -179,5 +179,7 @@ export default defineSchema({
     by: v.string(), // "slack_reaction" | "quality_gates_auto" | "operator"
     reason: v.optional(v.string()),
     slackThreadTs: v.optional(v.string()),
-  }).index("by_artifact", ["artifactId"]),
+  })
+    .index("by_artifact", ["artifactId"])
+    .index("by_slack_thread", ["slackThreadTs"]),
 });

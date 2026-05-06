@@ -115,6 +115,11 @@ export default function ExperimentsPage() {
         Experiment Tracker
       </h1>
 
+      {/* Mode context */}
+      <div className="rounded-md bg-[var(--color-op-card-alt)] border border-[var(--color-op-border)] px-4 py-2.5 text-xs text-[var(--color-op-dim)]">
+        Data shown reflects the current operating mode. Portfolio samples are displayed until a proof cycle runs.
+      </div>
+
       {/* Active Experiment */}
       <section>
         <h2 className="text-xs font-medium text-[var(--color-op-dim)] uppercase tracking-wider mb-3">

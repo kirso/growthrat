@@ -43,15 +43,14 @@ export const postForApproval = internalAction({
     const channel = defaultChannel ?? "growthrat";
 
     if (!token) {
-      console.log("[slack] No SLACK_BOT_TOKEN — skipping approval post");
-      // Auto-approve when no Slack
+      console.log("[slack] No SLACK_BOT_TOKEN — approval required but Slack is unavailable");
       await ctx.runMutation(internal.approvalLog.log, {
         artifactId,
-        action: "auto_approved",
+        action: "approval_blocked",
         by: "system_no_slack",
-        reason: "No Slack bot token configured — auto-approved",
+        reason: "No Slack bot token configured; artifact remains pending approval",
       });
-      return { posted: false, autoApproved: true };
+      return { posted: false, autoApproved: false, approvalBlocked: true };
     }
 
     const { WebClient } = await import("@slack/web-api");

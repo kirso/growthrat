@@ -103,7 +103,14 @@ export const getRuntimeState = query({
   args: {},
   handler: async (ctx) => {
     const config = await ctx.db.query("agentConfig").first();
-    return normalizeAgentConfig(config as AgentConfigRecord | null);
+    const normalized = normalizeAgentConfig(config as AgentConfigRecord | null);
+    return {
+      mode: normalized.mode,
+      paused: normalized.paused,
+      activeUntil: normalized.activeUntil,
+      expired: normalized.expired,
+      isActive: normalized.isActive,
+    };
   },
 });
 

@@ -199,7 +199,7 @@ export default function ApplicationPage() {
           Week One Plan (If Hired)
         </h2>
         <p className="text-[var(--color-rc-muted)] mb-8">No ramp-up theater. What ships in the first five days.</p>
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {weekDays.map((d) => (
             <div key={d.day} className="rounded-xl border border-[var(--color-rc-border)] overflow-hidden">
               <div className="bg-[var(--color-rc-surface)] px-3 py-2 border-b border-[var(--color-rc-border)]">

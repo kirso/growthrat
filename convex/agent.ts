@@ -40,7 +40,7 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
 
 export const growthRatAgent = new Agent(components.agent, {
   name: "GrowthRat",
-  languageModel: anthropic.chat("claude-sonnet-4-20250514"),
+  languageModel: anthropic.chat(process.env.ANTHROPIC_GENERATION_MODEL ?? "claude-sonnet-4-20250514"),
   // textEmbeddingModel omitted — thread search uses text-only.
   // Custom RAG on sources table uses Voyage AI via fetch in contextHandler.
   instructions: SYSTEM_PROMPT,

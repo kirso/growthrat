@@ -1,41 +1,162 @@
 # Local Development
 
-## Recommended topology
+This runbook is for the current pre-production repository.
 
-Use a hybrid local stack:
+## Current Runtime
 
-- run Postgres and Temporal in Docker
-- run the FastAPI API on the host
-- run the Temporal worker on the host
-- run the operator web app on the host with bun
+The app currently runs on:
 
-This keeps iteration fast while still testing the important service boundaries.
+- Next.js 16 App Router
+- React 19
+- Convex for database, workflows, crons, HTTP actions, and generated API types
+- Vercel AI SDK for model calls
+- Tailwind CSS v4
+
+The older Postgres, FastAPI, Temporal, Docker Compose, Render, Inngest, and
+AgentKit plans are not active. Those planning documents have been removed.
+
+The target runtime is Cloudflare-native, but the migration is not complete.
+Until the migration lands, Convex remains the local development backend.
+
+## Prerequisites
+
+- Bun 1.3+
+- Convex account or project access
+- `ANTHROPIC_API_KEY`
+- Optional provider keys for activated surfaces:
+  - `OPENAI_API_KEY`
+  - `VOYAGE_API_KEY`
+  - `DATAFORSEO_LOGIN`
+  - `DATAFORSEO_PASSWORD`
+  - `SLACK_BOT_TOKEN`
+  - `SLACK_SIGNING_SECRET`
+  - `GITHUB_TOKEN`
+  - `TYPEFULLY_API_KEY`
+  - `TYPEFULLY_SOCIAL_SET_ID`
+  - `REVENUECAT_API_KEY`
 
 ## Bootstrap
 
-1. Copy envs: `cp .env.example .env`
-2. Start infra: `docker compose up -d postgres temporal temporal-ui`
-3. Install Python deps: `uv sync`
-4. Install operator-web deps: `cd apps/operator-web && bun install`
+```bash
+bun install
+cp .env.example .env.local
+```
 
-## Run services
+Fill the minimum environment:
 
-1. API: `uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000`
-2. Worker: `uv run python -m src.workers.temporal_worker`
-3. Operator UI: `cd apps/operator-web && bun run dev`
+```bash
+NEXT_PUBLIC_CONVEX_URL=...
+NEXT_PUBLIC_CONVEX_SITE_URL=...
+SITE_URL=http://localhost:3000
+BETTER_AUTH_SECRET=...
+GROWTHCAT_INTERNAL_SECRET=...
+GROWTHCAT_PANEL_TOKEN=...
+RC_ADMIN_EMAILS=you@example.com
+```
 
-## Local smoke checks
+`GROWTHCAT_INTERNAL_SECRET` can fall back to `BETTER_AUTH_SECRET` in local
+development, but production should use a separate value.
 
-1. API health: `curl http://localhost:8000/healthz`
-2. API config summary: `curl http://localhost:8000/internal/config-summary`
-3. Operator UI health: `curl http://localhost:3000/api/health`
-4. Temporal UI: open `http://localhost:8088`
-5. Operator screens: open `/`, `/integrations`, `/assets`, `/scope-review`, `/audits`, `/reports`, `/panel`, `/founder`, `/settings/kill-switch`
+## Run Locally
 
-## What this proves
+Terminal 1:
 
-- config loading works locally
-- API boots cleanly
-- worker can connect to local Temporal
-- operator UI routes render locally
-- service boundaries match the plan and blueprint before hosted deployment
+```bash
+bunx convex dev
+```
+
+Terminal 2:
+
+```bash
+bun run dev
+```
+
+Or:
+
+```bash
+bun run dev:all
+```
+
+Open `http://localhost:3000`.
+
+## Smoke Checks
+
+| Check | URL or command |
+| --- | --- |
+| Landing | `http://localhost:3000/` |
+| Application letter | `http://localhost:3000/application` |
+| Proof pack | `http://localhost:3000/proof-pack` |
+| Articles | `http://localhost:3000/articles` |
+| Readiness review | `http://localhost:3000/readiness-review` |
+| Interview truth | `http://localhost:3000/interview-truth` |
+| Sign in | `http://localhost:3000/sign-in` |
+| Onboarding | `http://localhost:3000/onboarding` |
+| Dashboard | `http://localhost:3000/dashboard` |
+| Panel | `http://localhost:3000/panel` |
+| Runtime API | `curl http://localhost:3000/api/runtime` |
+
+## Operating Modes
+
+Modes live in the Convex `agentConfig` table.
+
+| Mode | Meaning |
+| --- | --- |
+| `dormant` | Chat closed, crons skip, zero intended token burn |
+| `interview_proof` | Public chat and panel only |
+| `rc_live` | Full weekly operation and side effects |
+
+Before `rc_live`, every public action, mutation, route, and workflow starter
+must be fail-closed against:
+
+- auth
+- mode
+- rate limit
+- budget
+- connector state
+- approval policy
+
+Do not treat a green build as proof of this. Trace the runtime path.
+
+## Verification
+
+```bash
+bun run typecheck
+bun run test
+bun run build
+```
+
+`bun run lint` runs ESLint directly. The old `next lint` command is not used.
+
+## Cloudflare Migration Notes
+
+Cloudflare is the target platform because it can own the web shell, agent
+runtime, state, durable execution, object artifacts, queues, analytics firehose,
+secrets, and model gateway inside one deployment model.
+
+Current product mapping:
+
+| Need | Cloudflare product |
+| --- | --- |
+| Public app and SSR | Astro on Workers |
+| Interactive UI | Svelte islands |
+| Stateful agent sessions | Agents plus Durable Objects |
+| Durable weekly runs | Workflows |
+| Relational state | D1 |
+| Hot per-agent state | Durable Object SQLite |
+| Proof artifacts and snapshots | R2 |
+| Async jobs | Queues |
+| Event firehose | Pipelines to R2 |
+| Secret handling | Secrets Store |
+| Model routing and observability | AI Gateway |
+| Docs and artifact retrieval | AI Search or Vectorize |
+| Browser or code validation | Browser Rendering, Sandbox, or Containers |
+
+Tooling boundary:
+
+- Use `cf` for broad account, zone, DNS, API, and context discovery.
+- Use `wrangler` for Workers project work: dev, deploy, D1, R2, Workflows,
+  Queues, Pipelines, Vectorize, AI Search, and bindings.
+
+Do not migrate everything in one commit. The first Cloudflare slice should prove
+one public page, one Svelte island, one read-only endpoint, and the binding
+shape for D1/R2/Workflows/DO.

@@ -6,7 +6,6 @@ import { ConvexAvailableContext } from "@/app/ConvexClientProvider";
 
 // ---- Dynamic API import ----
 // The generated API module only exists after `npx convex dev`.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let convexApi: Record<string, any> | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -42,7 +41,6 @@ export function useConvexAvailable(): boolean {
  * is constant for the lifetime of the app. The conditional hook call below
  * is safe because the branch never changes between renders.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useConvexQuery<T = any>(
   queryRef: any | null | undefined,
   args?: Record<string, unknown>

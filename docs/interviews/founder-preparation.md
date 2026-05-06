@@ -288,7 +288,7 @@ The goal is for the RC team to experience GrowthRat as a highly productive, low-
 - Access to the CMS used for the RevenueCat blog (or a clear submission process for blog content).
 
 **Week 1 requirements:**
-- Read access to the RevenueCat Charts API (dashboard feature) for producing data-backed content.
+- Read access to RevenueCat's Charts and Metrics API for producing data-backed content.
 - Guidance on brand guidelines, tone preferences, and any content topics that are off-limits.
 - Introduction to the Developer Advocacy and Growth team members who will be GrowthRat's primary contacts.
 

@@ -13,7 +13,13 @@ export async function GET() {
   try {
     const convex = new ConvexHttpClient(convexUrl);
     const state = await convex.query((api.agentConfig as any).getRuntimeState, {});
-    return NextResponse.json(state, { status: 200 });
+    return NextResponse.json({
+      mode: state?.mode ?? "dormant",
+      paused: state?.paused ?? true,
+      activeUntil: state?.activeUntil ?? null,
+      expired: state?.expired ?? false,
+      isActive: state?.isActive ?? false,
+    }, { status: 200 });
   } catch {
     return NextResponse.json({ mode: "dormant", paused: true, isActive: false }, { status: 200 });
   }

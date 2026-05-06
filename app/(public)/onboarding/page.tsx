@@ -6,7 +6,6 @@ import { useMutation } from "convex/react";
 import { ConvexAvailableContext } from "@/app/ConvexClientProvider";
 
 // ---- Dynamic API import ----
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let convexApi: Record<string, any> | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -221,8 +220,8 @@ export default function OnboardingPage() {
 
   const convexAvailable = useContext(ConvexAvailableContext);
   // The mutation ref is stable (env-based), so this conditional hook is safe.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const saveConfig = convexAvailable
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     ? useMutation(convexApi?.agentConfig?.save ?? ("__skip__" as any))
     : null;
 

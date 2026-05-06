@@ -4,7 +4,6 @@ import { useContext } from "react";
 import { useQuery } from "convex/react";
 import { ConvexAvailableContext } from "@/app/ConvexClientProvider";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let convexApi: Record<string, any> | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports

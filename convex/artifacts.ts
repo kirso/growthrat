@@ -114,7 +114,7 @@ export const _searchByContent = query({
     artifactType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let searchQuery = ctx.db
+    const searchQuery = ctx.db
       .query("artifacts")
       .withSearchIndex("search_content", (q) => {
         let sq = q.search("content", args.query);

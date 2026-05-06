@@ -53,8 +53,10 @@ export const fetchKeywords = internalAction({
     if (!login || !password) {
       return seeds.map((kw) => ({
         keyword: kw,
-        difficulty: Math.floor(Math.random() * 30) + 5,
-        volume: Math.floor(Math.random() * 400) + 100,
+        difficulty: 100,
+        volume: 0,
+        unavailable: true,
+        reason: "DataForSEO credentials not configured",
       }));
     }
 
@@ -88,13 +90,14 @@ export const fetchSerpBaseline = internalAction({
     const { login, password } = await getDataForSeoConnectorConfig(ctx);
 
     if (!login || !password) {
-      // Return sample data when no credentials
       return {
         keyword,
         serpPosition: null as number | null,
-        difficulty: Math.floor(Math.random() * 30) + 5,
-        volume: Math.floor(Math.random() * 400) + 100,
+        difficulty: null as number | null,
+        volume: null as number | null,
         topResults: [] as string[],
+        unavailable: true,
+        reason: "DataForSEO credentials not configured",
       };
     }
 
@@ -118,8 +121,10 @@ export const fetchSerpBaseline = internalAction({
     const serpData = await serpRes.json();
     const items = serpData.tasks?.[0]?.result?.[0]?.items ?? [];
 
-    // Find our domain in results
-    const ourDomain = "ai-growth-agent";
+    // Find our domain in results. Override via SITE_URL when running locally
+    // or against a non-production deployment.
+    const siteUrl = process.env.SITE_URL ?? "https://growthcat-psi.vercel.app";
+    const ourDomain = siteUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     const ourResult = items.find((item: any) =>
       (item.url ?? "").includes(ourDomain)
     );
@@ -455,7 +460,7 @@ async function publishArticleMarkdownToGitHub(args: {
 > {
   const token = args.token ?? process.env.GITHUB_TOKEN;
   const owner = args.owner ?? process.env.GITHUB_OWNER ?? "kirso";
-  const repo = args.repo ?? process.env.GITHUB_CONTENT_REPO ?? process.env.GITHUB_REPO ?? "growthcat";
+  const repo = args.repo ?? process.env.GITHUB_CONTENT_REPO ?? process.env.GITHUB_REPO ?? "growthrat";
 
   if (!token) {
     return { published: false, state: "built", method: "github-commit", reason: "no GitHub token" };
@@ -602,7 +607,7 @@ export const distributeViaTypefully = internalAction({
 
     // Get the artifact for content
     const artifact: { slug: string } | null = await ctx.runQuery(internal.agentQueries.getArtifactById, { id: artifactId });
-    const siteUrl = "https://growthrat.vercel.app";
+    const siteUrl = process.env.SITE_URL ?? "https://growthcat-psi.vercel.app";
     const articleUrl: string = artifact ? `${siteUrl}/articles/${artifact.slug}` : siteUrl;
 
     let xText = `GrowthRat: ${topic} ${articleUrl}`;
@@ -708,14 +713,21 @@ export const measureExperiment = internalAction({
       return;
     }
 
-    // Fetch the experiment record to get the real baseline
+    // Fetch the experiment record to get the real baseline.
+    // Parse once and reuse — the previous code re-parsed inside the
+    // completeExperiment payload and would throw if the JSON later changed shape.
     const experiment = await ctx.runQuery(internal.agentQueries.getExperimentByKey, { experimentKey });
     let baselinePosition: number | string = "not ranking";
+    let baselineVolume: number | null = null;
     if (experiment?.baselineMetric) {
       try {
-        const baseline = JSON.parse(experiment.baselineMetric);
+        const baseline = JSON.parse(experiment.baselineMetric) as {
+          serpPosition?: number | null;
+          volume?: number | null;
+        };
         baselinePosition = baseline.serpPosition ?? "not ranking";
-      } catch { /* invalid JSON — use default */ }
+        baselineVolume = typeof baseline.volume === "number" ? baseline.volume : null;
+      } catch { /* invalid JSON — keep defaults */ }
     }
 
     // Fetch current SERP data
@@ -734,7 +746,7 @@ export const measureExperiment = internalAction({
         baselinePosition,
         measurementPosition,
         delta,
-        baselineVolume: experiment?.baselineMetric ? JSON.parse(experiment.baselineMetric).volume : null,
+        baselineVolume,
         measurementVolume: measurement.volume,
         contentSlug,
         measuredAt: Date.now(),
@@ -920,30 +932,40 @@ export const engageCommunity = internalAction({
     // Post to external platform (GitHub comments)
     if (channel === "github" && targetUrl.includes("github.com")) {
       const { token } = await getGitHubConnectorConfig(ctx);
-      if (token && reply.text.length > 20) {
-        const match = targetUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
-        if (match) {
-          const [, owner, repo, issueNum] = match;
-          try {
-            await fetch(
-              `https://api.github.com/repos/${owner}/${repo}/issues/${issueNum}/comments`,
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  Accept: "application/vnd.github+json",
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  body: reply.text + "\n\n---\n_Reply by [GrowthRat](https://growthrat.vercel.app) — autonomous developer advocate agent._",
-                }),
-              }
-            );
-            return { replied: true, state: "activated" };
-          } catch {
-            console.log("[community] GitHub comment posting failed for:", targetUrl);
+      if (!token) {
+        return { replied: false, state: "built", reason: "no GitHub token" };
+      }
+      if (reply.text.length <= 20) {
+        return { replied: false, state: "built", reason: "reply too short to post" };
+      }
+      const match = targetUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
+      if (!match) {
+        return { replied: false, state: "built", reason: "could not parse GitHub issue url" };
+      }
+      const [, owner, repo, issueNum] = match;
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/issues/${issueNum}/comments`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/vnd.github+json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              body: reply.text + `\n\n---\n_Reply by [GrowthRat](${process.env.SITE_URL ?? "https://growthcat-psi.vercel.app"}) — autonomous developer advocate agent._`,
+            }),
           }
+        );
+        if (!res.ok) {
+          console.log("[community] GitHub comment posting failed for:", targetUrl, res.status);
+          return { replied: false, state: "built", reason: `GitHub ${res.status}` };
         }
+        return { replied: true, state: "activated" };
+      } catch (err) {
+        console.log("[community] GitHub comment posting failed for:", targetUrl, err);
+        return { replied: false, state: "built", reason: "GitHub fetch failed" };
       }
     }
 
@@ -952,11 +974,11 @@ export const engageCommunity = internalAction({
 
       const tweetMatch = targetUrl.match(/(?:twitter\.com|x\.com)\/(?:i\/status\/|[^/]+\/status\/)(\d+)/);
       if (!tweetMatch) {
-        return { replied: true, state: "built", reason: "could not parse tweet id" };
+        return { replied: false, state: "built", reason: "could not parse tweet id" };
       }
 
       if (!creds.apiKey || !creds.apiKeySecret || !creds.accessToken || !creds.accessTokenSecret) {
-        return { replied: true, state: "built", reason: "no X credentials" };
+        return { replied: false, state: "built", reason: "no X credentials" };
       }
 
       try {
@@ -970,11 +992,13 @@ export const engageCommunity = internalAction({
         return { replied: true, state: "activated" };
       } catch (err) {
         console.log("[community] X reply failed:", err);
-        return { replied: true, state: "built", reason: "X reply failed" };
+        return { replied: false, state: "built", reason: "X reply failed" };
       }
     }
 
-    return { replied: true, state: channel === "github" ? "activated" : "built" };
+    // Channel had no posting branch (e.g., a future channel) — recorded the
+    // interaction in Convex but didn't post anywhere external.
+    return { replied: false, state: "built", reason: "no posting branch for channel" };
   },
 });
 
@@ -1135,7 +1159,7 @@ export const testIngestStep = internalAction({
       results.push("1. Fetch OK: " + html.length + " chars");
       
       // Step 2: Simple text extraction (avoid regex memory blow-up)
-      let text = html
+      const text = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")
         .replace(/<[^>]+>/g, " ")

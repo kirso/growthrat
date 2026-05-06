@@ -77,22 +77,27 @@ export function Chat() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Listen for suggested-prompt clicks from landing page
-  useEffect(() => {
-    const handleSendFromPage = (e: Event) => {
-      const prompt = (e as CustomEvent<string>).detail;
-      if (prompt) handleSend(prompt);
-    };
-    window.addEventListener("growthRatSendMessage", handleSendFromPage);
-    return () =>
-      window.removeEventListener("growthRatSendMessage", handleSendFromPage);
-  });
-
   const handleSend = (text: string) => {
     if (!text.trim() || isLoading || !chatEnabled) return;
     sendMessage({ text: text.trim() }, { body: { threadId } });
     setInputValue("");
   };
+
+  // Listen for suggested-prompt clicks from landing page.
+  // Re-bind whenever the inputs to handleSend change so the listener never
+  // captures stale state (the previous version had no deps array, which
+  // re-attached on every render — wasteful and easy to overlook).
+  useEffect(() => {
+    const handleSendFromPage = (e: Event) => {
+      const prompt = (e as CustomEvent<string>).detail;
+      if (!prompt || isLoading || !chatEnabled) return;
+      sendMessage({ text: prompt.trim() }, { body: { threadId } });
+      setInputValue("");
+    };
+    window.addEventListener("growthRatSendMessage", handleSendFromPage);
+    return () =>
+      window.removeEventListener("growthRatSendMessage", handleSendFromPage);
+  }, [isLoading, chatEnabled, sendMessage, threadId]);
 
   if (!expanded) {
     return (

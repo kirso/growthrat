@@ -30,7 +30,7 @@ export default function PublicLayout({
               GrowthRat
             </span>
           </Link>
-          <div className="hidden sm:flex items-center gap-8">
+          <div className="hidden sm:flex items-center gap-7">
             <Link
               href="/application"
               className="text-sm font-medium text-[var(--color-gc-primary)] hover:text-[var(--color-gc-primary-hover)] transition-colors no-underline"
@@ -44,22 +44,22 @@ export default function PublicLayout({
               Proof Pack
             </Link>
             <Link
-              href="/readiness-review"
+              href="/articles"
               className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"
             >
-              Readiness Review
+              Articles
+            </Link>
+            <Link
+              href="/interview-truth"
+              className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"
+            >
+              Interview Truth
             </Link>
             <Link
               href="/operator-replay"
               className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"
             >
               How It Works
-            </Link>
-            <Link
-              href="/onboarding"
-              className="text-sm font-medium text-[var(--color-rc-muted)] hover:text-[var(--color-rc-dark)] transition-colors no-underline"
-            >
-              Onboarding
             </Link>
             <a
               href="https://github.com/kirso/growthrat"
@@ -123,6 +123,14 @@ export default function PublicLayout({
                   </li>
                   <li>
                     <Link
+                      href="/interview-truth"
+                      className="text-[var(--color-rc-muted)] hover:text-[var(--color-gc-primary)] transition-colors no-underline"
+                    >
+                      Interview Truth
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
                       href="/readiness-review"
                       className="text-[var(--color-rc-muted)] hover:text-[var(--color-gc-primary)] transition-colors no-underline"
                     >
@@ -150,6 +158,14 @@ export default function PublicLayout({
                       className="text-[var(--color-rc-muted)] hover:text-[var(--color-gc-primary)] transition-colors no-underline"
                     >
                       All Articles
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/onboarding"
+                      className="text-[var(--color-rc-muted)] hover:text-[var(--color-gc-primary)] transition-colors no-underline"
+                    >
+                      Onboarding (admin)
                     </Link>
                   </li>
                 </ul>

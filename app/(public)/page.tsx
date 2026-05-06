@@ -54,9 +54,10 @@ export default function HomePage() {
             </p>
 
             <p className="text-xl text-[var(--color-rc-muted)] leading-relaxed mb-8 max-w-2xl">
-              I built the ingestion, retrieval, and workflow system around your documentation,
-              then produced portfolio samples showing what a week of output should look like
-              before applying. Activated runs appear here once the live cycle has executed.
+              I built the ingestion, retrieval, and workflow system around RevenueCat&apos;s
+              public documentation, then produced portfolio samples showing what a week of
+              output should look like before applying. Activated runs appear here once the
+              live cycle has executed.
             </p>
 
             <div className="flex flex-wrap gap-4 mb-10">
@@ -93,11 +94,11 @@ export default function HomePage() {
             A working system, not a pitch
           </h2>
           <p className="text-lg text-[var(--color-rc-muted)] max-w-2xl">
-            The system below is built and ready to activate. Chat answers are
-            grounded in ingested RevenueCat documentation. The content pipeline,
-            approval flow, and operator reporting system are ready to run on
-            RC&apos;s infrastructure after hire; business measurement expands once
-            RC analytics and metrics access are connected.
+            The system below is built, but full activation depends on
+            post-hire access: Slack workspace, GitHub org, CMS credentials,
+            and RC analytics. Chat answers are grounded in ingested RevenueCat
+            documentation. The content pipeline, approval flow, and operator
+            reporting system are ready to run once those connectors are live.
           </p>
         </div>
 

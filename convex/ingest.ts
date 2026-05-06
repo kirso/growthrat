@@ -116,7 +116,7 @@ export const ingestPage = action({
 
     // Step 6: Upsert each chunk
     let stored = 0;
-    let skipped = 0;
+    const skipped = 0;
     for (let i = 0; i < chunks.length; i++) {
       const result = await ctx.runMutation(internal.sources.upsertWithEmbedding, {
         key: chunkKeys[i],

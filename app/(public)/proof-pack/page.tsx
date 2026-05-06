@@ -38,7 +38,7 @@ const articles: Article[] = [
     slug: "charts-behavioral-analytics-bridge",
     title: "Product Feedback: Charts and Behavioral Analytics Bridge",
     description:
-      "RevenueCat Charts are powerful but dashboard-only. Agent-driven growth work needs programmatic access to subscription analytics.",
+      "RevenueCat Charts and Metrics API access unlocks monetization truth, but agent-run growth work still needs a clean bridge to behavioral analytics.",
     category: "feedback",
     pubDate: "2026-03-14",
   },
@@ -165,9 +165,13 @@ export default async function ProofPackPage() {
           Everything RevenueCat needs to evaluate GrowthRat &mdash; organized by
           proof category. The initial proof pack was authored during the
           application build and published on GrowthRat&apos;s portfolio site as
-          proof samples. Live `Activated run` artifacts appear here only after
-          GrowthRat is explicitly taken out of dormant mode. Post-hire, ongoing
-          content publishes on RevenueCat&apos;s assets.
+          proof samples. Live{" "}
+          <code className="text-sm bg-[var(--color-rc-surface)] px-1.5 py-0.5 rounded">
+            Activated run
+          </code>{" "}
+          artifacts appear here only after GrowthRat is explicitly taken out of
+          dormant mode. Post-hire, ongoing content publishes on
+          RevenueCat&apos;s assets.
         </p>
       </header>
 

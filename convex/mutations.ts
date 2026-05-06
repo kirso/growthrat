@@ -14,7 +14,7 @@ import { isRuntimeActive } from "./agentConfig";
 
 export const scorePlan = internalMutation({
   args: { keywords: v.any(), weekNumber: v.number(), experimentHistory: v.optional(v.any()), lastWeekMetrics: v.optional(v.any()) },
-  handler: async (ctx, { keywords, weekNumber, experimentHistory }) => {
+  handler: async (ctx, { keywords, experimentHistory }) => {
     // Build a set of keywords that had positive experiment results (learning loop)
     const expHistory = (experimentHistory ?? []) as Array<{ results?: { delta?: number }; title?: string }>;
     const boostedKeywords = new Set<string>();
@@ -282,8 +282,8 @@ export const startWeeklyPlan = internalMutation({
   args: {},
   handler: async (ctx) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Weekly plan skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Weekly plan skipped — requires rc_live mode");
       return;
     }
     const weekNumber = Math.ceil(
@@ -297,8 +297,8 @@ export const startWeeklyReport = internalMutation({
   args: {},
   handler: async (ctx) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Weekly report skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Weekly report skipped — requires rc_live mode");
       return;
     }
     const weekNumber = Math.ceil(
@@ -312,8 +312,8 @@ export const startCommunityMonitor = internalMutation({
   args: {},
   handler: async (ctx) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Community monitor skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Community monitor skipped — requires rc_live mode");
       return;
     }
     await workflow.start(ctx, internal.workflows.index.communityMonitorWorkflow, {});
@@ -324,8 +324,8 @@ export const startKnowledgeIngest = internalMutation({
   args: {},
   handler: async (ctx) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Knowledge ingest skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Knowledge ingest skipped — requires rc_live mode");
       return;
     }
     await workflow.start(ctx, internal.workflows.index.knowledgeIngestWorkflow, {});
@@ -336,8 +336,8 @@ export const startContentGen = internalMutation({
   args: { topic: v.string(), targetKeyword: v.string(), artifactType: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Content generation skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Content generation skipped — requires rc_live mode");
       return;
     }
     await workflow.start(ctx, internal.workflows.index.contentGenWorkflow, args);
@@ -348,8 +348,8 @@ export const startTaskExecution = internalMutation({
   args: { taskPrompt: v.string(), deadline: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Task execution skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Task execution skipped — requires rc_live mode");
       return;
     }
     await workflow.start(ctx, internal.workflows.taskExecution.executeTask, args);
@@ -365,8 +365,8 @@ export const startExperimentRunner = internalMutation({
   },
   handler: async (ctx, args) => {
     const config = await ctx.db.query("agentConfig").first();
-    if (!isRuntimeActive(config as any)) {
-      console.log("[mode-gate] Experiment runner skipped — agent not active");
+    if (config?.mode !== "rc_live" || !isRuntimeActive(config as any)) {
+      console.log("[mode-gate] Experiment runner skipped — requires rc_live mode");
       return;
     }
     await workflow.start(ctx, internal.workflows.experimentRunner.runExperiment, args);

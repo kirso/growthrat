@@ -32,7 +32,10 @@ function signEnvelope(envelope: unknown, secret: string): string {
 }
 
 function getInternalSecret(): string | null {
-  return process.env.GROWTHCAT_INTERNAL_SECRET ?? null;
+  return process.env.GROWTHCAT_INTERNAL_SECRET ??
+    process.env.BETTER_AUTH_SECRET ??
+    process.env.AUTH_SECRET ??
+    null;
 }
 
 export async function GET() {

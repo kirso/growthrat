@@ -3,11 +3,11 @@
  * Messages are grouped by threadId (stored in client localStorage).
  */
 
-import { query, mutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 /** Get all messages for a thread, ordered by creation time. */
-export const getThread = query({
+export const getThread = internalQuery({
   args: { threadId: v.string() },
   handler: async (ctx, { threadId }) => {
     return await ctx.db
@@ -18,7 +18,7 @@ export const getThread = query({
 });
 
 /** Save a message (user or assistant) to a thread. */
-export const saveMessage = mutation({
+export const saveMessage = internalMutation({
   args: {
     threadId: v.string(),
     role: v.string(),

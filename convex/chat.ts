@@ -8,8 +8,10 @@
 
 import { action, ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 import { growthRatAgent } from "./agent";
 import { fetchKnowledgeContext } from "./knowledge";
+import { requireInternalServerToken, requireRcAdmin } from "./authz";
 
 /**
  * Create a new conversation thread.
@@ -17,6 +19,7 @@ import { fetchKnowledgeContext } from "./knowledge";
 export const createThread = action({
   args: { userId: v.optional(v.string()) },
   handler: async (ctx, { userId }) => {
+    await requireRcAdmin(ctx);
     const { threadId } = await growthRatAgent.createThread(ctx, {
       userId,
     });
@@ -31,9 +34,16 @@ export const createThread = action({
 export const searchKnowledge = action({
   args: {
     query: v.string(),
+    serverToken: v.string(),
   },
-  handler: async (ctx, { query }) => {
-    const { context, sources } = await fetchRAGContextWithSources(ctx, query);
+  handler: async (ctx, { query, serverToken }) => {
+    requireInternalServerToken(serverToken);
+    const runtime = await ctx.runQuery(api.agentConfig.getRuntimeState, {});
+    if (!runtime.isActive) {
+      return { context: "", sources: [] };
+    }
+    const safeQuery = query.slice(0, 2_000);
+    const { context, sources } = await fetchRAGContextWithSources(ctx, safeQuery);
     return { context: context ?? "", sources };
   },
 });
@@ -49,6 +59,7 @@ export const chat = action({
     threadId: v.optional(v.string()),
   },
   handler: async (ctx, { prompt, threadId }) => {
+    await requireRcAdmin(ctx);
     // Fetch RAG context from our sources table
     const ragContext = await fetchRAGContext(ctx, prompt);
     const enrichedPrompt = ragContext
@@ -76,6 +87,7 @@ export const panelChat = action({
     threadId: v.optional(v.string()),
   },
   handler: async (ctx, { prompt, threadId }) => {
+    await requireRcAdmin(ctx);
     // Fetch RAG context with source metadata
     const { context, sources } = await fetchRAGContextWithSources(ctx, prompt);
     const enrichedPrompt = context

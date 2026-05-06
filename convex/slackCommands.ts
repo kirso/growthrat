@@ -19,6 +19,23 @@ import { internalAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { WebClient } from "@slack/web-api";
 import { getSlackConnectorConfig } from "./runtimeConnectors";
+import { runTextTask } from "../lib/ai/runtime";
+
+async function logUsageEvent(ctx: any, event: {
+  feature: string;
+  workflowType?: string;
+  provider: string;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedUsd: number;
+  latencyMs?: number;
+  success: boolean;
+  errorCode?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  await ctx.runMutation(internal.usageEvents.recordInternal, event);
+}
 
 export const handleCommand = internalAction({
   args: {
@@ -45,8 +62,8 @@ export const handleCommand = internalAction({
 
     // ── plan ──
     if (cmd === "plan" || cmd === "run plan" || cmd.startsWith("plan")) {
-      if (!runtime.isActive) {
-        await reply("🐭 I’m dormant right now. Interview-proof or RC-live mode must be enabled before I can run planning.");
+      if (runtime.mode !== "rc_live" || !runtime.isActive) {
+        await reply("🐭 Planning requires rc_live mode. Current mode: " + runtime.mode);
         return;
       }
       await reply("🐭 Starting weekly planning...");
@@ -56,8 +73,8 @@ export const handleCommand = internalAction({
 
     // ── write about X ──
     if (cmd.startsWith("write about ") || cmd.startsWith("write ")) {
-      if (!runtime.isActive) {
-        await reply("🐭 I’m dormant right now. Enable interview-proof or RC-live mode before I can generate content.");
+      if (runtime.mode !== "rc_live" || !runtime.isActive) {
+        await reply("🐭 Content generation requires rc_live mode. Current mode: " + runtime.mode);
         return;
       }
       const topic = cmd.replace(/^write (about )?/, "").trim();
@@ -88,8 +105,8 @@ export const handleCommand = internalAction({
 
     // ── report ──
     if (cmd === "report" || cmd === "weekly report") {
-      if (!runtime.isActive) {
-        await reply("🐭 I’m dormant right now. Enable interview-proof or RC-live mode before I can generate reports.");
+      if (runtime.mode !== "rc_live" || !runtime.isActive) {
+        await reply("🐭 Report generation requires rc_live mode. Current mode: " + runtime.mode);
         return;
       }
       await reply("🐭 Generating weekly report...");
@@ -149,12 +166,25 @@ export const handleCommand = internalAction({
         return;
       }
 
-      const { generateText } = await import("ai");
-      const { anthropic } = await import("@ai-sdk/anthropic");
+      // RAG: search knowledge base for relevant context
+      let ragContext = "";
+      try {
+        const knowledge = await ctx.runAction(internal.actions.searchKnowledgeForContent, { query: command });
+        if (knowledge) ragContext = knowledge;
+      } catch {
+        // Knowledge base unavailable — answer without RAG
+      }
 
-      const result = await generateText({
-        model: anthropic("claude-sonnet-4-20250514"),
-        system: "You are GrowthRat, an autonomous developer advocacy agent for RevenueCat. Answer concisely in Slack format. Use *bold* for emphasis. Be helpful and specific.",
+      const system = ragContext
+        ? `You are GrowthRat, an autonomous developer advocacy agent for RevenueCat. Answer concisely in Slack format. Use *bold* for emphasis. Be helpful and specific.\n\n## RETRIEVED DOCUMENTATION\n\n${ragContext}\n\nGround your answer in the above documentation.`
+        : "You are GrowthRat, an autonomous developer advocacy agent for RevenueCat. Answer concisely in Slack format. Use *bold* for emphasis. Be helpful and specific.";
+
+      const result = await runTextTask({
+        feature: "slack_chat",
+        workflowType: "slack",
+        taskClass: "fast",
+        logUsage: (event) => logUsageEvent(ctx, event),
+        system,
         prompt: command,
         maxOutputTokens: 500,
         temperature: 0.4,

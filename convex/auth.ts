@@ -19,12 +19,14 @@ export function getSiteUrl() {
 }
 
 function getAuthSecret() {
-  return (
+  const secret =
     process.env.BETTER_AUTH_SECRET ||
     process.env.AUTH_SECRET ||
-    process.env.GROWTHCAT_INTERNAL_SECRET ||
-    "growthrat-proof-secret"
-  );
+    process.env.GROWTHCAT_INTERNAL_SECRET;
+  if (!secret) {
+    throw new Error("BETTER_AUTH_SECRET must be configured. No fallback secret is allowed in production.");
+  }
+  return secret;
 }
 
 export const authComponent = createClient<DataModel>(components.betterAuth);

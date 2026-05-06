@@ -152,7 +152,7 @@ export function chunkText(
 }
 
 /**
- * Generate an embedding using Voyage AI (voyage-3-lite, 1024 dimensions).
+ * Generate an embedding using Voyage AI (voyage-3-lite, 512 dimensions).
  * Falls back to OpenAI text-embedding-3-small if Voyage key not set.
  * Voyage free tier: 200M tokens.
  */

@@ -23,7 +23,7 @@ export async function publishArticle(
 ): Promise<{ published: boolean; url?: string; method: string; state: "built" | "activated" | "rc-connected"; reason?: string }> {
   const token = process.env.GITHUB_TOKEN;
   const owner = process.env.GITHUB_OWNER ?? "kirso";
-  const repo = process.env.GITHUB_CONTENT_REPO ?? process.env.GITHUB_REPO ?? "growthcat";
+  const repo = process.env.GITHUB_CONTENT_REPO ?? process.env.GITHUB_REPO ?? "growthrat";
 
   if (!token) {
     return { published: false, method: "dry-run: no GITHUB_TOKEN", state: "built", reason: "no GITHUB_TOKEN" };

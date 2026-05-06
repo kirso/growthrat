@@ -1,9 +1,11 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { requireRcAdmin } from "./authz";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
+    await requireRcAdmin(ctx);
     return await ctx.db.query("sources").take(100);
   },
 });
@@ -11,6 +13,7 @@ export const list = query({
 export const count = query({
   args: {},
   handler: async (ctx) => {
+    await requireRcAdmin(ctx);
     const all = await ctx.db.query("sources").collect();
     return { total: all.length, providers: [...new Set(all.map((s) => s.provider))] };
   },
@@ -19,6 +22,7 @@ export const count = query({
 export const getFreshnessSummary = query({
   args: {},
   handler: async (ctx) => {
+    await requireRcAdmin(ctx);
     const all = await ctx.db.query("sources").collect();
     const now = Date.now();
     const staleThresholdMs = 7 * 24 * 60 * 60 * 1000;
@@ -55,6 +59,7 @@ export const getFreshnessSummary = query({
 export const getById = query({
   args: { id: v.id("sources") },
   handler: async (ctx, { id }) => {
+    await requireRcAdmin(ctx);
     return await ctx.db.get(id);
   },
 });
@@ -71,6 +76,7 @@ export const upsert = mutation({
     summary: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    await requireRcAdmin(ctx);
     // Look for an existing source with the same key
     const existing = await ctx.db
       .query("sources")

@@ -61,7 +61,7 @@ const HARDCODED_ARTICLES: ArticleItem[] = [
     slug: "charts-behavioral-analytics-bridge",
     title: "Product Feedback: Charts and Behavioral Analytics Bridge",
     description:
-      "RevenueCat Charts are powerful but dashboard-only. Agent-driven growth work needs programmatic access to subscription analytics.",
+      "RevenueCat Charts and Metrics API access unlocks monetization truth, but agent-run growth work still needs a clean bridge to behavioral analytics.",
     category: "feedback",
     pubDate: "2026-03-14",
     originLabel: "Portfolio sample",
@@ -104,24 +104,32 @@ function formatTimestamp(ts: number) {
 }
 
 export default async function ArticlesPage() {
-  let articles: ArticleItem[] = HARDCODED_ARTICLES;
+  // Start with hardcoded portfolio samples, then merge in dynamic Convex
+  // articles. Match /proof-pack: dedupe Convex hits against the seed list by
+  // slug so the seeded samples never disappear when Convex returns data.
+  let articles: ArticleItem[] = [...HARDCODED_ARTICLES];
 
   try {
     const convexArticles = await fetchQuery(api.artifacts.listPublished, {}).catch(
       () => null
     );
     if (convexArticles && convexArticles.length > 0) {
-      articles = convexArticles.map((a: {
-        slug: string;
-        title: string;
-        content?: string;
-        artifactType?: string;
-        publishedAt?: number;
-        metadata?: { origin?: string };
-      }) => ({
-        slug: a.slug,
-        title: a.title,
-        description: (a.content ?? "").slice(0, 180) + "...",
+      const dynamicArticles: ArticleItem[] = convexArticles
+        .filter(
+          (a: { slug: string }) =>
+            !HARDCODED_ARTICLES.some((s) => s.slug === a.slug)
+        )
+        .map((a: {
+          slug: string;
+          title: string;
+          content?: string;
+          artifactType?: string;
+          publishedAt?: number;
+          metadata?: { origin?: string };
+        }) => ({
+          slug: a.slug,
+          title: a.title,
+          description: (a.content ?? "").slice(0, 180) + "...",
           category: a.artifactType,
           artifactType: a.artifactType,
           publishedAt: a.publishedAt,
@@ -132,6 +140,7 @@ export default async function ArticlesPage() {
                 ? "Portfolio sample"
                 : "Artifact",
         }));
+      articles = [...HARDCODED_ARTICLES, ...dynamicArticles];
     }
   } catch {
     // Convex not available or types not generated — use hardcoded fallback

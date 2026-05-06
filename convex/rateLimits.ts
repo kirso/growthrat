@@ -2,6 +2,7 @@ import { mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { HOUR, MINUTE, RateLimiter } from "@convex-dev/rate-limiter";
+import { requireInternalServerToken } from "./authz";
 
 const rateLimiter = new RateLimiter(components.rateLimiter, {
   publicChatRequests: {
@@ -29,8 +30,9 @@ const rateLimiter = new RateLimiter(components.rateLimiter, {
 });
 
 export const consumePublicChat = mutation({
-  args: { key: v.string() },
-  handler: async (ctx, { key }) => {
+  args: { key: v.string(), serverToken: v.string() },
+  handler: async (ctx, { key, serverToken }) => {
+    requireInternalServerToken(serverToken);
     const hourly = await rateLimiter.limit(ctx, "publicChatRequests", { key });
     if (!hourly.ok) return hourly;
     return await rateLimiter.limit(ctx, "publicChatBurst", { key });
@@ -38,8 +40,9 @@ export const consumePublicChat = mutation({
 });
 
 export const consumePanel = mutation({
-  args: { key: v.string() },
-  handler: async (ctx, { key }) => {
+  args: { key: v.string(), serverToken: v.string() },
+  handler: async (ctx, { key, serverToken }) => {
+    requireInternalServerToken(serverToken);
     const hourly = await rateLimiter.limit(ctx, "panelRequests", { key });
     if (!hourly.ok) return hourly;
     return await rateLimiter.limit(ctx, "panelBurst", { key });

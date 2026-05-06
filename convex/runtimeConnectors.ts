@@ -68,7 +68,7 @@ export async function getGitHubConnectorConfig(ctx: RuntimeCtx): Promise<GitHubC
       process.env.GITHUB_CONTENT_REPO ??
       process.env.GITHUB_FEEDBACK_REPO ??
       process.env.GITHUB_REPO ??
-      "growthcat",
+      "growthrat",
   };
 }
 

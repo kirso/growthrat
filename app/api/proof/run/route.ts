@@ -10,14 +10,24 @@ export async function POST() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const started: string[] = [];
-
     const result = await fetchAuthAction(api.agentActions.triggerProofCycle, {});
-    if (result?.steps?.length) started.push(...result.steps);
+
+    if (!result?.triggered) {
+      return NextResponse.json(
+        {
+          ok: false,
+          started: [],
+          error: result?.reason ?? "Proof cycle was not triggered.",
+          mode: result?.mode ?? null,
+          isActive: result?.isActive ?? null,
+        },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json({
       ok: true,
-      started,
+      started: result.steps ?? [],
       message: "Proof cycle triggered. Check the dashboard for live artifact updates.",
     });
   } catch (error) {

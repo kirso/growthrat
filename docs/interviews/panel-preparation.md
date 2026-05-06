@@ -20,32 +20,46 @@ Here is how I would structure a technical guide for webhook integration in an ag
 
 **The core problem webhooks solve for agent builders:** An agent-built app needs a reliable way to keep its backend in sync with subscription state changes that happen outside its control -- renewals, cancellations, billing issues, and expirations all originate from the app store, not from the app itself. RevenueCat webhooks are the event surface that bridges that gap.
 
-**Step 1: Define a webhook endpoint.** The agent should create a POST endpoint that accepts RevenueCat's webhook payload. In a FastAPI app, that looks like this:
+**Step 1: Define a webhook endpoint.** The agent should create a POST endpoint that accepts RevenueCat's webhook payload. In the Cloudflare target stack, that can be a Worker route:
 
-```python
-from fastapi import FastAPI, Request, HTTPException
-import hmac
-import hashlib
+```ts
+type RevenueCatEvent = {
+  id: string;
+  type: string;
+  app_user_id: string;
+  [key: string]: unknown;
+};
 
-app = FastAPI()
+type RevenueCatWebhookPayload = {
+  event: RevenueCatEvent;
+};
 
-REVENUECAT_WEBHOOK_SECRET = "your_webhook_auth_key"
+interface Env {
+  REVENUECAT_WEBHOOK_SECRET: string;
+  DB: D1Database;
+}
 
-@app.post("/webhooks/revenuecat")
-async def handle_revenuecat_webhook(request: Request):
-    # Verify the authorization header
-    auth_header = request.headers.get("Authorization")
-    if auth_header != f"Bearer {REVENUECAT_WEBHOOK_SECRET}":
-        raise HTTPException(status_code=401, detail="Unauthorized")
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    if (new URL(request.url).pathname !== "/webhooks/revenuecat") {
+      return new Response("Not found", { status: 404 });
+    }
 
-    payload = await request.json()
-    event_type = payload.get("event", {}).get("type")
-    app_user_id = payload.get("event", {}).get("app_user_id")
+    if (request.method !== "POST") {
+      return new Response("Method not allowed", { status: 405 });
+    }
 
-    # Normalize and route the event
-    await process_subscription_event(event_type, app_user_id, payload)
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader !== `Bearer ${env.REVENUECAT_WEBHOOK_SECRET}`) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-    return {"status": "ok"}
+    const payload = (await request.json()) as RevenueCatWebhookPayload;
+    await processSubscriptionEvent(env, payload.event);
+
+    return Response.json({ status: "ok" });
+  },
+};
 ```
 
 **Step 2: Handle the key event types.** The events an agent-built app should handle from day one are:
@@ -59,41 +73,56 @@ async def handle_revenuecat_webhook(request: Request):
 
 **Step 3: Make processing idempotent.** Webhooks can arrive more than once. The agent should store a processed-event log keyed by event ID and skip duplicates:
 
-```python
-async def process_subscription_event(event_type, app_user_id, payload):
-    event_id = payload["event"]["id"]
+```ts
+async function processSubscriptionEvent(env: Env, event: RevenueCatEvent) {
+  const existing = await env.DB.prepare(
+    "select id from processed_events where id = ?"
+  )
+    .bind(event.id)
+    .first();
 
-    if await event_already_processed(event_id):
-        return  # Idempotent skip
+  if (existing) return;
 
-    if event_type == "INITIAL_PURCHASE":
-        await activate_entitlement(app_user_id, payload)
-    elif event_type == "RENEWAL":
-        await confirm_entitlement(app_user_id, payload)
-    elif event_type == "CANCELLATION":
-        await schedule_entitlement_expiration(app_user_id, payload)
-    elif event_type == "BILLING_ISSUE":
-        await flag_billing_grace_period(app_user_id, payload)
-    elif event_type == "EXPIRATION":
-        await revoke_entitlement(app_user_id, payload)
+  switch (event.type) {
+    case "INITIAL_PURCHASE":
+    case "RENEWAL":
+      await upsertEntitlementState(env, event.app_user_id, "active", event);
+      break;
+    case "CANCELLATION":
+      await upsertEntitlementState(env, event.app_user_id, "canceling", event);
+      break;
+    case "BILLING_ISSUE":
+      await upsertEntitlementState(env, event.app_user_id, "billing_issue", event);
+      break;
+    case "EXPIRATION":
+      await upsertEntitlementState(env, event.app_user_id, "expired", event);
+      break;
+  }
 
-    await mark_event_processed(event_id)
+  await env.DB.prepare("insert into processed_events (id, processed_at) values (?, ?)")
+    .bind(event.id, Date.now())
+    .run();
+}
 ```
 
 **Step 4: Re-read subscriber state for high-stakes actions.** Webhooks are great for awareness, but before taking an irreversible action -- like revoking access to paid data or disabling a premium feature -- the agent should re-read the subscriber's current state from the RevenueCat REST API to confirm the entitlement is actually gone:
 
-```python
-import httpx
+```ts
+async function verifyEntitlementActive(
+  env: Env & { PROJECT_ID: string; REVENUECAT_API_KEY: string },
+  appUserId: string,
+  entitlementId: string
+) {
+  const response = await fetch(
+    `https://api.revenuecat.com/v2/projects/${env.PROJECT_ID}/customers/${encodeURIComponent(appUserId)}`,
+    { headers: { Authorization: `Bearer ${env.REVENUECAT_API_KEY}` } }
+  );
 
-async def verify_entitlement_revoked(app_user_id: str, entitlement_id: str) -> bool:
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"https://api.revenuecat.com/v2/projects/{PROJECT_ID}/customers/{app_user_id}",
-            headers={"Authorization": f"Bearer {REVENUECAT_API_KEY}"}
-        )
-        customer = response.json()
-        entitlements = customer.get("subscriber", {}).get("entitlements", {})
-        return entitlement_id not in entitlements or not entitlements[entitlement_id].get("is_active", False)
+  if (!response.ok) throw new Error(`RevenueCat lookup failed: ${response.status}`);
+
+  const customer = (await response.json()) as any;
+  return Boolean(customer.subscriber?.entitlements?.[entitlementId]?.is_active);
+}
 ```
 
 **Step 5: Validate in Test Store.** Before going to production, the agent should use RevenueCat's sandbox and Test Store to trigger each event type and verify that the webhook handler processes them correctly. This shortens the feedback loop dramatically compared to waiting for real store events.

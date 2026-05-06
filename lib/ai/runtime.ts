@@ -1,6 +1,6 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
-import { generateObject, generateText } from "ai";
+import { generateObject, generateText, streamText, type StreamTextResult } from "ai";
 
 export type AiTaskClass = "reasoning" | "generation" | "fast";
 type AiProvider = "anthropic" | "openai";
@@ -277,6 +277,71 @@ export async function runStructuredTask<TSchema>(args: StructuredTaskArgs<TSchem
     }, undefined, false, error instanceof Error ? error.name : "unknown_error");
     throw error;
   }
+}
+
+type StreamTaskArgs = {
+  feature: string;
+  workflowType?: string;
+  taskClass: AiTaskClass;
+  system?: string;
+  messages: NonNullable<Parameters<typeof streamText>[0]["messages"]>;
+  maxOutputTokens?: number;
+  temperature?: number;
+  enableThinking?: boolean;
+  metadata?: Record<string, unknown>;
+  logUsage?: UsageLogger;
+  experimental_transform?: Parameters<typeof streamText>[0]["experimental_transform"];
+  onFinish?: (event: { text: string; usage: UsageShape }) => void | Promise<void>;
+};
+
+export function runStreamTask(args: StreamTaskArgs): StreamTextResult<any, any> {
+  const startedAt = Date.now();
+  const provider = getPreferredProvider();
+  const modelId = getModelId(args.taskClass, provider);
+
+  const result = streamText({
+    model: getModel(args.taskClass, provider),
+    ...(args.system ? { system: args.system } : {}),
+    messages: args.messages,
+    maxOutputTokens: args.maxOutputTokens ?? 2048,
+    temperature: args.temperature ?? 0.4,
+    ...(getProviderOptions(provider, args.taskClass, args.enableThinking)
+      ? { providerOptions: getProviderOptions(provider, args.taskClass, args.enableThinking) }
+      : {}),
+    ...(args.experimental_transform ? { experimental_transform: args.experimental_transform } : {}),
+    onFinish: async ({ text, usage }) => {
+      await logResultUsage(args.logUsage, {
+        feature: args.feature,
+        workflowType: args.workflowType,
+        provider,
+        model: modelId,
+        latencyMs: Date.now() - startedAt,
+        metadata: {
+          taskClass: args.taskClass,
+          streaming: true,
+          ...(args.metadata ?? {}),
+        },
+      }, usage, true);
+      if (args.onFinish) await args.onFinish({ text, usage: usage ?? {} });
+    },
+    onError: async ({ error }) => {
+      // If Anthropic quota exhausted and OpenAI available, log the failure
+      // Note: streaming fallback happens at the route level since the stream is already started
+      await logResultUsage(args.logUsage, {
+        feature: args.feature,
+        workflowType: args.workflowType,
+        provider,
+        model: modelId,
+        latencyMs: Date.now() - startedAt,
+      }, undefined, false, error instanceof Error ? error.name : "stream_error");
+    },
+  });
+
+  return result;
+}
+
+export function getRouteProvider() {
+  return getPreferredProvider();
 }
 
 export function getRouteModel(taskClass: AiTaskClass) {

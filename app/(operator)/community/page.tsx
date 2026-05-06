@@ -85,6 +85,11 @@ export default function CommunityPage() {
         Community Tracker
       </h1>
 
+      {/* Mode context */}
+      <div className="rounded-md bg-[var(--color-op-card-alt)] border border-[var(--color-op-border)] px-4 py-2.5 text-xs text-[var(--color-op-dim)]">
+        Data shown reflects the current operating mode. Portfolio samples are displayed until a proof cycle runs.
+      </div>
+
       {/* Progress overview */}
       <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-5">
         <div className="flex items-baseline justify-between mb-2">

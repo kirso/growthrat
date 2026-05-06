@@ -21,7 +21,10 @@ authComponent.registerRoutesLazy(http, createAuth, {
 function verifyInternalAuth(request: Request): boolean {
   const authHeader = request.headers.get("Authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
-  const expected = process.env.GROWTHCAT_INTERNAL_SECRET;
+  const expected =
+    process.env.GROWTHCAT_INTERNAL_SECRET ||
+    process.env.BETTER_AUTH_SECRET ||
+    process.env.AUTH_SECRET;
 
   // If no secret is configured, reject all requests (fail closed)
   if (!expected) return false;
@@ -301,24 +304,17 @@ http.route({
     });
 
     // Fetch full docs for the results
-    const docs = await Promise.all(
-      results.map(async (r) => {
-        const doc = await ctx.runQuery(api.sources.getById, { id: r._id });
-        return doc;
-      })
-    );
-
-    const resolvedDocs = docs.filter(
-      (d: (typeof docs)[number]): d is NonNullable<(typeof docs)[number]> => d !== null
-    );
+    const docs = await ctx.runQuery(internal.agentQueries.getSourcesByIds, {
+      ids: results.map((r) => r._id),
+    });
 
     return new Response(
       JSON.stringify({
-        docs: resolvedDocs.map((d: NonNullable<(typeof docs)[number]>) => ({
+        docs: docs.map((d: { provider: string; key: string; summary: string }, index: number) => ({
           provider: d.provider,
           key: d.key,
           summary: d.summary ?? "",
-          score: results.find((r) => r._id === d._id)?._score ?? 0,
+          score: results[index]?._score ?? 0,
         })),
       }),
       {
@@ -353,7 +349,7 @@ http.route({
       });
     }
 
-    const messages = await ctx.runQuery(api.chatHistory.getThread, { threadId });
+    const messages = await ctx.runQuery(internal.chatHistory.getThread, { threadId });
 
     return new Response(JSON.stringify({ messages: messages.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })) }), {
       status: 200,
@@ -377,7 +373,7 @@ http.route({
       });
     }
 
-    await ctx.runMutation(api.chatHistory.saveMessage, { threadId, role, content });
+    await ctx.runMutation(internal.chatHistory.saveMessage, { threadId, role, content });
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,

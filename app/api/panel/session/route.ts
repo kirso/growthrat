@@ -2,7 +2,9 @@ import { streamText, tool, stepCountIs, smoothStream } from "ai";
 import { z } from "zod";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { AI_MODEL_IDS, getEstimatedAnthropicUsd, getRouteModel, getRouteProviderOptions } from "@/lib/ai/runtime";
+import { AI_MODEL_IDS, OPENAI_MODEL_IDS, getEstimatedAnthropicUsd, getRouteModel, getRouteProviderOptions, getRouteProvider } from "@/lib/ai/runtime";
+import { fetchAuthQuery } from "@/lib/auth-server";
+import { isAuthorizedRcAdminEmail } from "@/lib/authz";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -14,6 +16,18 @@ function getRequestKey(req: Request, feature: string) {
   return `${feature}:${ip}`;
 }
 
+async function hasPanelAccess(panelToken: string | null) {
+  const expectedToken = process.env.GROWTHCAT_PANEL_TOKEN;
+  if (expectedToken && panelToken === expectedToken) return true;
+
+  try {
+    const user = await fetchAuthQuery(api.auth.getCurrentUser, {});
+    return Boolean(user?.email && isAuthorizedRcAdminEmail(user.email));
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const prompt = searchParams.get("prompt");
@@ -23,15 +37,19 @@ export async function GET(req: Request) {
   }
 
   const panelToken = searchParams.get("token");
-  const expectedToken = process.env.GROWTHCAT_PANEL_TOKEN;
-  if (expectedToken && panelToken !== expectedToken) {
+  if (!(await hasPanelAccess(panelToken))) {
     return new Response("Unauthorized", { status: 401 });
   }
 
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  const serverToken = (
+    process.env.GROWTHCAT_INTERNAL_SECRET ||
+    process.env.BETTER_AUTH_SECRET ||
+    process.env.AUTH_SECRET
+  )?.trim();
   const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
-  if (!convex) {
-    return new Response("GrowthRat panel is unavailable because backend connectivity is missing.", { status: 503 });
+  if (!convex || !serverToken) {
+    return new Response("GrowthRat panel is unavailable because backend connectivity or server auth is missing.", { status: 503 });
   }
 
   const encoder = new TextEncoder();
@@ -74,9 +92,11 @@ export async function GET(req: Request) {
       try {
         rateStatus = await convex.mutation((api.rateLimits as any).consumePanel, {
           key: getRequestKey(req, "public_panel"),
+          serverToken,
         });
         budgetStatus = await convex.query((api.usageEvents as any).getBudgetStatus, {
           feature: "public_panel",
+          serverToken,
         });
       } catch {
         send("progress", {
@@ -146,7 +166,7 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
                 query: z.string().describe("What to search for in the RC knowledge base"),
               }),
               execute: async ({ query }) => {
-                const result = await convex.action(api.chat.searchKnowledge, { query });
+                const result = await convex.action(api.chat.searchKnowledge, { query, serverToken });
                 return result.context || "No relevant documentation found.";
               },
             }),
@@ -194,16 +214,18 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
                 try {
                   const article = await convex.query(api.artifacts.getBySlug, { slug });
                   if (!article) return { error: `No article found with slug "${slug}"` };
+                  const siteUrl = process.env.SITE_URL ?? "https://growthcat-psi.vercel.app";
                   return {
                     slug: article.slug,
                     title: article.title,
                     status: article.status,
-                    url: `https://growthrat.vercel.app/articles/${article.slug}`,
+                    url: `${siteUrl}/articles/${article.slug}`,
                     contentPreview: article.content.slice(0, 500),
                     source: "convex",
                   };
                 } catch {
-                  return { slug, url: `https://growthrat.vercel.app/articles/${slug}`, source: "fallback" };
+                  const siteUrl = process.env.SITE_URL ?? "https://growthcat-psi.vercel.app";
+                  return { slug, url: `${siteUrl}/articles/${slug}`, source: "fallback" };
                 }
               },
             }),
@@ -244,19 +266,22 @@ GrowthRat is an independent agent applying to RevenueCat, not a RevenueCat-owned
           },
           stopWhen: stepCountIs(5),
           onFinish: async ({ usage }) => {
+            const provider = getRouteProvider();
+            const modelId = provider === "openai" ? OPENAI_MODEL_IDS.reasoning : AI_MODEL_IDS.reasoning;
             await convex.mutation((api.usageEvents as any).record, {
               feature: "public_panel",
               workflowType: "panel",
-              provider: "anthropic",
-              model: AI_MODEL_IDS.reasoning,
+              provider,
+              model: modelId,
               inputTokens: usage?.inputTokens ?? 0,
               outputTokens: usage?.outputTokens ?? 0,
-              estimatedUsd: getEstimatedAnthropicUsd(AI_MODEL_IDS.reasoning, usage),
+              estimatedUsd: getEstimatedAnthropicUsd(modelId, usage),
               success: true,
               latencyMs: elapsed(),
+              serverToken,
               metadata: {
                 promptLength: prompt.length,
-                cachedPrompt: true,
+                cachedPrompt: provider === "anthropic",
                 toolCount: 5,
               },
             }).catch(() => {});

@@ -5,9 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 // ---------------------------------------------------------------------------
 // Slack Event Handler — receives events when someone mentions @GrowthRat
 //
-// Pattern: respond to Slack within 3 seconds, then process the command
-// asynchronously via Inngest. This keeps the Slack API happy while
-// allowing arbitrarily complex background work.
+// Pattern: respond to Slack within 3 seconds, then forward to Convex
+// for async processing. Convex handles signature verification and routing.
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest) {
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: commonHeaders,
           body,
-        }).catch(() => {/* fire and forget */});
+        }).catch((err) => console.error("[slack] Forward failed:", err));
       }
     }
 
@@ -78,7 +77,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: commonHeaders,
             body,
-          }).catch(() => {/* fire and forget */});
+          }).catch((err) => console.error("[slack] Forward failed:", err));
         }
       }
     }
@@ -90,7 +89,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: commonHeaders,
           body,
-        }).catch(() => {/* fire and forget */});
+        }).catch((err) => console.error("[slack] Forward failed:", err));
       }
     }
   }

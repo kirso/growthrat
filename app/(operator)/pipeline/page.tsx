@@ -53,9 +53,10 @@ function GateProgress({ gates }: { gates: boolean[] }) {
 
 export default function PipelinePage() {
   const available = useConvexAvailable();
-  const convexArtifacts = useConvexQuery(convexApi?.artifacts?.list, {
-    artifactType: "flagship",
-  });
+  // Show every artifact in flight. The previous {artifactType: "flagship"}
+  // filter never matched anything — real types are blog_post, comparison,
+  // api_guide, integration_guide, faq_hub, feedback, experiment, report.
+  const convexArtifacts = useConvexQuery(convexApi?.artifacts?.list, {});
 
   const convexOpportunities = useConvexQuery(
     convexApi?.opportunities?.getTopOverall,
@@ -92,19 +93,22 @@ export default function PipelinePage() {
     );
   }
 
-  const slots: ContentSlot[] = convexArtifacts.map((a: any) => ({
-    id: a.slug ?? a._id,
-    title: a.title,
-    stage:
-      a.status === "published"
-        ? "Published" as const
-        : a.status === "validated" || a.status === "pending_approval"
-          ? "Quality Gates" as const
-          : "Draft" as const,
-    gates: a.qualityScores
-      ? Object.values(a.qualityScores).map((v: any) => Boolean(v))
-      : [],
-  }));
+  const slots: ContentSlot[] = convexArtifacts
+    .filter((a: any) => a.status !== "rejected")
+    .slice(0, 8)
+    .map((a: any) => ({
+      id: a.slug ?? a._id,
+      title: a.title,
+      stage:
+        a.status === "published"
+          ? "Published" as const
+          : a.status === "validated" || a.status === "pending_approval"
+            ? "Quality Gates" as const
+            : "Draft" as const,
+      gates: a.qualityScores
+        ? Object.values(a.qualityScores).map((v: any) => Boolean(v))
+        : [],
+    }));
 
   const opportunities: Opportunity[] = convexOpportunities.map((o: any) => ({
     score: o.score,
@@ -112,13 +116,16 @@ export default function PipelinePage() {
     lane: (o.lane ?? "Technical") as Opportunity["lane"],
   }));
 
-  const derivatives: Array<{ type: string; title: string; status: string }> = [];
-
   return (
     <div className="space-y-6 max-w-5xl">
       <h1 className="text-xl font-semibold text-[var(--color-op-text)]">
         Content Pipeline
       </h1>
+
+      {/* Mode context */}
+      <div className="rounded-md bg-[var(--color-op-card-alt)] border border-[var(--color-op-border)] px-4 py-2.5 text-xs text-[var(--color-op-dim)]">
+        Data shown reflects the current operating mode. Portfolio samples are displayed until a proof cycle runs.
+      </div>
 
       {/* This Week's Plan */}
       <section>
@@ -128,7 +135,7 @@ export default function PipelinePage() {
         {slots.length === 0 ? (
           <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] p-8 text-center">
             <p className="text-sm text-[var(--color-op-dim)]">
-              No flagship content queued yet.
+              No artifacts in flight yet.
             </p>
           </div>
         ) : (
@@ -141,7 +148,7 @@ export default function PipelinePage() {
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
                     <div className="text-xs text-[var(--color-op-dim)] mb-1">
-                      Flagship {index + 1}
+                      #{index + 1}
                     </div>
                     <h3 className="text-sm font-medium text-[var(--color-op-text)] leading-snug">
                       {slot.title}
@@ -161,36 +168,6 @@ export default function PipelinePage() {
             ))}
           </div>
         )}
-      </section>
-
-      {/* Derivatives */}
-      <section>
-        <h2 className="text-sm font-medium text-[var(--color-op-muted)] uppercase tracking-wider mb-3">
-          Derivatives
-        </h2>
-        <div className="rounded-lg bg-[var(--color-op-card)] border border-[var(--color-op-border)] divide-y divide-[var(--color-op-border)]">
-          {derivatives.length === 0 ? (
-            <div className="px-4 py-8 text-sm text-[var(--color-op-dim)]">
-              No derivative assets recorded yet.
-            </div>
-          ) : (
-            derivatives.map((d, i) => (
-              <div key={i} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="px-2 py-0.5 rounded text-xs font-medium bg-[var(--color-op-card-alt)] text-[var(--color-op-muted)]">
-                    {d.type}
-                  </span>
-                  <span className="text-sm text-[var(--color-op-text)]">
-                    {d.title}
-                  </span>
-                </div>
-                <span className="text-xs text-[var(--color-op-dim)]">
-                  {d.status}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
       </section>
 
       {/* Opportunity Queue */}

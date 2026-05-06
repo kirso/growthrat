@@ -1,7 +1,7 @@
-import { streamText, UIMessage, convertToModelMessages, smoothStream } from "ai";
+import { UIMessage, convertToModelMessages, smoothStream } from "ai";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { AI_MODEL_IDS, getEstimatedAnthropicUsd, getRouteModel, getRouteProviderOptions } from "@/lib/ai/runtime";
+import { runStreamTask } from "@/lib/ai/runtime";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -61,25 +61,31 @@ function getRequestKey(req: Request, feature: string) {
 
 export async function POST(req: Request) {
   const { messages, threadId }: { messages: UIMessage[]; threadId?: string } = await req.json();
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL?.trim();
+  const serverToken = (
+    process.env.GROWTHCAT_INTERNAL_SECRET ||
+    process.env.BETTER_AUTH_SECRET ||
+    process.env.AUTH_SECRET
+  )?.trim();
   const convex = convexUrl ? new ConvexHttpClient(convexUrl) : null;
 
-  if (!convex) {
+  if (!convex || !serverToken) {
     return new Response(
-      "GrowthRat is dormant right now. Backend connectivity is unavailable, so public chat is closed.",
+      "GrowthRat is dormant right now. Backend connectivity or server auth is unavailable, so public chat is closed.",
       { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }
 
   try {
-    const runtime = await convex.query((api.agentConfig as any).getRuntimeState, {});
-    if (!runtime.isActive) {
+    const runtime = await convex.query(api.agentConfig.getRuntimeState, {});
+    if (!runtime?.isActive) {
       return new Response(
         "GrowthRat is dormant right now. Enable interview-proof or RC-live mode before using public chat.",
         { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
       );
     }
-  } catch {
+  } catch (err) {
+    console.error("[chat] Mode gate check failed:", String(err));
     return new Response(
       "GrowthRat is dormant right now. Runtime state could not be verified, so public chat is closed.",
       { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
@@ -91,9 +97,11 @@ export async function POST(req: Request) {
   try {
     rateStatus = await convex.mutation((api.rateLimits as any).consumePublicChat, {
       key: getRequestKey(req, "public_chat"),
+      serverToken,
     });
     budgetStatus = await convex.query((api.usageEvents as any).getBudgetStatus, {
       feature: "public_chat",
+      serverToken,
     });
   } catch {
     return new Response(
@@ -126,7 +134,7 @@ export async function POST(req: Request) {
   let ragContext = "";
   if (query.length > 5) {
     try {
-      const result = await convex.action(api.chat.searchKnowledge, { query });
+      const result = await convex.action(api.chat.searchKnowledge, { query, serverToken });
       ragContext = result.context ?? "";
     } catch {
       // Knowledge base not available — fall through
@@ -138,42 +146,19 @@ export async function POST(req: Request) {
     ? `${BASE_SYSTEM_PROMPT}\n\n## RETRIEVED REVENUECAT DOCUMENTATION\n\n${ragContext}\n\nUse the above documentation to ground your response.`
     : BASE_SYSTEM_PROMPT;
 
-  const result = streamText({
-    model: getRouteModel("generation"),
+  const result = runStreamTask({
+    feature: "public_chat",
+    workflowType: "chat",
+    taskClass: "generation",
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
-    providerOptions: getRouteProviderOptions("generation"),
     maxOutputTokens: 2048,
     temperature: 0.4,
     experimental_transform: smoothStream({ delayInMs: 12, chunking: "word" }),
-    onFinish: async ({ text, usage }) => {
-      // Persist messages to Convex for thread history (fire-and-forget)
-      if (threadId && query && text) {
-        void convex.mutation(api.chatHistory.saveMessage, {
-          threadId,
-          role: "user",
-          content: query,
-        }).catch(() => {});
-        void convex.mutation(api.chatHistory.saveMessage, {
-          threadId,
-          role: "assistant",
-          content: text,
-        }).catch(() => {});
-      }
+    logUsage: (event) => {
       void convex.mutation((api.usageEvents as any).record, {
-        feature: "public_chat",
-        workflowType: "chat",
-        provider: "anthropic",
-        model: AI_MODEL_IDS.generation,
-        inputTokens: usage?.inputTokens ?? 0,
-        outputTokens: usage?.outputTokens ?? 0,
-        estimatedUsd: getEstimatedAnthropicUsd(AI_MODEL_IDS.generation, usage),
-        success: true,
-        metadata: {
-          threadId: threadId ?? null,
-          ragUsed: Boolean(ragContext),
-          cachedPrompt: true,
-        },
+        ...event,
+        serverToken,
       }).catch(() => {});
     },
   });

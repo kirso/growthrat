@@ -169,8 +169,9 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
             project still requires the dashboard.
           </li>
           <li>
-            <strong>Charts data is dashboard-only.</strong> Agents can&apos;t
-            pull MRR, churn, or trial conversion via API.
+            <strong>Charts and Metrics API exists.</strong> Agents can pull
+            monetization metrics programmatically, but still need clearer
+            patterns for joining those metrics to behavioral analytics.
           </li>
           <li>
             <strong>Webhook testing is manual.</strong> No CLI command to trigger
@@ -280,7 +281,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
     slug: "charts-behavioral-analytics-bridge",
     title: "Product Feedback: Charts and Behavioral Analytics Bridge",
     description:
-      "RevenueCat Charts are powerful but dashboard-only. Agent-driven growth work needs programmatic access to subscription analytics.",
+      "RevenueCat Charts and Metrics API access unlocks monetization truth, but agent-run growth work still needs a clean bridge to behavioral analytics.",
     category: "feedback",
     pubDate: "2026-03-14",
     content: (
@@ -290,21 +291,27 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
           RevenueCat Charts provide essential subscription analytics &mdash; MRR,
           churn rate, trial-to-paid conversion, revenue by product. These
           metrics are critical for growth experiments, automated reporting, and
-          feedback loops. Currently, they&apos;re only accessible through the
-          dashboard UI.
+          feedback loops. Programmatic Charts and Metrics API access makes those
+          metrics available to agents, but the harder operator problem is
+          connecting monetization truth to behavioral analytics.
         </p>
 
-        <h2>Reproduction</h2>
+        <h2>Observed friction</h2>
         <ol>
           <li>
             An agent needs to measure the impact of a growth experiment
           </li>
           <li>
-            The relevant metrics (trial conversion, MRR change) are in Charts
+            Monetization metrics such as trial conversion and MRR live in
+            RevenueCat Charts and Metrics
           </li>
-          <li>There is no REST API endpoint to query Charts data</li>
           <li>
-            The agent cannot close the feedback loop programmatically
+            Behavioral inputs such as paywall views, onboarding completion, and
+            feature exposure usually live in product analytics
+          </li>
+          <li>
+            The agent needs a documented decision model for combining both
+            systems without mixing incompatible metrics
           </li>
         </ol>
 
@@ -317,12 +324,12 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         </p>
 
         <h2>Impact</h2>
-        <p>Without programmatic access to Charts, agents cannot:</p>
+        <p>Without a clear bridge between Charts and behavioral analytics, agents can misread:</p>
         <ul>
-          <li>Measure experiment outcomes automatically</li>
-          <li>Generate weekly reports with real metrics</li>
+          <li>Experiment outcomes</li>
+          <li>Weekly reports that mix paid outcomes with upstream behavior</li>
           <li>Identify churn patterns for proactive intervention</li>
-          <li>Build custom analytics on top of RevenueCat data</li>
+          <li>Custom analytics built around RevenueCat data</li>
         </ul>
         <p>
           This limits RevenueCat&apos;s value in automated growth workflows
@@ -333,20 +340,20 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
         <h2>Proposed direction</h2>
         <ol>
           <li>
-            <strong>Charts REST API</strong> with endpoints for key metrics: MRR,
-            active subscriptions, churn rate, trial-to-paid, revenue by product
+            <strong>Operator guide</strong> that separates monetization metrics
+            from behavioral metrics
           </li>
           <li>
-            <strong>Time-series support</strong> so agents can compare periods
-            (this week vs. last week)
+            <strong>Shared dimensions</strong> for app user ID, offering,
+            product, paywall variant, platform, and timestamp windows
           </li>
           <li>
-            <strong>Webhook-triggered metric snapshots</strong> that push
-            daily/weekly summaries to a configured endpoint
+            <strong>Example experiment templates</strong> for paywall,
+            onboarding, and pricing tests
           </li>
           <li>
-            <strong>Rate limiting at 120 req/min</strong> (lower than the
-            customer API, since analytics queries are heavier)
+            <strong>Agent-readable reporting examples</strong> that combine
+            Charts metrics with product analytics without collapsing them
           </li>
         </ol>
 
@@ -601,7 +608,7 @@ const active = customer.subscriber?.entitlements ?? {};`}</code>
           </li>
           <li>
             <strong>Charts and Behavioral Analytics Bridge</strong> &mdash;
-            Charts data is dashboard-only
+            programmatic Charts metrics need a clean behavioral-analytics bridge
           </li>
           <li>
             <strong>Webhook Sync Trust Boundaries</strong> &mdash; missing

@@ -125,7 +125,10 @@ Events sent via POST to registered webhook URLs.
 ## RevenueCat's Gaps for Agent Builders
 
 1. **No API-first quickstart** — docs assume IDE + simulator workflow
-2. **Charts is dashboard-only** — no REST API for MRR, churn, trial conversion
+2. **Charts + product analytics bridge is still unclear** — RevenueCat now has
+   programmatic Charts and Metrics API access, but agent-run growth loops still
+   need clearer guidance for combining monetization metrics with behavioral
+   analytics such as paywall views, onboarding completion, and feature exposure
 3. **Webhook testing is manual** — no CLI or API to trigger test events
 4. **No agent-specific error messages** — errors assume human developer context
 5. **Project creation requires dashboard** — can't create projects via API
@@ -146,21 +149,34 @@ Target keywords with difficulty scores (retrieved 2026-03-16):
 
 ## GrowthRat Architecture
 
-- **Next.js 15** — single framework for UI, API, SSE, static pages
-- **Inngest AgentKit** — 5-agent network (planner, content, growth, feedback, community)
-- **Convex** — reactive database + cron + file storage + vector search
-- **Vercel AI SDK** — LLM streaming with Anthropic Claude
+- **Current implementation** — Next.js 16, React 19, Convex, Vercel AI SDK,
+  and Tailwind. This is the running pre-production app.
+- **Target architecture** — Astro with Svelte islands on Cloudflare Workers,
+  backed by Cloudflare Agents, Durable Objects, Workflows, D1, R2, Queues,
+  Pipelines, Secrets Store, AI Gateway, and AI Search or Vectorize.
+- **Convex status** — current runtime and migration source, not the long-term
+  architecture invariant.
+- **Vercel AI SDK v6** — `runTextTask` / `runStructuredTask` / `runStreamTask` chokepoint in `lib/ai/runtime.ts` with Anthropic primary + OpenAI fallback on quota errors
+- **Voyage AI** — `voyage-3-lite` embeddings (512-dim) for RAG over the `sources` table
 - **Typefully** — multi-platform social distribution (X, LinkedIn, Threads, Bluesky, Mastodon)
-- **DataForSEO** — keyword research, SERP analysis, content trends
+- **DataForSEO** — keyword research, SERP analysis, experiment baselines
+
+Operating modes are gated at `agentConfig.mode`: `dormant` (chat closed, crons
+skip), `interview_proof` (chat + panel only), `rc_live` (full operation).
+Inngest and AgentKit are not part of the active stack.
 
 ## Quality Gates
 
-Every flagship content piece passes 8 gates:
-1. Grounding — claims are source-backed
-2. Novelty — not duplicating existing content
-3. Technical — code works, API refs correct
-4. SEO — title, meta, headings, keywords
-5. AEO — extractable answers for LLMs
-6. GEO — comparison tables, schema markup
-7. Benchmark — stronger than obvious alternative
-8. Voice — matches GrowthRat identity
+Every flagship content piece is checked against 8 gates. 5 are blocking and 3
+are advisory — failed advisory gates log a warning but don't stop publication.
+
+| Gate | Type | What it checks |
+| --- | --- | --- |
+| 1. Grounding | blocking | Minimum content length and source-backing |
+| 2. Novelty | blocking | Slug not already published as a different artifact |
+| 3. Technical | blocking | Code blocks present + API references in body |
+| 4. SEO | blocking | H2 headings, keyword in intro, sufficient length |
+| 5. Voice | blocking | No forbidden phrases, no excessive exclamation marks |
+| 6. AEO | advisory | TL;DR / structured lists for answer extraction |
+| 7. GEO | advisory | Citations or numeric data points |
+| 8. Benchmark | advisory | Comparison language ("vs", "compared to", "better than") |

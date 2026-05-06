@@ -1,7 +1,7 @@
 import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { normalizeBudgetPolicy } from "./agentConfig";
-import { requireRcAdmin } from "./authz";
+import { requireInternalServerToken, requireRcAdmin } from "./authz";
 
 const usageEventArgs = {
   feature: v.string(),
@@ -22,9 +22,25 @@ async function insertUsageEvent(ctx: any, args: any) {
 }
 
 export const record = mutation({
-  args: usageEventArgs,
+  args: {
+    ...usageEventArgs,
+    serverToken: v.string(),
+  },
   handler: async (ctx, args) => {
-    return await insertUsageEvent(ctx, args);
+    requireInternalServerToken(args.serverToken);
+    return await insertUsageEvent(ctx, {
+      feature: args.feature,
+      workflowType: args.workflowType,
+      provider: args.provider,
+      model: args.model,
+      inputTokens: args.inputTokens,
+      outputTokens: args.outputTokens,
+      estimatedUsd: args.estimatedUsd,
+      latencyMs: args.latencyMs,
+      success: args.success,
+      errorCode: args.errorCode,
+      metadata: args.metadata,
+    });
   },
 });
 
@@ -36,8 +52,9 @@ export const recordInternal = internalMutation({
 });
 
 export const getBudgetStatus = query({
-  args: { feature: v.optional(v.string()) },
-  handler: async (ctx, { feature }) => {
+  args: { feature: v.optional(v.string()), serverToken: v.string() },
+  handler: async (ctx, { feature, serverToken }) => {
+    requireInternalServerToken(serverToken);
     const config = await ctx.db.query("agentConfig").first();
     const budgetPolicy = normalizeBudgetPolicy(config?.budgetPolicy);
     const allUsage = await ctx.db.query("usageEvents").collect();

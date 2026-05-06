@@ -7,15 +7,17 @@
 
 import { v } from "convex/values";
 import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { requireRcAdmin } from "./authz";
 
 /**
- * Trigger knowledge ingestion (public, for testing).
+ * Trigger knowledge ingestion. Admin-only.
  */
 export const triggerIngest = action({
   args: {},
   handler: async (ctx) => {
+    await requireRcAdmin(ctx);
     await ctx.runAction(internal.actions.ingestKnowledge, {});
     return { triggered: true };
   },
@@ -25,6 +27,7 @@ export const triggerIngest = action({
 export const ingestOnePage = action({
   args: { pageIndex: v.number() },
   handler: async (ctx, { pageIndex }) => {
+    await requireRcAdmin(ctx);
     const { RC_DOC_URLS } = await import("./crawler");
     if (pageIndex < 0 || pageIndex >= RC_DOC_URLS.length) {
       return { error: "Invalid page index. Range: 0-" + (RC_DOC_URLS.length - 1) };
@@ -84,7 +87,8 @@ export const ingestOnePage = action({
 /** Minimal test — just fetch one RC docs page */
 export const testFetch = action({
   args: {},
-  handler: async () => {
+  handler: async (ctx) => {
+    await requireRcAdmin(ctx);
     try {
       const res = await fetch("https://www.revenuecat.com/docs/getting-started/quickstart");
       const text = await res.text();
@@ -99,10 +103,32 @@ export const testFetch = action({
  * Trigger a bounded proof cycle on the active deployment.
  * This is intentionally public at the Convex layer but still gated by the
  * authenticated Next.js route plus RC admin checks.
+ *
+ * The downstream starters (startKnowledgeIngest/startWeeklyPlan/etc.) all
+ * gate on rc_live mode internally and silently no-op otherwise. We mirror
+ * that gate here so the caller gets an honest answer instead of a fake
+ * "triggered" success.
  */
 export const triggerProofCycle = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<
+    | { triggered: true; steps: string[] }
+    | { triggered: false; reason: string; mode: string; isActive: boolean }
+  > => {
+    await requireRcAdmin(ctx);
+    const runtime = await ctx.runQuery(api.agentConfig.getRuntimeState, {});
+    if (runtime.mode !== "rc_live" || !runtime.isActive) {
+      return {
+        triggered: false,
+        reason:
+          "Proof cycle requires rc_live mode with the agent active. " +
+          `Current mode: ${runtime.mode}, active: ${runtime.isActive}. ` +
+          "Switch to rc_live in /onboarding before retrying.",
+        mode: runtime.mode,
+        isActive: runtime.isActive,
+      };
+    }
+
     await ctx.runMutation(internal.mutations.startKnowledgeIngest, {});
     await ctx.runMutation(internal.mutations.startWeeklyPlan, {});
     await ctx.runMutation(internal.mutations.startWeeklyReport, {});
@@ -126,6 +152,7 @@ export const triggerProofCycle = action({
 export const promoteArtifactBySlug = action({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
+    await requireRcAdmin(ctx);
     const artifact = await ctx.runQuery(internal.agentQueries.getArtifactBySlug, { slug }) as {
       _id: Id<"artifacts">;
       slug: string;

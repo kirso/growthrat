@@ -1,6 +1,5 @@
 import { action, mutation } from "./_generated/server";
 import { api } from "./_generated/api";
-import { v } from "convex/values";
 
 export const seedArticles = action({
   args: {},
@@ -30,7 +29,7 @@ export const seedArticles = action({
         artifactType: "feedback",
         title: "Product Feedback: Charts and Behavioral Analytics Bridge",
         slug: "charts-behavioral-analytics-bridge",
-        content: `RevenueCat Charts provide essential subscription analytics — MRR, churn rate, trial-to-paid conversion, revenue by product. These metrics are critical for growth experiments, automated reporting, and feedback loops. Currently, they're only accessible through the dashboard UI.\n\nAn agent needs to measure the impact of a growth experiment. The relevant metrics (trial conversion, MRR change) are in Charts. There is no REST API endpoint to query Charts data. The agent cannot close the feedback loop programmatically.\n\nGrowth-focused agents, automated reporting systems, any workflow that needs subscription metrics without a human opening the dashboard.`,
+        content: `RevenueCat Charts provide essential subscription analytics — MRR, churn rate, trial-to-paid conversion, revenue by product. These metrics are critical for growth experiments, automated reporting, and feedback loops. Programmatic Charts and Metrics API access makes those metrics available to agents.\n\nAn agent still needs a clear model for joining monetization outcomes from RevenueCat with behavioral analytics such as paywall views, onboarding completion, feature exposure, and experiment cohorts.\n\nGrowth-focused agents, automated reporting systems, and human growth teams need examples that keep monetization truth and behavioral truth separate while making them usable in one decision loop.`,
         contentFormat: "markdown",
         status: "published",
         metadata: { origin: "seed", activationState: "built", infrastructure: "growthrat" },
@@ -172,6 +171,55 @@ export const seedWeeklyReport = action({
     });
 
     return { seeded: true };
+  },
+});
+
+/** Tag all existing artifacts missing origin metadata as "seed" */
+export const tagSeedArtifacts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const artifacts = await ctx.db.query("artifacts").collect();
+    let tagged = 0;
+    for (const artifact of artifacts) {
+      const meta = (artifact.metadata as Record<string, unknown>) ?? {};
+      if (!meta.origin) {
+        await ctx.db.patch(artifact._id, {
+          metadata: { ...meta, origin: "seed", activationState: "built", infrastructure: "growthrat" },
+        });
+        tagged++;
+      }
+    }
+    return { tagged, total: artifacts.length };
+  },
+});
+
+/** Seed connector statuses as pending — actual verification happens at runtime */
+export const seedConnectors = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const connectors = [
+      { connector: "slack", status: "pending", label: "Slack", verificationMethod: "env_var_check" },
+      { connector: "github", status: "pending", label: "GitHub", verificationMethod: "env_var_check" },
+      { connector: "dataforseo", status: "pending", label: "DataForSEO", verificationMethod: "env_var_check" },
+      { connector: "typefully", status: "manual_verification", label: "Typefully", verificationMethod: "pending" },
+      { connector: "revenuecat", status: "unsupported", label: "RevenueCat (post-hire)", verificationMethod: "requires_rc_assets" },
+    ];
+
+    let seeded = 0;
+    for (const conn of connectors) {
+      const existing = await ctx.db
+        .query("connectorConnections")
+        .withIndex("by_connector", (q) => q.eq("connector", conn.connector))
+        .first();
+      if (existing) continue;
+      await ctx.db.insert("connectorConnections", {
+        ...conn,
+        lastSubmittedAt: Date.now(),
+        lastVerifiedAt: conn.status === "verified" ? Date.now() : undefined,
+      });
+      seeded++;
+    }
+    return { seeded, total: connectors.length };
   },
 });
 

@@ -170,6 +170,11 @@ export default function DashboardPage() {
         Dashboard
       </h1>
 
+      {/* Mode context */}
+      <div className="rounded-md bg-[var(--color-op-card-alt)] border border-[var(--color-op-border)] px-4 py-2.5 text-xs text-[var(--color-op-dim)]">
+        Data shown reflects the current operating mode. Portfolio samples are displayed until a proof cycle runs.
+      </div>
+
       {/* Top row: Status + CTA */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* System status */}

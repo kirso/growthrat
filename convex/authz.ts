@@ -30,9 +30,18 @@ export async function requireRcAdmin(ctx: AuthCtx) {
   if (!user?.email) {
     throw new Error("Not authenticated");
   }
-  const hasExplicitAllowlist = Boolean((process.env.RC_ADMIN_EMAILS ?? "").trim() || (process.env.RC_ADMIN_DOMAINS ?? "").trim());
-  if (hasExplicitAllowlist && !isAuthorizedRcAdminEmail(user.email)) {
+  if (!isAuthorizedRcAdminEmail(user.email)) {
     throw new Error("Forbidden");
   }
   return user;
+}
+
+export function requireInternalServerToken(token: string | undefined | null) {
+  const expected =
+    process.env.GROWTHCAT_INTERNAL_SECRET ||
+    process.env.BETTER_AUTH_SECRET ||
+    process.env.AUTH_SECRET;
+  if (!expected || token !== expected) {
+    throw new Error("Unauthorized");
+  }
 }
