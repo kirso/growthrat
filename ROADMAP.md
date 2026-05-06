@@ -20,13 +20,18 @@ old implementation choices.
 
 ## Current State: 2026-05-06
 
-The current codebase runs on:
+The active codebase now runs on:
 
-- Next.js 16 App Router
-- React 19
-- Convex database, actions, workflows, crons, and generated API types
-- Vercel AI SDK
-- Tailwind CSS v4
+- Astro 6 with Svelte 5 islands
+- Cloudflare Workers through `@astrojs/cloudflare`
+- Cloudflare Agents plus Durable Objects
+- Cloudflare Workflows
+- D1, R2, Queues, Pipelines, AI, AI Search, and Vectorize bindings
+- a custom Worker entrypoint in `src/worker.ts`
+- D1 migration and seed data in `migrations/0001_growthrat_core.sql`
+
+The legacy Next.js and Convex app remains in the repo as migration source code,
+not the default served runtime.
 
 The current app has useful surfaces:
 
@@ -38,11 +43,14 @@ The current app has useful surfaces:
 - panel console
 - operator dashboard
 - onboarding and runtime controls
-- Convex workflow and agent code
+- deterministic Cloudflare API endpoints
+- one Svelte chat island
+- a Cloudflare Agent class and Workflow class
 
 The current app is still pre-production. It is not yet safe to treat as a fully
-autonomous public agent because side-effect and LLM paths still need a complete
-auth, mode, rate, budget, connector, and approval pass.
+autonomous public agent because side-effect and LLM paths still need production
+Cloudflare resources, secrets, connector activation, and a complete auth, mode,
+rate, budget, connector, kill-switch, and approval pass.
 
 ## Architecture Direction
 
@@ -61,8 +69,8 @@ The strategic target is:
 - AI Search or Vectorize for RevenueCat docs and artifact retrieval
 - Browser Rendering, Sandbox, or Containers for validation where needed
 
-Convex is the current implementation and migration source. It is not the target
-architecture.
+Convex is a legacy implementation and migration source. It is not the target
+architecture or default local runtime.
 
 ## Why Astro And Svelte Islands
 
@@ -107,38 +115,42 @@ split:
 | High-volume event firehose | Pipelines to R2 |
 | Retrieval index | AI Search or Vectorize |
 
-Convex should be kept only while the current application is running or while its
-schema and data are being migrated.
+Convex should be kept only while its schema, workflows, and useful behavior are
+being migrated.
 
 ## Current Rung
 
-**Goal:** make repo truth match the product decision.
+**Goal:** make the Cloudflare foundation real enough to replace the default
+Next/Convex app shell.
 
 Exit criteria:
 
-- PRD no longer encodes Convex as the product requirement.
-- ROADMAP reflects Astro, Svelte islands, and Cloudflare-native target.
-- README and setup docs distinguish current runtime from target runtime.
-- obsolete Render, Temporal, FastAPI, Inngest, and old Convex-native planning
-  docs are removed.
-- stale "Charts has no REST API" claims are removed from docs and public copy.
-- public artifacts remain in place as proof, not planning docs.
+- `bun run dev` serves Astro, not Next.
+- `astro.config.mjs`, `svelte.config.js`, `wrangler.jsonc`, and generated
+  Worker types exist.
+- D1 migration maps the core operational tables.
+- public routes still resolve.
+- one Svelte island and read-only proof/runtime APIs exist.
+- Wrangler dry-run recognizes the declared bindings.
+
+Status: completed for the first migration slice on 2026-05-06.
 
 ## Next Gate
 
-**Goal:** make the current app safe enough to keep online while the Cloudflare
-migration starts.
+**Goal:** make the Cloudflare app safe enough to keep online while live
+RevenueCat connectors are still unavailable.
 
 Required checks:
 
-- every public Convex action and mutation is classified as read, write,
-  side-effect, or LLM
+- every public Worker endpoint and legacy Convex export is classified as read,
+  write, side-effect, or LLM
 - public write and LLM paths fail closed on auth and mode
 - budget and rate gates run before provider calls
 - connector loss cannot silently approve, publish, or report success
 - approval policy is explicit and test-covered
 - panel token behavior is fail-closed in production
-- lint command is replaced with a valid ESLint command
+- missing secrets and remote-only Cloudflare products are documented as
+  pre-production warnings
 
 Exit artifact:
 
@@ -147,7 +159,7 @@ Exit artifact:
 
 ## Work Package 1: Truth Surface Cleanup
 
-Status: in progress.
+Status: completed.
 
 Scope:
 
@@ -160,23 +172,23 @@ Scope:
 Out of scope:
 
 - broad UI rewrite
-- platform migration implementation
+- broad product redesign
 - committing unrelated dirty worktree edits
 
 ## Work Package 2: Current Runtime Safety
 
-Purpose: keep the current Next plus Convex app from undermining the public
-application while migration work begins.
+Purpose: keep the active Cloudflare app and legacy migration source from
+undermining the public application while live operation is still gated.
 
 Tasks:
 
-- inventory all public Convex exports
+- inventory all public Worker endpoints and legacy Convex exports
 - put LLM calls behind one enforced policy path
 - require auth and mode checks for public write surfaces
 - make Slack approval fail closed when Slack is unavailable
 - prevent unauthenticated chat-history and usage-event writes
 - add tests for dormant, interview proof, and rc live modes
-- update `package.json` lint script
+- keep missing-secret and remote-binding warnings visible in setup docs
 
 Do this before enabling `rc_live`.
 
@@ -184,26 +196,30 @@ Do this before enabling `rc_live`.
 
 Purpose: prove the new stack in a small, reversible slice.
 
-First slice:
+Status: completed for the foundation slice.
 
-- add Astro project structure
-- add Svelte integration
-- add Cloudflare adapter
-- add `wrangler.jsonc`
-- add D1 schema and first migration
-- add bindings for D1, R2, one Durable Object, one Queue, and one Workflow
-- migrate one public page
-- migrate one interactive Svelte island
-- expose one read-only proof endpoint
-- verify local dev and deploy commands
+Completed slice:
+
+- added Astro project structure
+- added Svelte integration
+- added Cloudflare adapter
+- added `wrangler.jsonc`
+- added D1 schema and first migration
+- added bindings for D1, R2, Durable Objects, Queues, Workflows, Pipelines, AI,
+  AI Search, and Vectorize
+- migrated public and operator URLs into Astro pages
+- migrated one interactive Svelte island
+- exposed read-only proof and runtime endpoints
+- verified typecheck, lint, tests, build, and Wrangler dry-run
 
 Exit criteria:
 
-- the slice builds locally
-- the slice runs with Wrangler
-- the page renders without requiring Convex
-- the endpoint reads from D1 or static seed data
-- no existing public proof URL is broken
+- remote Cloudflare resources are created
+- D1 database ID is added to `wrangler.jsonc`
+- remote D1 migrations are applied
+- production secrets are set
+- live connectors remain disabled until approval, rate, budget, and
+  kill-switch gates are verified
 
 ## Work Package 4: Data Model Migration
 

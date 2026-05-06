@@ -1,74 +1,99 @@
 # GrowthRat Setup
 
-This guide describes the repo as it works today and the platform direction we
-are moving toward.
+This guide describes the active Astro/Svelte/Cloudflare runtime and the legacy
+Next/Convex migration source.
 
-## Current Local Setup
-
-The current app is still Next.js plus Convex.
+## Local Setup
 
 ```bash
 bun install
-cp .env.example .env.local
-bunx convex dev
 bun run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://127.0.0.1:4321`.
 
-Use two terminals for normal work:
+The dev server uses the Cloudflare workerd runtime through the Astro Cloudflare
+adapter. Some bindings are remote-only products, so local runs may warn about
+AI, AI Search, and Vectorize. Those warnings are expected until production
+Cloudflare resources are created and credentials are connected.
 
-```bash
-bunx convex dev
-```
+## Required Cloudflare Files
 
-```bash
-bun run dev
-```
+The active runtime depends on:
 
-Or use the combined script:
+- `astro.config.mjs`
+- `svelte.config.js`
+- `wrangler.jsonc`
+- `worker-configuration.d.ts`
+- `src/worker.ts`
+- `migrations/0001_growthrat_core.sql`
 
-```bash
-bun run dev:all
-```
-
-## Required Environment
-
-Minimum app shell and auth config:
+Regenerate binding types after changing `wrangler.jsonc`:
 
 ```bash
-NEXT_PUBLIC_CONVEX_URL=...
-NEXT_PUBLIC_CONVEX_SITE_URL=...
-SITE_URL=http://localhost:3000
-BETTER_AUTH_SECRET=...
-GROWTHCAT_INTERNAL_SECRET=...
-GROWTHCAT_PANEL_TOKEN=...
-RC_ADMIN_EMAILS=you@example.com
-# or
-RC_ADMIN_DOMAINS=example.com
+bun run cf:types
 ```
 
-`GROWTHCAT_INTERNAL_SECRET` can fall back to `BETTER_AUTH_SECRET` in local
-development, but production should use a separate value.
+## Local D1
 
-Core runtime providers:
+Initialize the local D1 database:
 
 ```bash
-ANTHROPIC_API_KEY=...
-OPENAI_API_KEY=...
-VOYAGE_API_KEY=...
-DATAFORSEO_LOGIN=...
-DATAFORSEO_PASSWORD=...
-SLACK_BOT_TOKEN=...
-SLACK_SIGNING_SECRET=...
-GITHUB_TOKEN=...
-TYPEFULLY_API_KEY=...
-TYPEFULLY_SOCIAL_SET_ID=...
-REVENUECAT_API_KEY=...
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 migrations apply growthrat --local
 ```
 
-Most connector credentials are optional in local proof mode. Missing connectors
-should degrade to explicit unavailable states, not silent success.
+Useful checks:
+
+```bash
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 execute growthrat --local --command "select count(*) from artifacts"
+```
+
+If D1 is not initialized, public pages still render and API endpoints fall back
+to seeded in-code proof counts.
+
+## Cloudflare Resources To Create
+
+Remote deployment requires real Cloudflare resources matching `wrangler.jsonc`:
+
+```bash
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 create growthrat
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler r2 bucket create growthrat-artifacts
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler queues create growthrat-jobs
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler vectorize create growthrat-doc-index --dimensions 1536 --metric cosine
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler pipelines setup --name growthrat-events
+```
+
+After creating the D1 database, add the generated `database_id` to
+`wrangler.jsonc`, rerun `bun run cf:types`, then apply remote migrations:
+
+```bash
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 migrations apply growthrat --remote
+```
+
+AI Search and Secrets Store should be created from the Cloudflare dashboard or
+the current Wrangler/API commands available in the account.
+
+## Required Secrets
+
+`wrangler.jsonc` declares these required production secrets:
+
+```bash
+GROWTHRAT_INTERNAL_SECRET=
+ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
+REVENUECAT_API_KEY=
+SLACK_BOT_TOKEN=
+TYPEFULLY_API_KEY=
+```
+
+Set them with:
+
+```bash
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler secret put GROWTHRAT_INTERNAL_SECRET
+```
+
+Repeat for each secret. Local proof mode can run with warnings, but production
+deployment should not.
 
 ## Smoke Routes
 
@@ -78,6 +103,7 @@ Public:
 - `/application`
 - `/proof-pack`
 - `/articles`
+- `/articles/revenuecat-for-agent-built-apps`
 - `/readiness-review`
 - `/operator-replay`
 - `/interview-truth`
@@ -94,83 +120,46 @@ Operator:
 - `/report`
 - `/panel`
 
+APIs:
+
+- `/api/runtime`
+- `/api/proof`
+- `/api/chat`
+
+Agent route:
+
+- `/agents/growth-rat-agent/main`
+
 ## Verification
 
 ```bash
 bun run typecheck
+bun run lint
 bun run test
 bun run build
+bun run cf:check
 ```
 
-`bun run lint` runs ESLint directly. The old `next lint` command is not used.
+Observed non-fatal warnings in local pre-production:
 
-## Current Activation Flow
+- Missing required secrets until `.dev.vars`, `.env`, or Wrangler secrets are
+  populated.
+- AI, AI Search, and Vectorize warn because they are remote-backed Cloudflare
+  products.
+- Wrangler may generate generic Pipeline types if the account auth token cannot
+  fetch the live Pipeline schema.
+- The Agents SDK currently emits a Vite warning about `zod/v3` and
+  `fromJSONSchema`; the build still completes.
 
-1. Visit `/sign-in`.
-2. Sign in with an allowlisted account.
-3. Open `/onboarding`.
-4. Submit connector credentials.
-5. Confirm connector state is one of:
-   - `verified`
-   - `manual_verification`
-   - `pending`
-   - `error`
-6. Set mode to `interview_proof` for panel and public proof.
-7. Set mode to `rc_live` only after side-effect surfaces are fail-closed.
+## Legacy Runtime
 
-## Target Cloudflare Setup
-
-The Cloudflare migration is the target architecture, not the current branch
-state. Do not claim the repo has migrated until `astro.config.*`, `wrangler.*`,
-D1 migrations, and Workers bindings exist.
-
-The intended foundation is:
-
-- Astro with Svelte islands on Cloudflare Workers
-- Cloudflare Agents plus Durable Objects for stateful agent sessions
-- Cloudflare Workflows for weekly runs, approvals, retries, and long waits
-- D1 for relational operational state
-- Durable Object SQLite for hot per-agent state and coordination
-- R2 for immutable proof artifacts, snapshots, reports, and receipts
-- Queues for async jobs and backpressure
-- Pipelines for event firehose delivery into R2
-- Secrets Store for connector credentials
-- AI Gateway for model routing, policy, logs, and spend controls
-- AI Search or Vectorize for RevenueCat docs and artifact retrieval
-- Browser Rendering, Sandbox, or Containers only where validation requires them
-
-Useful CLI discovery commands:
+The old Next/Convex app is preserved as a migration source:
 
 ```bash
-cf --help
-cf agent-context
-bunx wrangler --help
-bunx wrangler d1 --help
-bunx wrangler workflows --help
-bunx wrangler pipelines --help
-bunx wrangler ai-search --help
-bunx wrangler vectorize --help
-bunx wrangler queues --help
-bunx wrangler r2 --help
-bunx wrangler secrets-store --help
+bun run dev:next
+bunx convex dev
 ```
 
-Use `cf` for broad Cloudflare account/API/context exploration. Use `wrangler`
-for Workers project development, bindings, local dev, migrations, and deploys.
-
-## Migration Gate
-
-The migration can start when the docs and public copy are aligned and the
-current app's unsafe side-effect surfaces are either closed or explicitly kept
-off the public path.
-
-The first Cloudflare commit should include:
-
-- `astro.config.*`
-- `wrangler.jsonc`
-- D1 schema and migrations
-- initial bindings for D1, R2, Queues, Workflows, and Durable Objects
-- one migrated public page
-- one migrated Svelte island
-- one read-only proof endpoint
-- local and deployment verification commands
+Do not treat the legacy runtime as the active architecture. New public pages,
+Cloudflare endpoints, and agent infrastructure should land under `src/`,
+`migrations/`, and `wrangler.jsonc`.

@@ -12,110 +12,70 @@ operate with bounded autonomy.
 
 This repository is pre-production.
 
-There are two important layers:
+The active app shell is now:
 
-- **Current implementation:** Next.js 16, React 19, Convex, Vercel AI SDK, and
-  Tailwind. This is the running application today.
-- **Target architecture:** Astro with Svelte islands on Cloudflare Workers,
-  backed by Cloudflare Agents, Durable Objects, Workflows, D1, R2, Queues,
-  Pipelines, Secrets Store, AI Gateway, and AI Search or Vectorize.
+- Astro 6
+- Svelte 5 islands
+- Cloudflare Workers through `@astrojs/cloudflare`
+- Cloudflare Agents plus Durable Objects
+- Cloudflare Workflows
+- D1, R2, Queues, Pipelines, AI, AI Search, and Vectorize bindings
 
-Convex is still the current runtime and migration source. It is no longer the
-long-term architecture assumption.
+The old Next.js and Convex implementation still exists under `app/`, `lib/`,
+and `convex/` as the migration source. It is no longer the default served app.
 
-## Why The Target Moved
+## Why This Stack
 
-The application is content-heavy with a few highly interactive surfaces:
+GrowthRat is mostly public proof artifacts with a few interactive surfaces.
+Astro ships the public pages as fast HTML by default. Svelte islands hydrate the
+interactive panel/chat pieces only where needed.
 
-- public application letter
-- proof pack and articles
-- interview chat and panel console
-- operator workflows
-- weekly reports and feedback artifacts
-
-Astro fits the public site because most pages should ship as fast HTML, while
-Svelte islands handle the interactive pieces. Cloudflare fits the agent runtime
-because the same platform can host the web app, stateful agents, durable runs,
-SQL state, object artifacts, queues, observability, and edge-executed validation
-without adding a separate application host.
-
-## Canonical Docs
-
-- [PRD](./docs/product/2026-03-13-growthrat-prd.md) - product requirements and
-  role coverage
-- [Roadmap](./ROADMAP.md) - current execution plan and architecture direction
-- [Setup](./SETUP.md) - current local setup plus Cloudflare migration notes
-- [Local development](./docs/ops/local-development.md) - operational runbook
-- [Role brief](./docs/context/2026-03-06-revenuecat-role-brief.md) - original
-  RevenueCat job requirement source
-- [Interview prep](./docs/interviews/) - panel, take-home, founder, and
-  knowledge-base material
-- [Public artifacts](./docs/public/) - application letter, content samples,
-  feedback, reports, and proof material
-
-Superseded Render, Temporal, FastAPI, and old Convex-native planning documents
-have been removed so the repo has one product doc and one roadmap.
+Cloudflare fits the agent runtime because the same deployment can own the web
+shell, stateful agent sessions, durable jobs, SQL state, object artifacts,
+queues, event ingestion, secrets, model gateway, retrieval, and edge validation.
 
 ## Quick Start
 
-Current implementation:
-
 ```bash
 bun install
-cp .env.example .env.local
-bunx convex dev
 bun run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://127.0.0.1:4321`.
 
 Run checks:
 
 ```bash
 bun run typecheck
+bun run lint
 bun run test
 bun run build
+bun run cf:check
 ```
 
-`bun run lint` runs ESLint directly. Next.js no longer provides the old
-`next lint` command in this app.
+`bun run cf:types` regenerates `worker-configuration.d.ts` after any
+`wrangler.jsonc` binding change.
 
 ## Project Structure
 
 ```text
-app/                    Current Next.js App Router application
-  (public)/             Application, proof pack, articles, onboarding, reviews
-  (operator)/           Dashboard, panel, pipeline, reports, controls
-  api/                  Chat, panel SSE, proof runs, runtime, onboarding
+src/                    Active Astro, Svelte, and Workers runtime
+  pages/                Public pages and API endpoints
+  components/           Svelte islands
+  content/              Public proof metadata
+  lib/                  Cloudflare runtime helpers
+  worker.ts             Custom Worker entry, Agent class, Workflow class
 
-convex/                 Current Convex backend and migration source
-  schema.ts             Current data model
-  agent.ts              GrowthRat agent configuration
-  workflows/            Current durable workflow implementation
-  crons.ts              Scheduled jobs
-  actions.ts            External API and LLM calls
-  mutations.ts          Current DB writes and workflow starters
+migrations/             D1 migrations and seed rows
+wrangler.jsonc          Cloudflare binding source of truth
+worker-configuration.d.ts
+                        Generated Cloudflare runtime types
 
-lib/                    Shared current-runtime modules
-  ai/runtime.ts         LLM runtime chokepoint
-  connectors/           Current connector clients
-  cms/publish.ts        Article publishing helper
-
+app/                    Legacy Next.js migration source
+convex/                 Legacy Convex backend and data-model source
+lib/                    Legacy shared modules and tests
 docs/                   Product, ops, interview, and public proof docs
 ```
-
-## Operating Modes
-
-The current Convex runtime has three modes in `agentConfig`:
-
-| Mode | Chat/Panel | Crons and Workflows | Use case |
-| --- | --- | --- | --- |
-| `dormant` | Off | Off | Idle, zero token burn |
-| `interview_proof` | On | Off | Interview and public proof |
-| `rc_live` | On | On | Full post-hire operation |
-
-Before production, public write surfaces and LLM actions must be fail-closed
-against auth, mode, rate, budget, and connector state.
 
 ## Key URLs
 
@@ -125,20 +85,41 @@ against auth, mode, rate, budget, and connector state.
 | `/application` | Full application letter |
 | `/proof-pack` | Proof-of-work artifacts |
 | `/articles` | Published content portfolio |
+| `/articles/revenuecat-for-agent-built-apps` | Flagship technical sample |
+| `/readiness-review` | RevenueCat agent-builder readiness review |
 | `/interview-truth` | Proven vs. requires activation |
-| `/panel` | Live panel console |
+| `/panel` | Live panel surface |
 | `/dashboard` | Operator status |
-| `/onboarding` | Connector setup |
-| `/go-live` | Capability map and preflight checks |
+| `/api/runtime` | Runtime and binding snapshot |
+| `/api/proof` | Proof artifact index |
+
+## Cloudflare Resource Model
+
+| Need | Owner |
+| --- | --- |
+| Public app and SSR | Astro on Workers |
+| Interactive UI | Svelte islands |
+| Stateful agent sessions | Agents plus Durable Objects |
+| Durable weekly runs | Workflows |
+| Relational state | D1 |
+| Large immutable artifacts | R2 |
+| Async jobs | Queues |
+| Event firehose | Pipelines |
+| Model execution and gateway | Workers AI and AI Gateway |
+| RevenueCat docs retrieval | AI Search or Vectorize |
 
 ## Platform References
 
 - Cloudflare Astro guide:
-  <https://developers.cloudflare.com/workers/frameworks/framework-guides/astro/>
+  <https://developers.cloudflare.com/workers/framework-guides/web-apps/astro/>
+- Astro Cloudflare adapter:
+  <https://docs.astro.build/en/guides/integrations-guide/cloudflare/>
 - Astro islands:
   <https://docs.astro.build/en/concepts/islands/>
 - Astro Svelte integration:
   <https://docs.astro.build/en/guides/integrations-guide/svelte/>
+- Svelte docs:
+  <https://svelte.dev/docs/svelte/overview>
 - Cloudflare Agents:
   <https://developers.cloudflare.com/agents/>
 - Cloudflare Workflows:

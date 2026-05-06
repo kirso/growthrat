@@ -16,6 +16,8 @@ out/
 # Build artifacts
 *.tsbuildinfo
 next-env.d.ts
+.astro/
+.wrangler/
 dist/
 build/
 

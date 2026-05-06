@@ -1,0 +1,104 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "growthrat",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-05-06",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "APP_MODE": "interview_proof",
+    "PUBLIC_SITE_URL": "https://growthrat.com",
+    "REVENUECAT_ROLE": "agentic-ai-growth-advocate"
+  },
+  "secrets": {
+    "required": [
+      "GROWTHRAT_INTERNAL_SECRET",
+      "ANTHROPIC_API_KEY",
+      "OPENAI_API_KEY",
+      "REVENUECAT_API_KEY",
+      "SLACK_BOT_TOKEN",
+      "TYPEFULLY_API_KEY"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "growthrat",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ARTIFACT_BUCKET",
+      "bucket_name": "growthrat-artifacts"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "GROWTHRAT_QUEUE",
+        "queue": "growthrat-jobs"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "growthrat-jobs",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 3
+      }
+    ]
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "GrowthRatAgent",
+        "class_name": "GrowthRatAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "GrowthRatAgent"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "binding": "WEEKLY_LOOP",
+      "name": "growthrat-weekly-loop",
+      "class_name": "GrowthRatWeeklyWorkflow"
+    }
+  ],
+  "pipelines": [
+    {
+      "binding": "EVENT_PIPELINE",
+      "pipeline": "growthrat-events"
+    }
+  ],
+  "vectorize": [
+    {
+      "binding": "DOC_INDEX",
+      "index_name": "growthrat-doc-index"
+    }
+  ],
+  "ai_search": [
+    {
+      "binding": "REVENUECAT_SEARCH",
+      "instance_name": "growthrat-revenuecat-docs"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  }
+}

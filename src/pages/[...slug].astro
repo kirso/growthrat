@@ -1,0 +1,56 @@
+---
+import { getArticle } from "@/content/articles";
+import { getPage } from "@/content/pages";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const slug = Astro.params.slug ?? "";
+const articleSlug = slug.startsWith("articles/") ? slug.replace("articles/", "") : "";
+const article = articleSlug ? getArticle(articleSlug) : undefined;
+const page = article ? undefined : getPage(slug);
+
+if (!article && !page) {
+  return Astro.redirect("/");
+}
+---
+
+<BaseLayout
+  title={article?.title ?? page!.title}
+  description={article?.summary ?? page!.summary}
+>
+  <section class="hero">
+    <div class="shell">
+      <p class="eyebrow">{article ? article.type : page!.eyebrow}</p>
+      <h1>{article?.title ?? page!.title}</h1>
+      <p class="lead">{article?.summary ?? page!.summary}</p>
+      {article && (
+        <div class="actions">
+          <a class="button" href="/articles">Back to articles</a>
+          <span class="button">{article.sourcePath}</span>
+        </div>
+      )}
+    </div>
+  </section>
+
+  {article ? (
+    <section class="section">
+      <div class="shell prose">
+        {article.body.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+    </section>
+  ) : (
+    page!.sections.map((section, index) => (
+      <section class={`section ${index % 2 === 1 ? "alt" : ""}`}>
+        <div class="shell prose">
+          <h2>{section.title}</h2>
+          {section.body.length > 3 ? (
+            <ul>
+              {section.body.map((item) => <li>{item}</li>)}
+            </ul>
+          ) : (
+            section.body.map((paragraph) => <p>{paragraph}</p>)
+          )}
+        </div>
+      </section>
+    ))
+  )}
+</BaseLayout>

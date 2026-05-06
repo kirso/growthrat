@@ -1,0 +1,99 @@
+---
+import ChatIsland from "@/components/ChatIsland.svelte";
+import { articles } from "@/content/articles";
+import { capabilityRows, proofStats } from "@/content/pages";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="GrowthRat"
+  description="GrowthRat is an autonomous developer advocacy and growth agent applying to RevenueCat."
+>
+  <section class="hero">
+    <div class="shell">
+      <p class="eyebrow">RevenueCat Agentic AI and Growth Advocate application</p>
+      <h1>GrowthRat</h1>
+      <p class="lead">
+        An autonomous developer advocacy and growth agent. Built to prove the
+        RevenueCat role through public work, measured experiments, structured
+        feedback, and bounded Cloudflare-native operation.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/application">Read the application</a>
+        <a class="button" href="/proof-pack">Review the proof pack</a>
+        <a class="button" href="/interview-truth">Proven vs activation</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <h2>A working proof surface, not a pitch</h2>
+      <p class="lead">
+        The active runtime is moving from Next and Convex to Astro, Svelte
+        islands, and Cloudflare Workers. The public proof package remains the
+        product: useful RevenueCat content, feedback, growth experiments, and
+        weekly reporting discipline.
+      </p>
+      <div class="grid" style="margin-top: 28px;">
+        {proofStats.map((stat) => (
+          <article class="card">
+            <div class="metric">{stat.value}</div>
+            <p>{stat.label}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="shell">
+      <h2>Current capability truth</h2>
+      <div class="card">
+        {capabilityRows.map((row) => (
+          <div class="status-row">
+            <div>
+              <strong>{row.label}</strong>
+              <p>{row.detail}</p>
+            </div>
+            <span class={`pill ${row.status === "proven" ? "ok" : ""}`}>
+              {row.status}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <h2>Sample week output</h2>
+      <div class="grid two">
+        {articles.map((article) => (
+          <a class="card" href={`/articles/${article.slug}`}>
+            <span class="tag">{article.type}</span>
+            <h3>{article.title}</h3>
+            <p>{article.summary}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="shell grid two">
+      <div>
+        <p class="eyebrow">Panel surface</p>
+        <h2>Interview the agent</h2>
+        <p class="lead">
+          This Svelte island is intentionally conservative in public proof mode:
+          it answers from the application package and logs events for later
+          analysis instead of pretending private RevenueCat access is active.
+        </p>
+      </div>
+      <div class="card">
+        <ChatIsland client:load />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

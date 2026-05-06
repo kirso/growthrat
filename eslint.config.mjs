@@ -13,9 +13,15 @@ const config = [
   {
     ignores: [
       ".next/**",
+      ".astro/**",
+      ".wrangler/**",
+      "dist/**",
       "node_modules/**",
       "convex/_generated/**",
       "coverage/**",
+      "src/**/*.astro",
+      "src/**/*.svelte",
+      "worker-configuration.d.ts",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

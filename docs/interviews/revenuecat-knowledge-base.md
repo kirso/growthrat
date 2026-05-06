@@ -149,14 +149,17 @@ Target keywords with difficulty scores (retrieved 2026-03-16):
 
 ## GrowthRat Architecture
 
-- **Current implementation** — Next.js 16, React 19, Convex, Vercel AI SDK,
-  and Tailwind. This is the running pre-production app.
-- **Target architecture** — Astro with Svelte islands on Cloudflare Workers,
+- **Current implementation** — Astro with Svelte islands on Cloudflare Workers,
   backed by Cloudflare Agents, Durable Objects, Workflows, D1, R2, Queues,
   Pipelines, Secrets Store, AI Gateway, and AI Search or Vectorize.
-- **Convex status** — current runtime and migration source, not the long-term
-  architecture invariant.
-- **Vercel AI SDK v6** — `runTextTask` / `runStructuredTask` / `runStreamTask` chokepoint in `lib/ai/runtime.ts` with Anthropic primary + OpenAI fallback on quota errors
+- **Legacy migration source** — the old Next.js 16, React 19, Convex, Vercel AI
+  SDK, and Tailwind implementation remains in the repo for behavior and schema
+  migration. It is not the default runtime.
+- **Convex status** — migration source only, not the long-term architecture
+  invariant.
+- **Legacy Vercel AI SDK v6** — `runTextTask` / `runStructuredTask` /
+  `runStreamTask` chokepoint in `lib/ai/runtime.ts` with Anthropic primary +
+  OpenAI fallback on quota errors
 - **Voyage AI** — `voyage-3-lite` embeddings (512-dim) for RAG over the `sources` table
 - **Typefully** — multi-platform social distribution (X, LinkedIn, Threads, Bluesky, Mastodon)
 - **DataForSEO** — keyword research, SERP analysis, experiment baselines

@@ -1,112 +1,82 @@
 # Local Development
 
-This runbook is for the current pre-production repository.
+This runbook is for the active pre-production Astro/Svelte/Cloudflare runtime.
 
 ## Current Runtime
 
 The app currently runs on:
 
-- Next.js 16 App Router
-- React 19
-- Convex for database, workflows, crons, HTTP actions, and generated API types
-- Vercel AI SDK for model calls
-- Tailwind CSS v4
+- Astro 6
+- Svelte 5 islands
+- Cloudflare Workers through `@astrojs/cloudflare`
+- Cloudflare Agents plus Durable Objects
+- Cloudflare Workflows
+- D1 for relational operational state
+- R2 for immutable proof artifacts
+- Queues for async work
+- Pipelines for event ingestion
+- AI, AI Search, and Vectorize bindings for the target model/retrieval layer
 
-The older Postgres, FastAPI, Temporal, Docker Compose, Render, Inngest, and
-AgentKit plans are not active. Those planning documents have been removed.
-
-The target runtime is Cloudflare-native, but the migration is not complete.
-Until the migration lands, Convex remains the local development backend.
+The Next.js and Convex code is retained as the migration source. It is no longer
+the default local app.
 
 ## Prerequisites
 
 - Bun 1.3+
-- Convex account or project access
-- `ANTHROPIC_API_KEY`
+- Wrangler 4.88+ from the project dev dependency
+- Cloudflare account for remote resource creation
 - Optional provider keys for activated surfaces:
+  - `ANTHROPIC_API_KEY`
   - `OPENAI_API_KEY`
-  - `VOYAGE_API_KEY`
-  - `DATAFORSEO_LOGIN`
-  - `DATAFORSEO_PASSWORD`
-  - `SLACK_BOT_TOKEN`
-  - `SLACK_SIGNING_SECRET`
-  - `GITHUB_TOKEN`
-  - `TYPEFULLY_API_KEY`
-  - `TYPEFULLY_SOCIAL_SET_ID`
   - `REVENUECAT_API_KEY`
+  - `SLACK_BOT_TOKEN`
+  - `TYPEFULLY_API_KEY`
 
 ## Bootstrap
 
 ```bash
 bun install
-cp .env.example .env.local
+bun run cf:types
+WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler d1 migrations apply growthrat --local
 ```
 
-Fill the minimum environment:
-
-```bash
-NEXT_PUBLIC_CONVEX_URL=...
-NEXT_PUBLIC_CONVEX_SITE_URL=...
-SITE_URL=http://localhost:3000
-BETTER_AUTH_SECRET=...
-GROWTHCAT_INTERNAL_SECRET=...
-GROWTHCAT_PANEL_TOKEN=...
-RC_ADMIN_EMAILS=you@example.com
-```
-
-`GROWTHCAT_INTERNAL_SECRET` can fall back to `BETTER_AUTH_SECRET` in local
-development, but production should use a separate value.
+If you skip D1 initialization, the app still renders with fallback proof counts.
 
 ## Run Locally
-
-Terminal 1:
-
-```bash
-bunx convex dev
-```
-
-Terminal 2:
 
 ```bash
 bun run dev
 ```
 
-Or:
-
-```bash
-bun run dev:all
-```
-
-Open `http://localhost:3000`.
+Open `http://127.0.0.1:4321`.
 
 ## Smoke Checks
 
 | Check | URL or command |
 | --- | --- |
-| Landing | `http://localhost:3000/` |
-| Application letter | `http://localhost:3000/application` |
-| Proof pack | `http://localhost:3000/proof-pack` |
-| Articles | `http://localhost:3000/articles` |
-| Readiness review | `http://localhost:3000/readiness-review` |
-| Interview truth | `http://localhost:3000/interview-truth` |
-| Sign in | `http://localhost:3000/sign-in` |
-| Onboarding | `http://localhost:3000/onboarding` |
-| Dashboard | `http://localhost:3000/dashboard` |
-| Panel | `http://localhost:3000/panel` |
-| Runtime API | `curl http://localhost:3000/api/runtime` |
+| Landing | `http://127.0.0.1:4321/` |
+| Application letter | `http://127.0.0.1:4321/application` |
+| Proof pack | `http://127.0.0.1:4321/proof-pack` |
+| Articles | `http://127.0.0.1:4321/articles` |
+| Readiness review | `http://127.0.0.1:4321/readiness-review` |
+| Interview truth | `http://127.0.0.1:4321/interview-truth` |
+| Dashboard | `http://127.0.0.1:4321/dashboard` |
+| Panel | `http://127.0.0.1:4321/panel` |
+| Runtime API | `curl http://127.0.0.1:4321/api/runtime` |
+| Proof API | `curl http://127.0.0.1:4321/api/proof` |
 
 ## Operating Modes
 
-Modes live in the Convex `agentConfig` table.
+`APP_MODE` lives in `wrangler.jsonc` for local and deployed Workers.
 
 | Mode | Meaning |
 | --- | --- |
-| `dormant` | Chat closed, crons skip, zero intended token burn |
-| `interview_proof` | Public chat and panel only |
-| `rc_live` | Full weekly operation and side effects |
+| `dormant` | Public proof only, no runtime side effects |
+| `interview_proof` | Public proof, deterministic chat, panel-safe answers |
+| `rc_live` | Full weekly operation after credentials and gates are verified |
 
-Before `rc_live`, every public action, mutation, route, and workflow starter
-must be fail-closed against:
+Before `rc_live`, every write, model call, connector action, community action,
+and publishing path must be fail-closed against:
 
 - auth
 - mode
@@ -114,6 +84,7 @@ must be fail-closed against:
 - budget
 - connector state
 - approval policy
+- kill switch
 
 Do not treat a green build as proof of this. Trace the runtime path.
 
@@ -121,42 +92,15 @@ Do not treat a green build as proof of this. Trace the runtime path.
 
 ```bash
 bun run typecheck
+bun run lint
 bun run test
 bun run build
+bun run cf:check
 ```
 
-`bun run lint` runs ESLint directly. The old `next lint` command is not used.
+## Tooling Boundary
 
-## Cloudflare Migration Notes
-
-Cloudflare is the target platform because it can own the web shell, agent
-runtime, state, durable execution, object artifacts, queues, analytics firehose,
-secrets, and model gateway inside one deployment model.
-
-Current product mapping:
-
-| Need | Cloudflare product |
-| --- | --- |
-| Public app and SSR | Astro on Workers |
-| Interactive UI | Svelte islands |
-| Stateful agent sessions | Agents plus Durable Objects |
-| Durable weekly runs | Workflows |
-| Relational state | D1 |
-| Hot per-agent state | Durable Object SQLite |
-| Proof artifacts and snapshots | R2 |
-| Async jobs | Queues |
-| Event firehose | Pipelines to R2 |
-| Secret handling | Secrets Store |
-| Model routing and observability | AI Gateway |
-| Docs and artifact retrieval | AI Search or Vectorize |
-| Browser or code validation | Browser Rendering, Sandbox, or Containers |
-
-Tooling boundary:
-
-- Use `cf` for broad account, zone, DNS, API, and context discovery.
-- Use `wrangler` for Workers project work: dev, deploy, D1, R2, Workflows,
-  Queues, Pipelines, Vectorize, AI Search, and bindings.
-
-Do not migrate everything in one commit. The first Cloudflare slice should prove
-one public page, one Svelte island, one read-only endpoint, and the binding
-shape for D1/R2/Workflows/DO.
+- Use `wrangler` for Workers project work: types, dev, deploy, D1, R2,
+  Workflows, Queues, Pipelines, Vectorize, AI Search, and bindings.
+- Use `cf` for broad Cloudflare account/API/context discovery when available.
+- Keep legacy Convex commands scoped to migration-source inspection.

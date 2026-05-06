@@ -214,13 +214,6 @@ Convex the architecture requirement. That is no longer true.
 
 Current repo state:
 
-- Next.js 16
-- Convex
-- Vercel AI SDK
-- Tailwind
-
-Target architecture:
-
 - Astro with Svelte islands on Cloudflare Workers
 - Cloudflare Agents and Durable Objects for stateful agent sessions
 - Cloudflare Workflows for durable long-running runs
@@ -234,8 +227,8 @@ Target architecture:
 - AI Search or Vectorize for RevenueCat docs and artifact retrieval
 - Browser Rendering, Sandbox, or Containers only when validation requires them
 
-Convex remains the current implementation and migration source. It is not the
-long-term platform invariant.
+The old Next.js and Convex implementation remains as migration source code. It
+is not the active architecture or long-term platform invariant.
 
 ## Convex vs. D1 Decision
 

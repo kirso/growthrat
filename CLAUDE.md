@@ -1,43 +1,80 @@
 # GrowthRat
 
-An autonomous developer-advocacy and growth agent for RevenueCat.
+GrowthRat is an autonomous developer-advocacy and growth agent for RevenueCat.
+The app is pre-production and currently optimized to prove interview readiness,
+technical content capability, growth experiment design, and bounded agent
+operation.
 
-## Stack
+## Active Stack
 
-- Next.js 16 (App Router, React 19, Turbopack)
-- Convex (database, workflows, crons, vector search, agent framework)
-- Vercel AI SDK v6 (Anthropic Claude + OpenAI fallback)
-- Tailwind CSS v4
+- Astro 6 with server output
+- Svelte 5 islands for interactive surfaces
+- Cloudflare Workers through `@astrojs/cloudflare`
+- Cloudflare Agents plus Durable Objects for stateful agent sessions
+- Cloudflare Workflows for durable weekly loops
+- D1 for relational operational state
+- R2 for large artifacts
+- Queues for async jobs
+- Pipelines for event ingestion
+- Workers AI, AI Gateway, AI Search, and Vectorize for model/retrieval paths
+
+The legacy Next.js and Convex app remains in `app/`, `lib/`, and `convex/` as a
+migration source. It is not the default runtime.
+
+## Commands
+
+```bash
+bun run dev          # Astro dev server on http://127.0.0.1:4321
+bun run typecheck    # astro check plus tsc
+bun run lint
+bun run test
+bun run build
+bun run cf:types     # regenerate worker-configuration.d.ts after bindings change
+bun run cf:check     # wrangler deploy --dry-run
+```
+
+Legacy inspection commands:
+
+```bash
+bun run dev:next
+bunx convex dev
+```
 
 ## Architecture
 
-- `app/(public)/` — public pages (application, articles, proof pack, onboarding)
-- `app/(operator)/` — auth-gated operator console (dashboard, panel, pipeline, reports)
-- `app/api/` — chat + panel SSE streaming
-- `convex/` — backend (schema, agent, workflows, crons, actions, mutations)
-- `lib/ai/runtime.ts` — shared LLM runtime (ALL LLM calls go through this)
-- `lib/connectors/` — API clients (Twitter, DataForSEO, GitHub, Slack)
-
-## Convex
-
-- Connected via Vercel Marketplace integration
-- Production: `adventurous-bobcat-240`, Development: `decisive-minnow-257`
-- Build deploys both Next.js and Convex: `npx convex deploy --cmd 'bun run build'`
-- See `convex_rules.txt` for Convex coding guidelines (validators, function registration, queries, mutations, actions, crons, schema)
+- `src/pages/` — active Astro pages and API endpoints
+- `src/components/` — Svelte islands
+- `src/content/` — public proof, article, and page metadata
+- `src/lib/runtime.ts` — Cloudflare runtime helpers and fallback proof snapshot
+- `src/worker.ts` — custom Worker entry, Agent class, Workflow class, queue consumer
+- `migrations/` — D1 schema and seed data
+- `wrangler.jsonc` — Cloudflare binding source of truth
+- `worker-configuration.d.ts` — generated Cloudflare binding types
+- `app/`, `convex/`, `lib/` — legacy migration source
 
 ## Operating Modes
 
-- `dormant` — everything off, zero token burn
-- `interview_proof` — chat/panel only, crons/workflows skip
-- `rc_live` — full operation (crons, workflows, content generation, community monitoring)
+- `dormant` — no side effects
+- `interview_proof` — public proof, chat/panel, and deterministic API surfaces
+- `rc_live` — full post-hire operation after secrets, connectors, approvals, and
+  budgets are active
 
-Mode is stored in `agentConfig` table. All cron starters and API routes check `isRuntimeActive()`.
+Current mode is configured through `APP_MODE` in `wrangler.jsonc` and local
+environment files. Do not enable side effects or connector writes unless the
+mode, required secrets, and approval path are explicit.
 
 ## Key Patterns
 
-- ALL LLM calls go through `lib/ai/runtime.ts` (`runTextTask` / `runStructuredTask` / `runStreamTask`). One exception: `convex/agent.ts` specifies the model at definition time (Convex Agent SDK requirement) but uses env-configurable model ID
-- Convex actions with `"use node"` can import from `../lib/`
-- Cron workflow starters require `rc_live` mode (not just any active mode)
-- Connector secrets are stored encrypted in `connectorSecrets`, never exposed via public queries
-- Budget enforcement: 15 USD/day, 2M input tokens, 400k output tokens
-- Knowledge ingestion uses sitemap-based crawl (`convex/ingest.ts`), not the legacy hardcoded crawler
+- Public proof pages should render without a local D1 database by using seeded
+  fallback data from `src/lib/runtime.ts`.
+- Durable or side-effecting work belongs behind Cloudflare bindings in
+  `src/worker.ts`, API endpoints, Workflows, Queues, or Agents, not in legacy
+  Convex code.
+- Regenerate `worker-configuration.d.ts` with `bun run cf:types` after changing
+  `wrangler.jsonc`.
+- Keep secrets out of D1, R2, and docs. Production values should be Wrangler
+  secrets, Secrets Store entries, or connector records.
+- Treat the old Vercel AI SDK runtime in `lib/ai/runtime.ts` as migration-source
+  material until the Cloudflare-native model path is fully wired.
+- Do not create new active routes in the legacy Next.js app unless the task is
+  explicitly about preserving or inspecting old behavior.
