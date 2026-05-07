@@ -30,13 +30,17 @@ application path.
 - Bun 1.3+
 - Wrangler 4.88+ from the project dev dependency
 - Cloudflare account for remote resource creation
-- Optional connector keys for activated surfaces:
+- Optional local proof fallback keys:
   - `REVENUECAT_API_KEY`
   - `REVENUECAT_PROJECT_ID`
   - `SLACK_BOT_TOKEN`
-  - `TYPEFULLY_API_KEY`
+  - `POSTIZ_API_KEY`
   - `GITHUB_TOKEN`
   - `CMS_API_TOKEN`
+
+In `rc_live`, connector tokens should be supplied by a signed-in RevenueCat
+representative through connected-account onboarding and encrypted before D1
+storage. The env keys above are only for local proof and smoke testing.
 
 ## Bootstrap
 
@@ -79,8 +83,10 @@ Open `http://127.0.0.1:4321`.
 
 ## Experiment Operations
 
-Use `/experiments` for the operator UI. Mutating actions require
-`GROWTHRAT_INTERNAL_SECRET`.
+Use `/sign-in` to start a local RevenueCat representative session, then use
+`/experiments` for the experiment UI. Mutating actions accept the signed
+session cookie. `GROWTHRAT_INTERNAL_SECRET` is the local activation code and
+remains the CLI/API fallback.
 
 The loop is:
 
@@ -88,8 +94,7 @@ The loop is:
 2. use generated `/r/:trackingId` links in approved distribution
 3. collect redirect clicks and tracked page views through `/api/events`
 4. import manual channel metrics until social connectors are active
-5. pull RevenueCat chart snapshots once `REVENUECAT_API_KEY` and
-   `REVENUECAT_PROJECT_ID` are configured
+5. pull RevenueCat chart snapshots once the RevenueCat connector is active
 6. file a readout before counting the experiment as complete
 
 ## Operating Modes

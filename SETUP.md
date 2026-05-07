@@ -75,15 +75,11 @@ resource provisioning errors, so the active retrieval binding is Vectorize.
 
 ## Required Secrets
 
-`wrangler.jsonc` declares these required production secrets:
+The platform declares these required production secrets:
 
 ```bash
 GROWTHRAT_INTERNAL_SECRET=
-ANTHROPIC_API_KEY=
-OPENAI_API_KEY=
-REVENUECAT_API_KEY=
-SLACK_BOT_TOKEN=
-TYPEFULLY_API_KEY=
+GROWTHRAT_CONNECTOR_ENCRYPTION_KEY=
 ```
 
 Set them with:
@@ -92,8 +88,12 @@ Set them with:
 WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler secret put GROWTHRAT_INTERNAL_SECRET
 ```
 
-Repeat for each secret. Local proof mode can run with warnings, but production
-deployment should not.
+Repeat for each platform secret. `GROWTHRAT_INTERNAL_SECRET` starts the first
+RC representative session and remains the CLI/API fallback for protected
+operations. RevenueCat, Slack, CMS, GitHub, Postiz, and other product tokens are
+not deployment secrets in `rc_live`; they are provided by a signed-in RevenueCat
+representative through connected-account onboarding and encrypted before
+storage.
 
 ## Smoke Routes
 
@@ -126,7 +126,15 @@ APIs:
 - `/api/proof`
 - `/api/chat`
 - `/api/activation`
+- `/api/agent-config`
+- `/api/accounts/revenuecat/connectors`
+- `/api/connectors/postiz`
+- `/api/connectors/postiz/upload-from-url`
+- `/api/slack/events`
+- `/api/community/scan`
+- `/api/tasks/execute`
 - `/api/workflows/weekly-dry-run`
+- `/api/workflows/weekly-run`
 
 Agent route:
 

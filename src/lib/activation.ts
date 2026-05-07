@@ -1,6 +1,11 @@
 import { getRuntimeSnapshot, type RuntimeSnapshot } from "./runtime";
 import { getRuntimePolicySnapshot, type RuntimePolicySnapshot } from "./policy";
 import { getSourceStats, type SourceStats } from "./sources";
+import {
+  getConnectorChecks,
+  type ConnectorCheck,
+} from "./connected-accounts";
+import { getRcSessionFromRequest, timingSafeEqual, type RcSession } from "./auth";
 
 export type ActivationStatus = "ready" | "gated" | "blocked";
 
@@ -34,6 +39,7 @@ export type ActivationSnapshot = {
     missing: string[];
     checks: SecretCheck[];
   };
+  connectors: ConnectorCheck[];
   blockers: string[];
   policy: RuntimePolicySnapshot;
   sources: SourceStats;
@@ -41,20 +47,16 @@ export type ActivationSnapshot = {
   readyForRcLive: boolean;
 };
 
-export const requiredSecretKeys = [
+export const requiredPlatformSecretKeys = [
   "GROWTHRAT_INTERNAL_SECRET",
-  "REVENUECAT_API_KEY",
-  "SLACK_BOT_TOKEN",
-  "TYPEFULLY_API_KEY",
-  "GITHUB_TOKEN",
-  "CMS_API_TOKEN",
+  "GROWTHRAT_CONNECTOR_ENCRYPTION_KEY",
 ] as const;
 
 function hasBinding(env: Env, key: keyof Env) {
   return Boolean((env as Partial<Env>)[key]);
 }
 
-function hasSecret(env: Env, key: (typeof requiredSecretKeys)[number]) {
+function hasSecret(env: Env, key: (typeof requiredPlatformSecretKeys)[number]) {
   const value = (env as Partial<Record<typeof key, string>>)[key];
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -67,10 +69,11 @@ function hasConfigValue(env: Env, key: string) {
 export async function getActivationSnapshot(
   env: Env,
 ): Promise<ActivationSnapshot> {
-  const [runtime, policy, sources] = await Promise.all([
+  const [runtime, policy, sources, connectors] = await Promise.all([
     getRuntimeSnapshot(env),
     getRuntimePolicySnapshot(env),
     getSourceStats(env),
+    getConnectorChecks(env),
   ]);
   const mode = String(env.APP_MODE || "interview_proof");
   const productionWorkerObserved =
@@ -80,7 +83,7 @@ export async function getActivationSnapshot(
         .PRODUCTION_WORKER_OBSERVED,
     ) === "true";
 
-  const secretChecks = requiredSecretKeys.map((key) => ({
+  const secretChecks = requiredPlatformSecretKeys.map((key) => ({
     key,
     configured: hasSecret(env, key),
   }));
@@ -186,23 +189,21 @@ export async function getActivationSnapshot(
     },
     {
       key: "secrets",
-      label: "Required secrets",
+      label: "Platform secrets",
       status: missingSecrets.length === 0 ? "ready" : "blocked",
       detail:
         missingSecrets.length === 0
-          ? "All required connector secrets are configured."
-          : `${missingSecrets.length} required secrets are not configured.`,
+          ? "Server-owned auth and connector-encryption secrets are configured."
+          : `${missingSecrets.length} platform secrets are not configured.`,
     },
     {
       key: "revenuecat_access",
-      label: "RevenueCat private access",
-      status:
-        hasSecret(env, "REVENUECAT_API_KEY") &&
-        hasConfigValue(env, "REVENUECAT_PROJECT_ID")
-          ? "gated"
-          : "blocked",
+      label: "RC connected accounts",
+      status: connectors.every((connector) => connector.status === "ready")
+        ? "ready"
+        : "gated",
       detail:
-        "RevenueCat chart snapshots require REVENUECAT_API_KEY and REVENUECAT_PROJECT_ID; private Slack, CMS, GitHub, and social credentials remain post-hire dependencies.",
+        "After interview approval, a RevenueCat representative signs in and connects RevenueCat, Slack, CMS, GitHub, and Postiz from the app.",
     },
     {
       key: "approval_policy",
@@ -228,6 +229,9 @@ export async function getActivationSnapshot(
 
   const blockers = [
     ...gates.filter((gate) => gate.status === "blocked").map((gate) => gate.label),
+    ...connectors
+      .filter((connector) => connector.status === "blocked")
+      .map((connector) => connector.label),
     ...resources
       .filter((resource) => resource.status === "blocked")
       .map((resource) => resource.label),
@@ -236,6 +240,9 @@ export async function getActivationSnapshot(
     .filter((resource) => resource.key !== "ai_search")
     .every((resource) => resource.status === "ready");
   const activationGatesReady = gates.every((gate) => gate.status === "ready");
+  const connectorsReady = connectors.every(
+    (connector) => connector.status === "ready",
+  );
 
   return {
     generatedAt: new Date().toISOString(),
@@ -259,6 +266,7 @@ export async function getActivationSnapshot(
       missing: missingSecrets,
       checks: secretChecks,
     },
+    connectors,
     blockers,
     policy,
     sources,
@@ -269,32 +277,21 @@ export async function getActivationSnapshot(
     readyForRcLive:
       mode === "rc_live" &&
       missingSecrets.length === 0 &&
+      connectorsReady &&
       operationalResourcesReady &&
       activationGatesReady,
   };
 }
 
-async function timingSafeEqual(actual: string, expected: string) {
-  const encoder = new TextEncoder();
-  const actualBytes = encoder.encode(actual);
-  const expectedBytes = encoder.encode(expected);
-
-  if (actualBytes.byteLength !== expectedBytes.byteLength) return false;
-
-  const actualDigest = await crypto.subtle.digest("SHA-256", actualBytes);
-  const expectedDigest = await crypto.subtle.digest("SHA-256", expectedBytes);
-  const actualHash = new Uint8Array(actualDigest);
-  const expectedHash = new Uint8Array(expectedDigest);
-
-  let mismatch = 0;
-  for (const [index, value] of actualHash.entries()) {
-    mismatch |= value ^ expectedHash[index];
+export async function authorizeInternalRequest(request: Request, env: Env): Promise<
+  | { ok: true; session?: RcSession }
+  | { ok: false; status: number; error: string }
+> {
+  const session = await getRcSessionFromRequest(request, env);
+  if (session) {
+    return { ok: true, session };
   }
 
-  return mismatch === 0;
-}
-
-export async function authorizeInternalRequest(request: Request, env: Env) {
   const expected = (env as Partial<Record<"GROWTHRAT_INTERNAL_SECRET", string>>)
     .GROWTHRAT_INTERNAL_SECRET;
 

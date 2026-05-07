@@ -10,6 +10,7 @@ import {
 export type AgentChatResponse = {
   answer: string;
   mode: string;
+  threadId: string;
   source: "rag" | "deterministic" | "blocked";
   policy: {
     chat: string;
@@ -45,9 +46,31 @@ function citationsForSources(sources: RetrievedSource[]) {
   }));
 }
 
+async function recordChatMessage(
+  env: Env,
+  threadId: string,
+  role: "user" | "assistant",
+  content: string,
+  detail: Record<string, unknown> = {},
+) {
+  await env.DB.prepare(
+    "insert into chat_messages (id, thread_id, role, content, detail_json, created_at) values (?, ?, ?, ?, ?, ?)",
+  )
+    .bind(
+      crypto.randomUUID(),
+      threadId,
+      role,
+      content.slice(0, 8000),
+      JSON.stringify(detail),
+      new Date().toISOString(),
+    )
+    .run();
+}
+
 function deterministicResponse(
   env: Env,
   message: string,
+  threadId: string,
   chatPolicyDetail: string,
   modelPolicyDetail: string,
   sources: RetrievedSource[] = [],
@@ -55,6 +78,7 @@ function deterministicResponse(
   return {
     answer: buildChatAnswer(message),
     mode: env.APP_MODE,
+    threadId,
     source: modelPolicyDetail === "blocked" ? "blocked" : "deterministic",
     policy: {
       chat: chatPolicyDetail,
@@ -81,7 +105,9 @@ export async function answerAgentChat(
   env: Env,
   request: Request,
   message: string,
+  threadId: string = crypto.randomUUID(),
 ): Promise<{ status: number; body: AgentChatResponse | { error: string; detail: string } }> {
+  await recordChatMessage(env, threadId, "user", message).catch(() => undefined);
   const chatPolicy = await enforceChatPolicy(env, request, message);
   if (!chatPolicy.ok) {
     await recordEvent(env, {
@@ -113,6 +139,7 @@ export async function answerAgentChat(
     const response = deterministicResponse(
       env,
       message,
+      threadId,
       chatPolicy.detail,
       "source retrieval returned no indexed sources",
       sources,
@@ -126,6 +153,10 @@ export async function answerAgentChat(
         citations: sources.length,
       },
     });
+    await recordChatMessage(env, threadId, "assistant", response.answer, {
+      source: response.source,
+      citations: sources.length,
+    }).catch(() => undefined);
 
     return { status: 200, body: response };
   }
@@ -137,6 +168,7 @@ export async function answerAgentChat(
     const response = deterministicResponse(
       env,
       message,
+      threadId,
       chatPolicy.detail,
       reason,
       sources,
@@ -150,6 +182,10 @@ export async function answerAgentChat(
         citations: sources.length,
       },
     });
+    await recordChatMessage(env, threadId, "assistant", response.answer, {
+      source: response.source,
+      citations: sources.length,
+    }).catch(() => undefined);
 
     return { status: 200, body: response };
   }
@@ -212,12 +248,18 @@ export async function answerAgentChat(
       aiGatewayLogId,
     },
   });
+  await recordChatMessage(env, threadId, "assistant", answer, {
+    source: "rag",
+    citations: sources.length,
+    aiGatewayLogId,
+  }).catch(() => undefined);
 
   return {
     status: 200,
     body: {
       answer,
       mode: env.APP_MODE,
+      threadId,
       source: "rag",
       policy: {
         chat: chatPolicy.detail,

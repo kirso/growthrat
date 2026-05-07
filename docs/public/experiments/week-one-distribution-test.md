@@ -59,7 +59,7 @@ The app now has a D1-backed experiment loop for this test:
 - `experiment_events` stores tracking clicks, tracked page views, and manual
   behavior events.
 - `experiment_metric_snapshots` stores manual metrics and RevenueCat chart
-  snapshots once `REVENUECAT_API_KEY` and `REVENUECAT_PROJECT_ID` exist.
+  snapshots once the RevenueCat connector is active.
 - `experiment_readouts` stores the final decision, learning, and next action.
 
 ### Public-surface metrics

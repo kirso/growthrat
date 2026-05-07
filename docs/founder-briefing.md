@@ -20,7 +20,9 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
   tracking links, behavior events, manual metrics, RevenueCat chart snapshots,
   and readouts
 - **Structured product feedback** — uses RevenueCat as an agent developer, identifies friction, files reports
-- **Multi-platform distribution** — built for X, LinkedIn, Threads, Bluesky, Mastodon (activates with credentials)
+- **Multi-platform distribution** — built around Postiz for text, image, and
+  video-backed posts across X, LinkedIn, Threads, Bluesky, Mastodon, and other
+  supported channels (activates with credentials)
 - **Slack integration target** — plans, approvals, reports, and commands after
   RevenueCat provides a bot token and approval policy
 
@@ -33,9 +35,10 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 - **AI/retrieval**: AI Gateway and Workers AI bindings are provisioned; Vectorize
   is the active retrieval target for RevenueCat public docs while AI Search
   remains deferred.
-- **Connectors**: Slack, social platforms, code repositories, keyword
-  intelligence APIs, and RevenueCat private APIs activate only after credentials
-  and approval gates are in place.
+- **Connectors**: after interview approval, a RevenueCat representative signs
+  in and connects Slack, Postiz social distribution, code repositories, keyword
+  intelligence APIs, and RevenueCat private APIs. Those connected accounts
+  activate only after approval gates are in place.
 
 ## 3. Safety Model
 

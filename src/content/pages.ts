@@ -117,7 +117,7 @@ export const pages: RoutePage[] = [
         body: [
           "GrowthRat already shipped the public application package: technical content, feedback reports, a growth experiment, a sample weekly report, and an agent-builder readiness review.",
           "The system is built around evidence, bounded autonomy, explicit activation states, and source-backed artifacts. That is the role, not a mascot layer around the role.",
-          "The honest boundary is that public proof and the gated runtime exist today, while live RevenueCat operation still requires RevenueCat-owned credentials, channel access, and connector approvals.",
+          "The honest boundary is that public proof, representative sign-in, and the gated runtime exist today, while live RevenueCat operation still requires RC-owned accounts, private context, and approved connector side effects.",
         ],
       },
     ],
@@ -134,7 +134,7 @@ export const pages: RoutePage[] = [
         body: [
           "GrowthRat is an autonomous developer advocacy and growth agent for RevenueCat-style work: source-grounded technical content, growth experiments, community answers, product feedback, and weekly reporting.",
           "The product is not the framework, the hosting stack, or a chatbot demo. The product is the operating loop that turns developer friction into useful public work and measurable learning.",
-          "The current app is the public proof and operator surface for that loop. It can run source-grounded chat and weekly dry-run artifacts, but it is not yet a live employee because RevenueCat-owned external systems are not connected.",
+          "The current app is the public proof and operator surface for that loop. It can run source-grounded chat and weekly artifacts, but it is not yet a live employee because RevenueCat-owned external systems are not connected through representative onboarding.",
         ],
       },
       {
@@ -150,8 +150,8 @@ export const pages: RoutePage[] = [
         title: "Missing before it is a live autonomous advocate",
         body: [
           "The production Vectorize index represents the public RevenueCat docs index; it still does not include private product context, internal roadmap notes, or private Charts data.",
-          "The production Worker is deployed on Cloudflare workers.dev; live operation still needs required connector secrets and RevenueCat-owned channel activation.",
-          "Slack, blog CMS, GitHub, X, forums, Discord, RevenueCat Charts/Metrics, and social publishing connectors must be activated.",
+          "The production Worker is deployed on Cloudflare workers.dev; live operation still needs connected accounts, private context, and channel activation.",
+          "Slack, blog CMS, GitHub, X, forums, Discord, RevenueCat Charts/Metrics, and Postiz social publishing must be activated.",
           "Approval policy, rate limits, budget caps, audit logs, and kill-switch behavior are now wired for the runtime path; external publishing still needs connector-specific approval rules.",
           "Live analytics must measure the weekly content and growth loop instead of relying on sample artifacts.",
         ],
@@ -160,7 +160,7 @@ export const pages: RoutePage[] = [
         title: "Verdict",
         body: [
           "GrowthRat is a credible gated autonomous advocate system and a strong application proof package.",
-          "It is not yet a RevenueCat-owned live advocate. The remaining gap is access: RevenueCat private data, Slack/CMS/GitHub/social credentials, and approved external side effects.",
+          "It is not yet a RevenueCat-owned live advocate. The remaining gap is connected accounts for private data and external channels, formal RC identity preference, and approved external side effects.",
         ],
       },
     ],
@@ -185,7 +185,7 @@ export const pages: RoutePage[] = [
         body: [
           "RevenueCat asked for an autonomous agent that can publish, experiment, engage, report, and submit product feedback. The proof pack shows those work products before internal access exists.",
           "The strongest signal is not volume. It is that the artifacts are specific to RevenueCat's model and written as reusable assets for agent builders.",
-          "The remaining gap is activation, not imagination: source ingestion, credentials, live community channels, deployment, and production approval policy.",
+          "The remaining gap is activation, not imagination: RC-owned credentials, private context, live community channels, and production approval policy.",
         ],
       },
     ],
@@ -246,7 +246,7 @@ export const pages: RoutePage[] = [
       {
         title: "Requires RevenueCat access",
         body: [
-          "Slack workspace, blog CMS, Charts access, private product context, GitHub org access, approved social distribution, and production connector activation.",
+          "Slack workspace, blog CMS, Charts access, private product context, GitHub org access, approved Postiz social distribution, and production connector activation.",
           "The retrieval layer has the public RevenueCat docs index, but it cannot claim private RevenueCat access or unreleased product knowledge.",
           "Any claim that those are already live would be an overclaim.",
         ],
@@ -322,7 +322,7 @@ export const pages: RoutePage[] = [
         body: [
           "Deploy the production Worker and observe it serving the public proof app.",
           "Ingest RevenueCat docs, API references, SDK docs, changelog, and public work samples into the retrieval index.",
-          "Activate Slack, CMS, RevenueCat, GitHub, X, forums, Discord, analytics, and social connectors.",
+          "Have a RevenueCat representative connect Slack, CMS, RevenueCat, GitHub, X/forums/Discord community surfaces, analytics, and Postiz social distribution.",
           "Verify auth, mode, rate, budget, connector, approval, audit-log, and kill-switch behavior before any external side effect.",
           "Run one dry weekly loop end to end: source retrieval, topic selection, draft, review, distribution plan, feedback, metrics, and async report.",
         ],
@@ -334,14 +334,14 @@ export const pages: RoutePage[] = [
     title: "Connector onboarding",
     eyebrow: "Setup",
     summary:
-      "The connector checklist for a RevenueCat-owned deployment.",
+      "The connected-account checklist for a RevenueCat-owned deployment.",
     sections: [
       {
         title: "Connector states",
         body: [
-          "Each connector should be explicit: missing, pending, verified, manual verification, or error.",
+          "Each connector should be owned by the RevenueCat account and explicit: missing, pending, verified, manual verification, or error.",
           "Connector loss must degrade read paths clearly and fail closed for side effects.",
-          "Slack owns team requests and approvals. CMS owns long-form publishing. GitHub owns code samples and docs PRs. Social/community connectors own distribution and engagement. RevenueCat APIs own monetization truth.",
+          "Slack owns team requests and approvals. CMS owns long-form publishing. GitHub owns code samples and docs PRs. Postiz owns social distribution. Community connectors own engagement. RevenueCat APIs own monetization truth.",
           "No connector should be treated as optional if the agent is claiming to perform the live weekly role.",
         ],
       },
@@ -428,16 +428,16 @@ export const pages: RoutePage[] = [
   {
     slug: "sign-in",
     title: "Sign in",
-    eyebrow: "Operator auth",
+    eyebrow: "RC auth",
     summary:
-      "Authentication is intentionally not activated in this Cloudflare foundation slice.",
+      "After interview approval, a RevenueCat representative should be able to sign in and connect owned accounts at any point.",
     sections: [
       {
         title: "Current behavior",
         body: [
-          "Public proof surfaces are available without auth.",
-          "Mutating operator actions remain disabled until auth and approval policy are wired and tested.",
-          "A finished live deployment needs operator identity, reviewer roles, approval history, and emergency stop controls before Slack, publishing, or social actions are exposed.",
+          "Public proof surfaces are available without auth before the interview decision.",
+          "After approval, RC representative auth is the entry point for connecting RevenueCat, Slack, CMS, GitHub, Postiz, and other accounts.",
+          "A finished live deployment still needs RC's preferred formal identity path, reviewer roles, approval history, and emergency stop controls before Slack, publishing, or social actions are exposed.",
         ],
       },
     ],

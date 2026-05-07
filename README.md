@@ -11,8 +11,8 @@ operate with bounded autonomy.
 ## Current Status
 
 This repository is a gated production-capable proof system. It is still not a
-RevenueCat-owned live advocate until post-hire connector credentials and
-approvals exist.
+RevenueCat-owned live advocate until a RevenueCat representative signs in,
+connects the required accounts, and approves live operation.
 
 The active app shell is now:
 
@@ -99,7 +99,11 @@ docs/                   Product, ops, interview, and public proof docs
 | `/experiments` | Experiment operating surface |
 | `/api/runtime` | Runtime and binding snapshot |
 | `/api/proof` | Proof artifact index |
-| `/api/activation` | Resource, secret, and gate snapshot |
+| `/api/activation` | Resource, platform secret, connected-account, and gate snapshot |
+| `/api/auth/register` | RC representative session start after activation code |
+| `/api/auth/session` | RC representative session check |
+| `/api/agent-config` | Authenticated mode, review, focus topic, and budget policy config |
+| `/api/accounts/revenuecat/connectors` | Authenticated RC connected-account registry |
 | `/api/policy` | Runtime policy and protected kill-switch/model toggle updates |
 | `/api/sources` | Source/retrieval index status |
 | `/api/sources/ingest` | Protected seed or RevenueCat docs batch ingestion into Vectorize |
@@ -107,8 +111,14 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot |
 | `/api/experiments/:id/readout` | Authenticated experiment readout creation |
+| `/api/connectors/postiz` | Authenticated Postiz social connector health and draft/schedule endpoint |
+| `/api/connectors/postiz/upload-from-url` | Authenticated Postiz media upload by public asset URL |
+| `/api/slack/events` | Slack event/mention/reaction receiver with signature verification |
+| `/api/community/scan` | Authenticated GitHub community-signal scanner and reply drafter |
+| `/api/tasks/execute` | Authenticated take-home style task decomposition/execution |
 | `/api/events` | Public behavior event capture |
 | `/api/workflows/weekly-dry-run` | Protected manual weekly Workflow dry run |
+| `/api/workflows/weekly-run` | Protected full advocate-loop run |
 | `/r/:trackingId` | Tracking redirect with experiment event logging |
 
 ## Cloudflare Resource Model
@@ -130,6 +140,8 @@ docs/                   Product, ops, interview, and public proof docs
 
 The activation gate lives in
 [docs/ops/cloudflare-activation-checklist.md](docs/ops/cloudflare-activation-checklist.md).
+The migration recovery matrix lives in
+[docs/ops/migration-verification.md](docs/ops/migration-verification.md).
 
 ## RevenueCat Docs Grounding
 
@@ -155,12 +167,14 @@ GrowthRat now has a pre-production experiment operating system:
 2. generate tracking links under `/r/:trackingId`
 3. record behavior through redirect clicks, tracked page views, and manual events
 4. import external metrics manually when connectors are unavailable
-5. pull RevenueCat chart snapshots when `REVENUECAT_API_KEY` and
-   `REVENUECAT_PROJECT_ID` are configured
+5. pull RevenueCat chart snapshots when the RevenueCat account is connected
+   by an RC representative
 6. file a readout with decision, learning, next action, and metric summary
 
 This is enough to prove the weekly growth-experiment discipline before
-RevenueCat grants Slack, CMS, GitHub, social, and private Charts access.
+RevenueCat signs in and connects Slack, CMS, GitHub, Postiz social, keyword,
+community monitoring, and private Charts access through the connected-account
+flow.
 
 ## Runtime Safety
 
@@ -172,8 +186,12 @@ All public chat/model paths now pass through one policy layer:
 4. model-chat toggle
 5. AI Gateway metadata/logging
 
-Protected operator mutations require `GROWTHRAT_INTERNAL_SECRET`. The policy
-endpoint can toggle `kill_switch` and `model_chat_enabled` without redeploying.
+Protected UI mutations use a signed RC representative session. The same
+`GROWTHRAT_INTERNAL_SECRET` remains as the initial activation code and CLI/API
+fallback. Live connector credentials are RC-provided connected accounts
+encrypted with `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY`, not production deployment
+env vars. The policy endpoint can toggle `kill_switch` and
+`model_chat_enabled` without redeploying.
 
 ## Platform References
 
@@ -193,5 +211,7 @@ endpoint can toggle `kill_switch` and `model_chat_enabled` without redeploying.
   <https://developers.cloudflare.com/d1/>
 - Cloudflare Pipelines:
   <https://developers.cloudflare.com/pipelines/>
+- Postiz Public API:
+  <https://docs.postiz.com/public-api>
 - RevenueCat API v2:
   <https://www.revenuecat.com/docs/api-v2>

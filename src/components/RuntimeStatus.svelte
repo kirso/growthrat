@@ -42,6 +42,7 @@
       configured: number;
       missing: string[];
     };
+    connectors: ActivationCheck[];
     blockers: string[];
     policy: {
       killSwitch: boolean;
@@ -127,11 +128,18 @@
         <p>Proof data source</p>
       </article>
       <article class="card">
-        <span class="tag">Secrets</span>
+        <span class="tag">Platform</span>
         <div class="metric">
           {snapshot.secrets.configured}/{snapshot.secrets.required}
         </div>
-        <p>Required production secrets configured</p>
+        <p>Server-owned secrets configured</p>
+      </article>
+      <article class="card">
+        <span class="tag">Connectors</span>
+        <div class="metric">
+          {snapshot.connectors.filter((item) => item.status === "ready").length}/{snapshot.connectors.length}
+        </div>
+        <p>RC-provided accounts connected</p>
       </article>
       <article class="card">
         <span class="tag">Experiments</span>
@@ -175,6 +183,21 @@
       <article class="card">
         <h3>Activation gates</h3>
         {#each snapshot.gates as item}
+          <div class="status-row compact">
+            <div>
+              <strong>{item.label}</strong>
+              <p>{item.detail}</p>
+            </div>
+            <span class="pill {item.status === 'ready' ? 'ok' : ''}">
+              {statusLabel[item.status]}
+            </span>
+          </div>
+        {/each}
+      </article>
+
+      <article class="card">
+        <h3>Connected accounts</h3>
+        {#each snapshot.connectors as item}
           <div class="status-row compact">
             <div>
               <strong>{item.label}</strong>

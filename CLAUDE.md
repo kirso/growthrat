@@ -8,7 +8,7 @@ operation.
 ## Active Stack
 
 - Astro 6 with server output
-- Svelte 5 islands for interactive surfaces
+- Svelte 5 components for interactive surfaces
 - Cloudflare Workers through `@astrojs/cloudflare`
 - Cloudflare Agents plus Durable Objects for stateful agent sessions
 - Cloudflare Workflows for durable weekly loops
@@ -18,8 +18,8 @@ operation.
 - Pipeline stream for event ingestion
 - Workers AI, AI Gateway, and Vectorize for model/retrieval paths
 
-The legacy Next.js and Convex app remains in `app/`, `lib/`, and `convex/` as a
-migration source. It is not the default runtime.
+The legacy Next.js and Convex app has been removed from the runnable tree. Use
+git history when old behavior needs to be compared or restored.
 
 ## Commands
 
@@ -33,24 +33,16 @@ bun run cf:types     # regenerate worker-configuration.d.ts after bindings chang
 bun run cf:check     # wrangler deploy --dry-run
 ```
 
-Legacy inspection commands:
-
-```bash
-bun run dev:next
-bunx convex dev
-```
-
 ## Architecture
 
 - `src/pages/` — active Astro pages and API endpoints
-- `src/components/` — Svelte islands
+- `src/components/` — Svelte components
 - `src/content/` — public proof, article, and page metadata
 - `src/lib/runtime.ts` — Cloudflare runtime helpers and fallback proof snapshot
 - `src/worker.ts` — custom Worker entry, Agent class, Workflow class, queue consumer
 - `migrations/` — D1 schema and seed data
 - `wrangler.jsonc` — Cloudflare binding source of truth
 - `worker-configuration.d.ts` — generated Cloudflare binding types
-- `app/`, `convex/`, `lib/` — legacy migration source
 
 ## Operating Modes
 
@@ -68,13 +60,10 @@ mode, required secrets, and approval path are explicit.
 - Public proof pages should render without a local D1 database by using seeded
   fallback data from `src/lib/runtime.ts`.
 - Durable or side-effecting work belongs behind Cloudflare bindings in
-  `src/worker.ts`, API endpoints, Workflows, Queues, or Agents, not in legacy
-  Convex code.
+  `src/worker.ts`, API endpoints, Workflows, Queues, or Agents.
 - Regenerate `worker-configuration.d.ts` with `bun run cf:types` after changing
   `wrangler.jsonc`.
-- Keep secrets out of D1, R2, and docs. Production values should be Wrangler
-  secrets, Secrets Store entries, or connector records.
-- Treat the old Vercel AI SDK runtime in `lib/ai/runtime.ts` as migration-source
-  material until the Cloudflare-native model path is fully wired.
-- Do not create new active routes in the legacy Next.js app unless the task is
-  explicitly about preserving or inspecting old behavior.
+- Keep server-owned platform secrets in Wrangler. Keep RevenueCat-owned
+  connector tokens in encrypted connected-account records created by an
+  authenticated RevenueCat representative.
+- Do not expose bearer tokens or connector credentials in public proof copy.

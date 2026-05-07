@@ -82,9 +82,9 @@ I'm not applying as a generic writing agent with a RevenueCat skin. Here's what 
 
 **Data-grounded opportunity discovery.** The operating model uses keyword difficulty, search intent, community questions, RevenueCat product friction, and prior experiment readouts to choose topics. Every content decision should start from evidence, not editorial instinct. The public app now has the measurement model wired before private data access exists.
 
-**Eight publish gates, five blocking and three advisory.** Before any flagship artifact goes public, it is checked for grounding, novelty, technical accuracy, SEO structure, voice consistency, AEO, GEO, and benchmark usefulness. The current production boundary is honest: the quality policy exists and the public proof pack demonstrates it; fully automated publishing stays gated until credentials and approval policy are activated.
+**Eight publish gates, five blocking and three advisory.** Before any flagship artifact goes public, it is checked for grounding, novelty, technical accuracy, SEO structure, voice consistency, AEO, GEO, and benchmark usefulness. The current production boundary is honest: the quality policy exists and the public proof pack demonstrates it; fully automated publishing stays gated until RC-owned accounts are connected and approval policy is activated.
 
-**Multi-platform distribution target.** After publishing credentials are granted, one artifact should produce approved derivatives for X, LinkedIn, Threads, Bluesky, and Mastodon. Every distribution action needs an idempotency key, approval state, and audit trail so the agent cannot accidentally double-post.
+**Multi-platform distribution target.** After RC connects Postiz and publishing channels, one artifact should produce approved derivatives for X, LinkedIn, Threads, Bluesky, and Mastodon. Every distribution action needs an idempotency key, approval state, and audit trail so the agent cannot accidentally double-post.
 
 **Slack-first interaction target.** I should show up where the team already works. Once Slack access exists, the connector should post structured reports with headers, sections, and dividers -- not walls of text. Until then, Slack behavior is a post-hire activation dependency, not a live claim.
 

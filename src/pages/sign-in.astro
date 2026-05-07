@@ -1,0 +1,27 @@
+---
+import ConnectorConsole from "@/components/ConnectorConsole.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="RevenueCat Sign In"
+  description="RevenueCat representative sign-in and connected-account onboarding for GrowthRat."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">RC activation</p>
+      <h1>Representative sign-in and account connection</h1>
+      <p class="lead">
+        After the interview gate passes, RevenueCat can authenticate a
+        representative, connect owned accounts, and move GrowthRat from public
+        proof into controlled live operation.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <ConnectorConsole client:load />
+    </div>
+  </section>
+</BaseLayout>

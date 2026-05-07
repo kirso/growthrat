@@ -58,7 +58,7 @@ The current app has useful surfaces:
 
 The current app is a gated production-capable proof system. It is not yet a
 RevenueCat-owned live advocate because RevenueCat access, Slack/CMS/GitHub/social
-credentials, and connector-specific approval rules are still post-hire
+connected accounts, and connector-specific approval rules are still post-hire
 dependencies.
 
 ## Cloudflare Resource State
@@ -80,8 +80,9 @@ Verified in the Cloudflare account on 2026-05-06 and updated locally on
 - Rate-limit bindings are declared for chat, model calls, and public event
   writes.
 - AI Search provisioning failed, so Vectorize is the active retrieval path.
-- A dedicated Secrets Store is blocked by account store quota; Wrangler secrets
-  are the current production path.
+- A dedicated Secrets Store is blocked by account store quota; server-owned
+  platform secrets stay in Wrangler, while RC-owned connector credentials are
+  now modeled as encrypted connected-account records.
 - The `growthrat` Worker and `growthrat-weekly-loop` Workflow are deployed on
   workers.dev.
 
@@ -125,6 +126,7 @@ operational seams a solo operator has to maintain.
 | Retrieval index | Vectorize now; AI Search later if provisionable |
 | Long-running weekly cadence | Workflows |
 | Bursty async jobs | Queues |
+| RC-owned connector credentials | Connected-account records in D1, encrypted with a platform secret |
 
 ## Current Rung
 
@@ -164,11 +166,12 @@ Completed:
 
 Remaining:
 
-- configure production secrets for RevenueCat, Slack, CMS, GitHub, and Typefully
-  before calling connector paths live
+- have a RevenueCat representative sign in and connect RevenueCat, Slack, CMS,
+  GitHub, and Postiz before calling connector paths live
 - configure a custom domain if `growthrat.com` should be the public URL
 - configure Pipeline R2 sink if we want event lake persistence
-- activate RevenueCat, Slack, CMS, GitHub, and social connectors after hire
+- activate RevenueCat, Slack, CMS, GitHub, and Postiz social connected accounts
+  after hire
 
 ## Next Gate
 
@@ -218,7 +221,8 @@ Tasks:
 - require policy checks for public write surfaces
 - make Slack approval fail closed when Slack is unavailable
 - add tests for dormant, interview proof, and rc live modes
-- keep missing-secret and remote-binding warnings visible in setup docs
+- keep missing-platform-secret, connected-account, and remote-binding warnings
+  visible in setup docs
 
 Status: core runtime path implemented. Connector-specific approval remains before
 `rc_live`.

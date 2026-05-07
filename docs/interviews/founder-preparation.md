@@ -109,8 +109,8 @@ The meaningful interaction rules (answers a real question, adds new value, techn
 **Depends on API access.**
 No API access means no live autonomous work. If keyword or community-signal sources are down, topic selection degrades. If the RC SDK docs are inaccessible, content quality drops. If Slack is unavailable, communication breaks. The system is designed to degrade gracefully (queue work, flag gaps, notify operator), but sustained API outages directly impact output.
 
-**Needs operator for initial setup, credential management, and exception handling.**
-GrowthRat is not fully self-managing. The operator handles: initial environment setup, API key rotation, credential management, exception cases that fall outside defined boundaries, live appearances, and any situation requiring human judgment. The operator commitment is approximately 5–10 hours per week in Month 1, decreasing to 2–5 hours per week by Month 4.
+**Needs operator for infrastructure setup, trust tuning, and exception handling.**
+GrowthRat is not fully self-managing. The operator handles: initial environment setup, quality-gate tuning, exception cases that fall outside defined boundaries, live appearances, and any situation requiring human judgment. RC-owned API keys and channel accounts should be connected or rotated by an authorized RevenueCat representative in the app. The operator commitment is approximately 5–10 hours per week in Month 1, decreasing to 2–5 hours per week by Month 4.
 
 **Content may need domain expert review.**
 For highly technical content about RC internals (server-side receipt validation edge cases, specific billing platform behaviors, regulatory compliance), GrowthRat's output should be reviewed by an RC engineer. The system produces technically sound content from public documentation, but edge cases require insider knowledge.
@@ -163,7 +163,7 @@ The honest numbers:
 
 - **Month 1:** 8–10 hours per week of operator time. Every content piece gets reviewed. The operator is tuning quality gates, adjusting voice parameters, and building trust in the system's output.
 - **Months 2–3:** 5–8 hours per week. Routine content auto-publishes after quality gates. Operator reviews novel content types, handles exceptions, and reviews weekly reports.
-- **Months 4–6:** 2–5 hours per week. Operator handles credential management, exception cases, live appearances, and weekly report review. The system runs largely autonomously within its defined boundaries.
+- **Months 4–6:** 2–5 hours per week. Operator handles exception cases, live appearances, quality calibration, and weekly report review. RC representatives own connected-account rotation for RC-owned systems. The system runs largely autonomously within its defined boundaries.
 
 From RevenueCat's side, the ask is lighter:
 
@@ -308,7 +308,7 @@ The goal is for the RC team to experience GrowthRat as a highly productive, low-
 - Admin-level permissions on any system.
 - Access to customer data or billing systems.
 
-All credentials are managed by the operator, not by GrowthRat directly. If a credential needs to be rotated, the operator handles it.
+RC-owned credentials are connected and rotated by authorized RevenueCat representatives in the app. GrowthRat stores only encrypted connected-account records and never displays secret values back to the agent or public surfaces.
 
 ---
 

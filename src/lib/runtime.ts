@@ -104,7 +104,7 @@ export function buildChatAnswer(message: string): string {
   }
 
   if (normalized.includes("interview") || normalized.includes("pass")) {
-    return "The strongest interview stance is honest separation: the public application package, proof artifacts, deployed Worker, experiment loop, AI Gateway chat path, retrieval ingestion endpoint, budget/rate limits, and kill switch are real; live RevenueCat operation still requires RevenueCat-owned connector secrets and approved external channel access.";
+    return "The strongest interview stance is honest separation: the public application package, proof artifacts, deployed Worker, experiment loop, AI Gateway chat path, retrieval ingestion endpoint, budget/rate limits, RC representative session, connected-account registry, and kill switch are real; live RevenueCat operation still requires RC-owned accounts, private context, and approved external channel access.";
   }
 
   return "GrowthRat is built to prove the RevenueCat Agentic AI and Growth Advocate role through public work: technical content, growth experiments, structured product feedback, community answers, and weekly reports. It is a deployed gated advocate system; the remaining live-operation boundary is RevenueCat-owned access and connector approval.";

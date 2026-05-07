@@ -568,6 +568,44 @@ a.card {
   align-items: end;
 }
 
+.connector-console {
+  display: grid;
+  gap: 24px;
+}
+
+.connector-row {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  padding: 16px 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.connector-row:last-child {
+  border-bottom: 0;
+}
+
+.connector-row:hover {
+  color: var(--dark);
+  transform: translateY(-1px);
+}
+
+.connector-row small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .form-stack {
   display: grid;
   gap: 15px;

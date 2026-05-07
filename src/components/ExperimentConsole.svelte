@@ -43,6 +43,12 @@
     created_at: string;
   };
 
+  type Session = {
+    email: string;
+    role: string;
+    expiresAt: string;
+  };
+
   type Experiment = {
     id: string;
     slug: string;
@@ -61,7 +67,7 @@
 
   let experiments: Experiment[] = [];
   let selectedId = "";
-  let token = "";
+  let session: Session | null = null;
   let pending = true;
   let actionPending = false;
   let message = "";
@@ -108,6 +114,7 @@
     experiments.find((experiment) => experiment.id === selectedId) ??
     experiments[0] ??
     null;
+  $: canMutate = Boolean(session);
 
   function parseVariants(value: string) {
     return value
@@ -147,15 +154,26 @@
     }
   }
 
+  async function loadSession() {
+    const response = await fetch("/api/auth/session", {
+      credentials: "same-origin",
+    });
+    const data = (await response.json().catch(() => ({}))) as {
+      authenticated?: boolean;
+      session?: Session | null;
+    };
+    session = data.authenticated ? (data.session ?? null) : null;
+  }
+
   async function internalRequest(path: string, body: Record<string, unknown>) {
-    if (!token.trim()) {
-      throw new Error("Operator token is required for mutating actions.");
+    if (!canMutate) {
+      throw new Error("RevenueCat representative sign-in is required.");
     }
 
     const response = await fetch(path, {
       method: "POST",
+      credentials: "same-origin",
       headers: {
-        authorization: `Bearer ${token.trim()}`,
         "content-type": "application/json",
       },
       body: JSON.stringify(body),
@@ -177,7 +195,6 @@
     error = "";
 
     try {
-      if (token.trim()) localStorage.setItem("growthrat-token", token.trim());
       await task();
       await loadExperiments();
     } catch (err) {
@@ -242,8 +259,7 @@
   }
 
   onMount(() => {
-    token = localStorage.getItem("growthrat-token") ?? "";
-    void loadExperiments();
+    void Promise.all([loadSession(), loadExperiments()]);
   });
 </script>
 
@@ -376,18 +392,18 @@
 
     <div class="card operator-panel">
       <div>
-        <h3>Operator token</h3>
-        <p>Required for creating experiments, importing metrics, and filing readouts.</p>
+        <h3>Representative session</h3>
+        <p>
+          {session
+            ? `${session.email} can create experiments, import metrics, pull charts, and file readouts.`
+            : "Sign in as a RevenueCat representative before mutating experiment state."}
+        </p>
       </div>
-      <label class="field">
-        Internal secret
-        <input
-          bind:value={token}
-          placeholder="Bearer token"
-          type="password"
-          autocomplete="off"
-        />
-      </label>
+      {#if session}
+        <span class="pill ok">Authenticated</span>
+      {:else}
+        <a class="button primary" href="/sign-in">Sign in</a>
+      {/if}
     </div>
 
     <div class="grid two runtime-detail">
@@ -417,7 +433,7 @@
           Variants: key | name | hook | cta | destination
           <textarea bind:value={createForm.variants} rows="5"></textarea>
         </label>
-        <button class="button primary" type="submit" disabled={actionPending}>
+        <button class="button primary" type="submit" disabled={actionPending || !canMutate}>
           Create
         </button>
       </form>
@@ -440,7 +456,7 @@
           Variant key
           <input bind:value={metricForm.variantKey} placeholder="optional" />
         </label>
-        <button class="button primary" type="submit" disabled={actionPending}>
+        <button class="button primary" type="submit" disabled={actionPending || !canMutate}>
           Add metric
         </button>
       </form>
@@ -483,7 +499,7 @@
           Variant key
           <input bind:value={revenueCatForm.variantKey} placeholder="optional" />
         </label>
-        <button class="button primary" type="submit" disabled={actionPending}>
+        <button class="button primary" type="submit" disabled={actionPending || !canMutate}>
           Pull chart
         </button>
       </form>
@@ -515,7 +531,7 @@
         Next action
         <textarea bind:value={readoutForm.nextAction} rows="3"></textarea>
       </label>
-      <button class="button primary" type="submit" disabled={actionPending}>
+      <button class="button primary" type="submit" disabled={actionPending || !canMutate}>
         File readout
       </button>
     </form>

@@ -166,8 +166,8 @@ keyword data until a keyword/SERP connector is activated:
 - **Experiment operations** — D1 stores experiments, variants, tracking assets,
   behavior events, metric snapshots, RevenueCat chart snapshots, and readouts.
   External channel distribution still requires approved credentials.
-- **Typefully** — target connector for multi-platform social distribution after
-  credentials and approval policy exist.
+- **Postiz** — target connector for multi-platform social distribution after an
+  RC representative connects the account and approval policy exists.
 - **Keyword/SERP connector** — target connector for keyword research, SERP
   analysis, and experiment baselines after credentials exist.
 

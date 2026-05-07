@@ -9,14 +9,21 @@ export async function POST({ request }: { request: Request }) {
     return Response.json({ error: "request body is too large" }, { status: 413 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as { message?: unknown };
+  const body = (await request.json().catch(() => ({}))) as {
+    message?: unknown;
+    threadId?: unknown;
+  };
   const message = typeof body.message === "string" ? body.message : "";
+  const threadId =
+    typeof body.threadId === "string" && body.threadId.trim()
+      ? body.threadId.trim()
+      : crypto.randomUUID();
 
   if (!message.trim()) {
     return Response.json({ error: "message is required" }, { status: 400 });
   }
 
-  const result = await answerAgentChat(env, request, message);
+  const result = await answerAgentChat(env, request, message, threadId);
 
   return Response.json(result.body, { status: result.status });
 }

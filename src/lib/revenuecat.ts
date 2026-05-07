@@ -1,3 +1,5 @@
+import { resolveConnectorCredentials } from "./connected-accounts";
+
 type RevenueCatConfig = {
   apiKey: string;
   projectId: string;
@@ -30,10 +32,20 @@ function bool(value: unknown, fallback = true) {
   return fallback;
 }
 
-function getRevenueCatConfig(env: Env): RevenueCatConfig | null {
-  const values = env as Partial<
-    Record<"REVENUECAT_API_KEY" | "REVENUECAT_PROJECT_ID", string>
-  >;
+async function getRevenueCatConfig(env: Env): Promise<RevenueCatConfig | null> {
+  const connected = await resolveConnectorCredentials(env, "revenuecat");
+  const values = {
+    REVENUECAT_API_KEY:
+      connected?.apiKey ??
+      connected?.REVENUECAT_API_KEY ??
+      (env as Partial<Record<"REVENUECAT_API_KEY", string>>)
+        .REVENUECAT_API_KEY,
+    REVENUECAT_PROJECT_ID:
+      connected?.projectId ??
+      connected?.REVENUECAT_PROJECT_ID ??
+      (env as Partial<Record<"REVENUECAT_PROJECT_ID", string>>)
+        .REVENUECAT_PROJECT_ID,
+  };
   const apiKey = values.REVENUECAT_API_KEY?.trim();
   const projectId = values.REVENUECAT_PROJECT_ID?.trim();
 
@@ -81,7 +93,7 @@ export async function fetchRevenueCatChartSnapshot(
   env: Env,
   input: RevenueCatChartSnapshotInput,
 ): Promise<RevenueCatChartSnapshot> {
-  const config = getRevenueCatConfig(env);
+  const config = await getRevenueCatConfig(env);
   if (!config) {
     throw new Error(
       "RevenueCat API key and project id are required for live chart snapshots",

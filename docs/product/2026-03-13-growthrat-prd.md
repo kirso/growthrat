@@ -117,8 +117,9 @@ Primary external users:
 Primary internal users:
 
 - GrowthRat operator
-- future RevenueCat teammate who connects Slack, CMS, Charts, GitHub, or other
-  assets
+- future RevenueCat representative who signs in, connects Slack, CMS, Charts,
+  GitHub, Postiz, or other production accounts, and can return later to rotate
+  or update those connected accounts
 
 ## Product Scope
 
@@ -169,7 +170,8 @@ Current implementation status:
 - CMS publishing path
 - RevenueCat Charts and Metrics API access
 - GitHub collaboration
-- X or social distribution through approved tooling
+- X or social distribution through approved tooling, with Postiz as the target
+  scheduler connector
 - product roadmap input document from repeated feedback patterns
 
 ## Weekly Responsibilities
@@ -242,8 +244,9 @@ Current repo state:
 - Queues for async work
 - Pipeline stream for event ingestion
 - Rate Limit bindings for chat, model calls, and public event writes
-- Secrets Store for connector credentials once account quota allows a dedicated
-  store
+- Connected-account records for RC-owned connector credentials, encrypted at
+  rest; Cloudflare Secrets Store remains a later hardening option once account
+  quota allows a dedicated store
 - AI Gateway for model routing, controls, logs, and spend management
 - Vectorize for RevenueCat docs and artifact retrieval
 - AI Search later if Cloudflare managed-resource provisioning succeeds

@@ -46,7 +46,8 @@ Production source state after the 2026-05-07 RevenueCat docs refresh:
 | --- | --- |
 | `/api/runtime` | Returns source, mode, binding names, and proof counts |
 | `/api/proof` | Returns public proof artifact index |
-| `/api/activation` | Returns resource, secret, and gate state without secret values |
+| `/api/activation` | Returns resource, platform secret, connected-account, and gate state without secret values |
+| `/api/agent-config` | Authenticated mode, review policy, focus topics, and autonomy budget |
 | `/api/policy` | Returns runtime policy; authenticated POST toggles kill switch or model chat |
 | `/api/sources` | Returns source and Vectorize index status |
 | `/api/sources/ingest` | Authenticated seed or RevenueCat docs batch ingestion into Vectorize and D1 |
@@ -56,9 +57,13 @@ Production source state after the 2026-05-07 RevenueCat docs refresh:
 | `/api/experiments/:id/readout` | Authenticated readout creation |
 | `/api/events` | Public behavior event capture |
 | `/api/workflows/weekly-dry-run` | Protected POST that creates a dry weekly Workflow run |
+| `/api/workflows/weekly-run` | Protected POST that runs the full advocate loop |
+| `/api/community/scan` | Authenticated GitHub community-signal scanner and reply drafter |
+| `/api/slack/events` | Slack Events API receiver with request signing verification |
 | `/r/:trackingId` | Tracking redirect that records experiment clicks |
 
-The manual workflow endpoint must be called with either:
+Protected endpoints accept the signed RC representative session created from
+`/sign-in`. CLI/manual calls can still use either fallback header:
 
 ```bash
 Authorization: Bearer $GROWTHRAT_INTERNAL_SECRET
@@ -76,19 +81,23 @@ token does not match, it returns `401`.
 ## Required Before `rc_live`
 
 - Keep the latest `growthrat` Worker deployed with Wrangler.
-- Keep remote D1 migrated through `migrations/0003_agent_runtime_safety.sql`.
-- Re-run `/api/sources/ingest` with `GROWTHRAT_INTERNAL_SECRET` after changing
-  the seed corpus or refreshing RevenueCat docs from `llms.txt`.
+- Keep remote D1 migrated through `migrations/0005_advocate_runtime_port.sql`.
+- Re-run `/api/sources/ingest` with an RC representative session or
+  `GROWTHRAT_INTERNAL_SECRET` after changing the seed corpus or refreshing
+  RevenueCat docs from `llms.txt`.
 - Confirm Cloudflare lists the `growthrat` Worker and `growthrat-weekly-loop`
   Workflow.
-- Set all required Wrangler secrets and config values:
+- Set all required platform secrets and config values:
   - `GROWTHRAT_INTERNAL_SECRET`
-  - `REVENUECAT_API_KEY`
-  - `REVENUECAT_PROJECT_ID`
-  - `SLACK_BOT_TOKEN`
-  - `TYPEFULLY_API_KEY`
-  - `GITHUB_TOKEN`
-  - `CMS_API_TOKEN`
+  - `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY`
+- Have a RevenueCat representative register or sign in and connect:
+  - RevenueCat API/Charts
+  - Slack
+  - Blog CMS
+  - GitHub
+  - Postiz social distribution
+  - DataForSEO or equivalent keyword/SERP provider
+  - X/community monitoring provider
 - Trigger one protected weekly dry run.
 - Confirm the dry run writes a `weekly-runs/<week>/plan.json` object to R2.
 - Confirm `workflow_runs` receives a planned workflow row.

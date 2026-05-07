@@ -5,8 +5,7 @@ import {
   type WorkflowEvent,
   type WorkflowStep,
 } from "cloudflare:workers";
-import { generateSourceGroundedDraft } from "./lib/content-draft";
-import { ensureWeeklyExperiment } from "./lib/experiments";
+import { runWeeklyAdvocateLoop } from "./lib/pipeline";
 
 type AgentState = {
   mode: string;
@@ -89,46 +88,11 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
   async run(event: Readonly<WorkflowEvent<WeeklyLoopParams>>, step: WorkflowStep) {
     const now = new Date().toISOString();
     const week = currentWeekKey();
-
-    const experiment = await step.do("ensure weekly experiment", async () => {
-      const detail = await ensureWeeklyExperiment(this.env, week.start);
-      return detail
-        ? {
-            id: detail.id,
-            slug: detail.slug,
-            title: detail.title,
-            status: detail.status,
-            trackingLinks: detail.assets.map((asset) => ({
-              title: asset.title,
-              trackingId: asset.tracking_id,
-              url: `/r/${asset.tracking_id}`,
-            })),
-          }
-        : null;
-    });
-
-    const plan = await step.do("plan weekly loop", async () => ({
-      trigger: event.payload.trigger,
-      dryRun: event.payload.dryRun ?? true,
-      weekStart: week.start,
-      weekEnd: week.end,
-      experiment,
-      requiredOutputs: [
-        "two content pieces",
-        "one growth experiment with variants and tracking links",
-        "daily metric snapshots or manual imports",
-        "one experiment readout",
-        "three feedback items",
-        "community interactions",
-        "weekly report",
-      ],
-    }));
-
-    const draft = await step.do("generate source-grounded draft", async () =>
-      generateSourceGroundedDraft(
-        this.env,
-        "Testing agent-built subscription flows with RevenueCat Test Store, CustomerInfo, webhooks, and Charts",
-      ),
+    const result = await step.do("run advocate loop", async () =>
+      runWeeklyAdvocateLoop(this.env, {
+        trigger: event.payload.trigger === "schedule" ? "schedule" : "manual",
+        dryRun: event.payload.dryRun ?? true,
+      }),
     );
 
     const r2Key = await step.do("write weekly proof bundle", async () => {
@@ -139,8 +103,7 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
           {
             workflowId: event.instanceId,
             generatedAt: now,
-            plan,
-            draft,
+            result,
           },
           null,
           2,
@@ -163,14 +126,14 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
           "weekly_loop",
           "planned",
           JSON.stringify(event.payload),
-          JSON.stringify({ ...plan, draft, r2Key }),
+          JSON.stringify({ ...result, r2Key }),
           new Date().toISOString(),
           new Date().toISOString(),
         )
         .run();
     });
 
-    return { ...plan, draft, r2Key };
+    return { ...result, r2Key };
   }
 }
 

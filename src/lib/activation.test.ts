@@ -57,7 +57,7 @@ describe("activation snapshot", () => {
     });
   });
 
-  it("accepts internal requests with the configured bearer token", async () => {
+  it("accepts internal requests with the configured CLI fallback secret", async () => {
     const request = new Request("https://growthrat.test/api/workflows/weekly-dry-run", {
       method: "POST",
       headers: {
