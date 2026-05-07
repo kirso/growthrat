@@ -17,7 +17,7 @@ Verified in the Cloudflare account on 2026-05-06 and updated on 2026-05-07:
 | AI Gateway | `growthrat` | provisioned |
 | AI Search | none | deferred; provisioning failed |
 | Secrets Store | default store | dedicated store blocked by account quota |
-| Workers / Workflows | `growthrat` Worker, `growthrat-weekly-loop` Workflow | deployed on workers.dev |
+| Workers / Workflows | `growthrat` Worker, `growthrat-weekly-loop` Workflow | deployed on workers.dev as Worker version `26263bc7-52e8-47fc-80f7-644572652efa` |
 | Rate Limits | chat/model/event bindings | declared in config |
 
 Remote D1 seed counts:
@@ -127,17 +127,22 @@ token does not match, it returns `401`.
   the current store quota.
 - RevenueCat private access, Slack, CMS, GitHub org, Charts, and social
   credentials are post-hire dependencies.
-- Remote D1 has migration `0006` applied, but this repository still has newer
-  local Worker code than the live Worker until the next Wrangler deploy is
-  completed.
 
-## Last Verified Production Proof Before Worker Redeploy
+## Last Verified Production Proof
 
-Verified on 2026-05-07, before the local run-ledger/opportunity Worker code in
-this branch is deployed:
+Verified on 2026-05-07 after deploying the run-ledger/opportunity Worker code:
 
 - `growthrat` Worker deployed to `https://growthrat.kirso.workers.dev`.
-- `GROWTHRAT_INTERNAL_SECRET` is configured.
+- Worker version `26263bc7-52e8-47fc-80f7-644572652efa` is live.
+- `GROWTHRAT_INTERNAL_SECRET` and `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY` are
+  configured.
+- `/api/activation` returns the connected-account model, both platform secrets
+  configured, no blockers, 342 sources, 1,982 indexed chunks, and
+  `readyForApplicationReview: true`.
+- `/api/opportunities` returns `401` without credentials, confirming the
+  current protected endpoint is live rather than the old redirected Worker.
+- `/application` serves the full public application letter and links the
+  RevenueCat Agent Monetization Benchmark.
 - `/api/sources` reports 342 sources, 1,982 indexed chunks, 1,982 vectors, and
   768 dimensions.
 - `/api/chat` answered from the newly ingested MCP docs with RevenueCat
@@ -149,6 +154,11 @@ this branch is deployed:
   `tracking_click`.
 - A manual `qualified_clicks` metric and draft readout were created for
   `weekly-agent-advocacy-2026-05-04`.
+
+Deployment note: this repository has no `env.production` block. Use
+`wrangler deploy --keep-vars` and `wrangler secret put <KEY>` for the actual
+`growthrat` Worker. Do not use `--env production`; Wrangler will target
+`growthrat-production`.
 
 ## RevenueCat Docs Ingestion
 

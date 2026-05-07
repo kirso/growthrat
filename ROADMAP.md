@@ -179,11 +179,14 @@ Completed:
   reports, and approval/rejection commands
 - the full application letter is served at both `/application` and
   `/application-letter`
+- the current Worker code is deployed on Cloudflare as version
+  `26263bc7-52e8-47fc-80f7-644572652efa`
+- production `/api/activation` now exposes the connected-account model,
+  confirms both platform secrets are configured, and reports no blockers in
+  `interview_proof`
 
 Remaining:
 
-- redeploy the Worker after this code lands so production no longer serves stale
-  activation or application output
 - set Langfuse secrets only if optional trace mirroring should be enabled
 - have a RevenueCat representative sign in and connect RevenueCat, Slack, CMS,
   GitHub, and Postiz before calling connector paths live
@@ -205,8 +208,8 @@ Required checks:
 - opportunity scoring explains why the agent chose the week's work
 - Slack plan/report commands return a useful client-facing summary
 - panel token behavior is fail-closed in production
-- missing secrets and remote-only Cloudflare products are documented as
-  pre-production warnings
+- remote-only Cloudflare product limits are documented as pre-production
+  warnings
 - protected dry run writes a weekly plan to R2 and a workflow row to D1
 - protected dry run writes a source-grounded draft or a clear source/model gate
   reason to R2

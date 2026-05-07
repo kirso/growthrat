@@ -28,7 +28,10 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 - [x] (2026-05-07T09:30:00Z) Made Slack a stronger client surface with opportunity, plan/report, approve, reject, stop, and resume commands.
 - [x] (2026-05-07T09:40:00Z) Published the full application letter routes and added the RevenueCat Agent Monetization Benchmark artifact.
 - [x] (2026-05-07T10:39:18Z) Applied `0006_run_ledger_observability.sql` to remote D1 through the Cloudflare API and verified the new tables plus `d1_migrations` row.
-- [ ] Fix production truth so the live Cloudflare Worker matches current `main`.
+- [x] (2026-05-07T11:05:52Z) Deployed current `main` to Cloudflare Worker
+  version `26263bc7-52e8-47fc-80f7-644572652efa`, set
+  `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY`, and verified live activation,
+  application, benchmark, and protected opportunity endpoints.
 - [x] Publish the full application letter at a public stable URL.
 - [x] Add Langfuse-based LLM/agent tracing while keeping D1/R2 as the canonical run ledger.
 - [x] Build the run ledger, opportunity engine, Slack operating loop, approval flow, and first approval-backed measurement hooks.
@@ -38,6 +41,7 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 
 - Observation: The repo roadmap and activation docs currently describe the new connected-account runtime as deployed, but the live Worker has been observed serving stale activation output.
   Evidence: On 2026-05-07, `curl -sS https://growthrat.kirso.workers.dev/api/activation | jq '{hasConnectors: has("connectors"), missing: .secrets.missing}'` returned `hasConnectors: false` and included `TYPEFULLY_API_KEY` in missing secrets.
+  Resolution: Later on 2026-05-07, Worker version `26263bc7-52e8-47fc-80f7-644572652efa` was deployed and `/api/activation` returned the connected-account model with no missing platform secrets and no `TYPEFULLY_API_KEY`.
 
 - Observation: The full application letter exists in `docs/public/application-letter.md`, but the routed public page `/application` is an abbreviated content-page summary, not the full letter the application form asks for.
   Evidence: `docs/public/application-letter.md` starts with `# I Already Did The Job. Here's The Proof.` while `src/content/pages.ts` defines `/application` with a shorter section-based page.
@@ -47,6 +51,11 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 
 - Observation: Slack exists as a command/event receiver, but it is not yet the product's primary client operating surface.
   Evidence: `src/lib/slack.ts` supports `help`, `status`, `plan`, `report`, `write`, `stop`, and `resume`; reaction events are recorded but do not promote drafts into approved distribution actions.
+
+- Observation: This repo does not define `env.production` in `wrangler.jsonc`.
+  Evidence: `wrangler secret put ... --env production` targeted a new
+  `growthrat-production` Worker. The accidental Worker was deleted, and the
+  secret was set on `growthrat` without `--env`.
 
 ## Decision Log
 
@@ -72,7 +81,7 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 
 ## Outcomes & Retrospective
 
-Local implementation now covers the missing product loop: scored opportunities, run ledger, approval records, Slack commands, optional Langfuse traces, and a public benchmark asset. Remote D1 has the new schema. The remaining success milestone is Worker production parity: Wrangler still needs a valid `CLOUDFLARE_API_TOKEN` or another approved deploy path so the live site exposes this code instead of stale activation output.
+Implementation now covers the missing product loop: scored opportunities, run ledger, approval records, Slack commands, optional Langfuse traces, and a public benchmark asset. Remote D1 has the new schema. The live Cloudflare Worker now serves the current code and reports the connected-account activation model with both platform secrets configured. Remaining `rc_live` work is RevenueCat-owned connector activation, optional Langfuse secrets, Pipeline R2 sink configuration, and post-hire approval-policy validation.
 
 ## Context and Orientation
 
@@ -89,8 +98,8 @@ Current stack:
 - `src/lib/connected-accounts.ts`: RevenueCat, Slack, CMS, GitHub, Postiz, DataForSEO, and X connected-account credential storage/verification.
 - `src/lib/activation.ts`: public activation snapshot and protected request authorization.
 - `docs/product/2026-03-13-growthrat-prd.md`: canonical PRD.
-- `ROADMAP.md`: current roadmap, but production deployment claims need revalidation.
-- `docs/ops/cloudflare-activation-checklist.md`: go-live checklist, also needs production truth cleanup after deploy.
+- `ROADMAP.md`: current roadmap and live production truth.
+- `docs/ops/cloudflare-activation-checklist.md`: go-live checklist and latest production smoke evidence.
 
 Important terms:
 
@@ -167,7 +176,9 @@ Files and work:
 - `src/content/pages.ts`: either replace `/application` with the full application letter content or add a clear `/application-letter` page backed by `docs/public/application-letter.md`.
 - `src/pages/[...slug].astro`: add support for rendering the full Markdown-backed application letter if needed.
 - `README.md`, `ROADMAP.md`, and `docs/ops/cloudflare-activation-checklist.md`: update deployment truth after the live Worker is actually redeployed and verified.
-- Cloudflare deployment: fix Wrangler auth, deploy current `main`, set `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY`, and verify `/api/activation` has the new connected-account model.
+- Cloudflare deployment: keep using the real `growthrat` Worker target,
+  deploy current `main`, set `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY`, and verify
+  `/api/activation` has the new connected-account model.
 
 Acceptance:
 
@@ -480,10 +491,10 @@ curl -sS -I https://growthrat.kirso.workers.dev/api/auth/session | sed -n '1,12p
 
 Expected after Milestone 0: `hasConnectors` is `true`, missing platform secrets are the new platform secret model, no `TYPEFULLY_API_KEY`, and `/api/auth/session` returns JSON rather than `302 /`.
 
-Deploy current Worker after Wrangler auth is fixed:
+Deploy current Worker:
 
 ```bash
-bunx wrangler deploy --env production
+bunx wrangler deploy --keep-vars
 ```
 
 Expected: deployment succeeds and the live Worker serves the current `main` runtime.
@@ -491,11 +502,15 @@ Expected: deployment succeeds and the live Worker serves the current `main` runt
 Set Langfuse secrets:
 
 ```bash
-bunx wrangler secret put LANGFUSE_PUBLIC_KEY --env production
-bunx wrangler secret put LANGFUSE_SECRET_KEY --env production
+bunx wrangler secret put LANGFUSE_PUBLIC_KEY
+bunx wrangler secret put LANGFUSE_SECRET_KEY
 ```
 
 Expected: secrets are set without printing values. `LANGFUSE_BASE_URL` can be a non-secret var if using Langfuse Cloud. If using EU or self-hosted Langfuse, set the corresponding base URL.
+
+Important: this repo has no `env.production` block. Do not pass
+`--env production` unless an explicit environment is added to `wrangler.jsonc`;
+otherwise Wrangler targets `growthrat-production`.
 
 Apply D1 migrations:
 
@@ -587,6 +602,8 @@ Recovery notes:
 
 - If deployment fails because of Cloudflare auth, do not mark production work complete. Fix Wrangler auth first.
 - If the live Worker serves stale code after deploy, compare `git rev-parse HEAD`, deployment logs, and `/api/activation` shape before continuing.
+- If Wrangler tries to target `growthrat-production`, stop and remove
+  `--env production`; the active Worker is `growthrat`.
 - If Langfuse integration causes Worker build/runtime issues, disable with `LANGFUSE_ENABLED=false` and keep D1 run ledger active.
 - If a connector is revoked or fails verification, side effects must fail closed and Slack should report the degraded state.
 - If a weekly run partially completes, restart from the run ledger state and avoid duplicating distribution through idempotency keys.
@@ -605,7 +622,7 @@ Current public proof artifacts:
 - `docs/public/feedback/webhook-sync-trust-boundaries.md`
 - `docs/public/revenuecat-agent-readiness-review.md`
 
-Current known production contradiction to resolve:
+Resolved production contradiction from the pre-deploy state:
 
 ```json
 {
@@ -620,7 +637,7 @@ Current known production contradiction to resolve:
 }
 ```
 
-Expected current-runtime direction:
+Verified current-runtime direction:
 
 ```json
 {

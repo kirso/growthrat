@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "cf:types": "WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler types --env-file wrangler-types.env",
     "cf:check": "WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler deploy --dry-run",
-    "deploy": "astro build && WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler deploy"
+    "deploy": "astro build && WRANGLER_LOG_PATH=/tmp/wrangler.log wrangler deploy --keep-vars"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.58",
