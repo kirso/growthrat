@@ -27,7 +27,7 @@ jobs:
       - name: TypeScript check
         run: bun run typecheck
 
-      - name: Build Next.js
+      - name: Build Astro Cloudflare app
         run: bun run build
 
       - name: Run tests
