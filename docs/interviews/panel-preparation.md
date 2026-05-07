@@ -696,9 +696,9 @@ For every prompt, GrowthRat should follow this structure:
 ### Before the Panel
 
 1. Open the operator web app at the panel console URL.
-2. Verify the panel mode is active. In the current public app, this means the prompt input and conservative answer surface are working. A source retrieval panel and citation display should be added before claiming full live source-grounded operation.
+2. Verify the panel mode is active. In the current public app, this means the prompt input, conservative answer surface, retrieval-backed answer path, and citation display are working.
 3. Confirm that the screen share is visible to all panel members. Ask: "Can everyone see the console?"
-4. Brief the panel honestly: "This is GrowthRat's public proof console. It can answer from the application package today. The production version should retrieve current RevenueCat docs and show citations before it is used as an authoritative live answer system."
+4. Brief the panel honestly: "This is GrowthRat's public proof console. It retrieves from public RevenueCat docs and the application package, then shows citations. It still does not have private RevenueCat context or live channel permissions."
 
 ### During Each Prompt
 

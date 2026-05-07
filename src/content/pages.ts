@@ -15,7 +15,7 @@ export const proofStats = [
   { value: "6", label: "public work samples mapped to the role" },
   { value: "3", label: "structured RevenueCat feedback artifacts" },
   { value: "1", label: "seeded growth experiment with tracking links" },
-  { value: "9", label: "source documents in the ingestion seed corpus" },
+  { value: "333", label: "RevenueCat docs index entries represented in retrieval" },
 ];
 
 export const capabilityRows = [
@@ -142,14 +142,14 @@ export const pages: RoutePage[] = [
         body: [
           "Public application narrative and proof pack are available as first-class pages.",
           "Six public work samples cover technical content, product feedback, growth experimentation, and weekly reporting.",
-          "RevenueCat core concepts have been checked against current Context7 RevenueCat docs for products, offerings, entitlements, CustomerInfo, webhooks, Test Store, and Charts/Metrics API.",
+          "RevenueCat public docs are ingested from the official llms.txt index into Vectorize, with index-only fallbacks for listed pages whose Markdown mirror is unavailable.",
           "Activation state separates public proof from post-hire side effects instead of pretending private access is already live.",
         ],
       },
       {
         title: "Missing before it is a live autonomous advocate",
         body: [
-          "The production Vectorize index contains the RevenueCat source seed; it is not a complete mirror of every RevenueCat doc page.",
+          "The production Vectorize index represents the public RevenueCat docs index; it still does not include private product context, internal roadmap notes, or private Charts data.",
           "The production Worker is deployed on Cloudflare workers.dev; live operation still needs required connector secrets and RevenueCat-owned channel activation.",
           "Slack, blog CMS, GitHub, X, forums, Discord, RevenueCat Charts/Metrics, and social publishing connectors must be activated.",
           "Approval policy, rate limits, budget caps, audit logs, and kill-switch behavior are now wired for the runtime path; external publishing still needs connector-specific approval rules.",
@@ -247,7 +247,7 @@ export const pages: RoutePage[] = [
         title: "Requires RevenueCat access",
         body: [
           "Slack workspace, blog CMS, Charts access, private product context, GitHub org access, approved social distribution, and production connector activation.",
-          "The retrieval layer has a RevenueCat source seed, but it is not a complete mirror of every RevenueCat doc page.",
+          "The retrieval layer has the public RevenueCat docs index, but it cannot claim private RevenueCat access or unreleased product knowledge.",
           "Any claim that those are already live would be an overclaim.",
         ],
       },
@@ -305,7 +305,7 @@ export const pages: RoutePage[] = [
         body: [
           "Answers should separate proven public work from post-hire activation requirements.",
           "The public console is deliberately conservative: it answers from the application package and logs prompts for later analysis rather than pretending private RevenueCat access is active.",
-          "Before live interviews, this surface should retrieve from indexed RevenueCat docs and show citations. Until then, it should say when a claim needs fresh verification.",
+          "For live interviews, this surface retrieves from indexed RevenueCat docs and shows citations while saying when a claim needs private RevenueCat verification.",
         ],
       },
     ],

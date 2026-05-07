@@ -158,9 +158,10 @@ keyword data until a keyword/SERP connector is activated:
   from the runnable repo. The active code path is Cloudflare-native.
 - **Model layer** — Workers AI and AI Gateway are provisioned as the target
   routing layer; provider keys remain required before live model side effects.
-- **Retrieval** — Vectorize is provisioned but currently empty. RevenueCat docs
-  ingestion and citation metadata are required before source-grounded live
-  answering is complete. AI Search remains a later option after account
+- **Retrieval** — Vectorize is the active retrieval path. RevenueCat public docs
+  are ingested from the official `llms.txt` index, with full Markdown mirrors
+  where available and index-only fallbacks for listed paths that do not expose a
+  usable Markdown mirror. AI Search remains a later option after account
   provisioning succeeds.
 - **Experiment operations** — D1 stores experiments, variants, tracking assets,
   behavior events, metric snapshots, RevenueCat chart snapshots, and readouts.

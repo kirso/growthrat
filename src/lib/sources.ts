@@ -29,18 +29,67 @@ export type SourceStats = {
   sources: number;
   vectorCount: number | null;
   vectorDimensions: number | null;
+  byType: Array<{
+    sourceType: string;
+    sources: number;
+    chunks: number;
+    indexedChunks: number;
+  }>;
+};
+
+export type RevenueCatDocsIndexEntry = {
+  path: string;
+  description: string;
+  url: string;
+  markdownUrl: string;
+};
+
+export type RevenueCatDocsIngestOptions = {
+  cursor?: number;
+  batchSize?: number;
+  includeIndexOnlyFallback?: boolean;
+};
+
+type FetchTextResult = {
+  ok: boolean;
+  status: number;
+  contentType: string;
+  text: string;
+  error?: string;
 };
 
 const embeddingModel = "@cf/baai/bge-base-en-v1.5";
 const sourceNamespace = "revenuecat";
 const maxChunkCharacters = 1400;
+const maxEmbeddingBatchSize = 24;
+const maxVectorBatchSize = 100;
+const revenueCatDocsBaseUrl = "https://www.revenuecat.com/docs";
+const revenueCatLlmsIndexUrl = `${revenueCatDocsBaseUrl}/llms.txt`;
 
-function slug(value: string) {
-  return value
+function shortHash(value: string) {
+  let hash = 5381;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(index);
+  }
+
+  return (hash >>> 0).toString(36).padStart(7, "0").slice(-7);
+}
+
+function slug(value: string, maxLength = 52) {
+  const normalized = value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 90);
+    .replace(/^-+|-+$/g, "");
+
+  if (normalized.length <= maxLength) return normalized;
+
+  const suffix = shortHash(value);
+  const prefix = normalized.slice(0, maxLength - suffix.length - 1);
+  return `${prefix.replace(/-+$/g, "")}-${suffix}`;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 async function sha256Hex(value: string) {
@@ -65,25 +114,33 @@ function chunksForDocument(document: SourceCorpusDocument) {
 }
 
 async function embedTexts(env: Env, values: string[]) {
-  const response = await env.AI.run(
-    embeddingModel,
-    {
-      text: values,
-    },
-    {
-      gateway: {
-        id: env.AI_GATEWAY_ID,
-        collectLog: true,
-        metadata: {
-          product: "growthrat",
-          operation: "source_embedding",
+  const embeddings: number[][] = [];
+
+  for (let index = 0; index < values.length; index += maxEmbeddingBatchSize) {
+    const batch = values.slice(index, index + maxEmbeddingBatchSize);
+    const response = await env.AI.run(
+      embeddingModel,
+      {
+        text: batch,
+      },
+      {
+        gateway: {
+          id: env.AI_GATEWAY_ID,
+          collectLog: true,
+          metadata: {
+            product: "growthrat",
+            operation: "source_embedding",
+          },
         },
       },
-    },
-  );
+    );
 
-  const data = (response as { data?: unknown }).data;
-  return Array.isArray(data) ? (data as number[][]) : [];
+    const data = (response as { data?: unknown }).data;
+    if (!Array.isArray(data)) return embeddings;
+    embeddings.push(...(data as number[][]));
+  }
+
+  return embeddings;
 }
 
 function vectorInfoStats(info: unknown) {
@@ -115,7 +172,7 @@ function vectorInfoStats(info: unknown) {
 
 export async function getSourceStats(env: Env): Promise<SourceStats> {
   const bindings = env as Partial<Env>;
-  const [chunkRow, sourceRow, vectorInfo] = await Promise.all([
+  const [chunkRow, sourceRow, byTypeRows, vectorInfo] = await Promise.all([
     bindings.DB
       ? bindings.DB.prepare(
           "select count(*) as chunks, sum(case when indexed_at is not null then 1 else 0 end) as indexedChunks from source_chunks",
@@ -130,6 +187,26 @@ export async function getSourceStats(env: Env): Promise<SourceStats> {
           .first<{ sources: number }>()
           .catch(() => null)
       : Promise.resolve(null),
+    bindings.DB
+      ? bindings.DB.prepare(
+          `select
+            source_type as sourceType,
+            count(distinct source_id) as sources,
+            count(*) as chunks,
+            sum(case when indexed_at is not null then 1 else 0 end) as indexedChunks
+          from source_chunks
+          group by source_type
+          order by source_type`,
+        )
+          .all<{
+            sourceType: string;
+            sources: number;
+            chunks: number;
+            indexedChunks: number;
+          }>()
+          .then((result) => result.results)
+          .catch(() => [])
+      : Promise.resolve([]),
     bindings.DOC_INDEX ? bindings.DOC_INDEX.describe().catch(() => null) : null,
   ]);
 
@@ -141,7 +218,35 @@ export async function getSourceStats(env: Env): Promise<SourceStats> {
     sources: Number(sourceRow?.sources ?? 0),
     vectorCount,
     vectorDimensions,
+    byType: byTypeRows.map((row) => ({
+      sourceType: row.sourceType,
+      sources: Number(row.sources ?? 0),
+      chunks: Number(row.chunks ?? 0),
+      indexedChunks: Number(row.indexedChunks ?? 0),
+    })),
   };
+}
+
+async function upsertVectors(env: Env, vectors: VectorizeVector[]) {
+  for (let index = 0; index < vectors.length; index += maxVectorBatchSize) {
+    await env.DOC_INDEX.upsert(vectors.slice(index, index + maxVectorBatchSize));
+  }
+}
+
+async function writeDocumentSource(env: Env, document: SourceCorpusDocument) {
+  const sourceId = slug(document.id);
+  const r2Key = `sources/${sourceId}.md`;
+
+  await env.ARTIFACT_BUCKET.put(r2Key, document.content, {
+    httpMetadata: { contentType: "text/markdown; charset=utf-8" },
+    customMetadata: {
+      source_id: sourceId,
+      source_type: document.sourceType,
+      source_url: document.url,
+    },
+  });
+
+  return { sourceId, r2Key };
 }
 
 export async function ingestSourceDocuments(
@@ -149,21 +254,11 @@ export async function ingestSourceDocuments(
   documents: SourceCorpusDocument[] = sourceCorpus,
 ) {
   const now = new Date().toISOString();
-  const vectors: VectorizeVector[] = [];
-  const rows: Array<{
-    id: string;
-    sourceId: string;
-    sourceType: string;
-    title: string;
-    url: string;
-    chunkIndex: number;
-    content: string;
-    contentHash: string;
-    vectorId: string;
-  }> = [];
+  let chunksWritten = 0;
+  const vectorIds: string[] = [];
 
   for (const document of documents) {
-    const sourceId = slug(document.id);
+    const { sourceId, r2Key } = await writeDocumentSource(env, document);
     const chunks = chunksForDocument(document);
     const embeddings = await embedTexts(env, chunks);
 
@@ -171,22 +266,19 @@ export async function ingestSourceDocuments(
       throw new Error(`embedding count mismatch for ${document.id}`);
     }
 
+    const vectors: VectorizeVector[] = [];
+    const rows: Array<{
+      id: string;
+      content: string;
+      contentHash: string;
+      vectorId: string;
+      chunkIndex: number;
+    }> = [];
+
     for (const [index, content] of chunks.entries()) {
       const contentHash = await sha256Hex(content);
       const id = `${sourceId}-${index}`;
       const vectorId = `src_${id}`;
-
-      rows.push({
-        id,
-        sourceId,
-        sourceType: document.sourceType,
-        title: document.title,
-        url: document.url,
-        chunkIndex: index,
-        content,
-        contentHash,
-        vectorId,
-      });
 
       vectors.push({
         id: vectorId,
@@ -202,71 +294,107 @@ export async function ingestSourceDocuments(
           content: content.slice(0, 2000),
         },
       });
-    }
-  }
 
-  if (vectors.length > 0) {
-    await env.DOC_INDEX.upsert(vectors);
-  }
-
-  for (const row of rows) {
-    await env.DB.prepare(
-      `insert into source_chunks (
+      rows.push({
         id,
-        source_id,
-        source_type,
-        title,
-        url,
-        chunk_index,
         content,
-        content_hash,
-        vector_id,
-        indexed_at,
-        created_at,
-        updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      on conflict(id)
-      do update set
-        source_type = excluded.source_type,
-        title = excluded.title,
-        url = excluded.url,
-        content = excluded.content,
-        content_hash = excluded.content_hash,
-        vector_id = excluded.vector_id,
-        indexed_at = excluded.indexed_at,
-        updated_at = excluded.updated_at`,
-    )
-      .bind(
-        row.id,
-        row.sourceId,
-        row.sourceType,
-        row.title,
-        row.url,
-        row.chunkIndex,
-        row.content,
-        row.contentHash,
-        row.vectorId,
-        now,
-        now,
-        now,
-      )
-      .run();
+        contentHash,
+        vectorId,
+        chunkIndex: index,
+      });
+    }
 
-    await env.DB.prepare(
-      `insert into sources (id, source_type, title, url, retrieved_at, created_at)
-      values (?, ?, ?, ?, ?, ?)
-      on conflict(id)
-      do update set source_type = excluded.source_type, title = excluded.title, url = excluded.url, retrieved_at = excluded.retrieved_at`,
+    if (vectors.length > 0) {
+      await upsertVectors(env, vectors);
+      vectorIds.push(...vectors.map((vector) => vector.id));
+    }
+
+    const staleRows = await env.DB.prepare(
+      "select vector_id from source_chunks where source_id = ? and chunk_index >= ?",
     )
-      .bind(row.sourceId, row.sourceType, row.title, row.url, now, now)
-      .run();
+      .bind(sourceId, rows.length)
+      .all<{ vector_id: string }>();
+
+    const staleVectorIds = staleRows.results.map((row) => row.vector_id);
+    if (staleVectorIds.length > 0) {
+      await env.DOC_INDEX.deleteByIds(staleVectorIds).catch(() => undefined);
+    }
+
+    const statements = [
+      env.DB.prepare(
+        `insert into sources (id, source_type, title, url, r2_key, retrieved_at, created_at)
+        values (?, ?, ?, ?, ?, ?, ?)
+        on conflict(id)
+        do update set
+          source_type = excluded.source_type,
+          title = excluded.title,
+          url = excluded.url,
+          r2_key = excluded.r2_key,
+          retrieved_at = excluded.retrieved_at`,
+      ).bind(
+        sourceId,
+        document.sourceType,
+        document.title,
+        document.url,
+        r2Key,
+        now,
+        now,
+      ),
+      ...rows.map((row) =>
+        env.DB.prepare(
+          `insert into source_chunks (
+            id,
+            source_id,
+            source_type,
+            title,
+            url,
+            chunk_index,
+            content,
+            content_hash,
+            vector_id,
+            indexed_at,
+            created_at,
+            updated_at
+          ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          on conflict(id)
+          do update set
+            source_type = excluded.source_type,
+            title = excluded.title,
+            url = excluded.url,
+            content = excluded.content,
+            content_hash = excluded.content_hash,
+            vector_id = excluded.vector_id,
+            indexed_at = excluded.indexed_at,
+            updated_at = excluded.updated_at`,
+        ).bind(
+          row.id,
+          sourceId,
+          document.sourceType,
+          document.title,
+          document.url,
+          row.chunkIndex,
+          row.content,
+          row.contentHash,
+          row.vectorId,
+          now,
+          now,
+          now,
+        ),
+      ),
+      env.DB.prepare(
+        "delete from source_chunks where source_id = ? and chunk_index >= ?",
+      ).bind(sourceId, rows.length),
+    ];
+
+    await env.DB.batch(statements);
+    chunksWritten += rows.length;
   }
 
   const receipt = {
     generatedAt: now,
     documents: documents.length,
-    chunks: rows.length,
-    vectorIds: rows.map((row) => row.vectorId),
+    chunks: chunksWritten,
+    vectorIds,
   };
 
   await env.ARTIFACT_BUCKET.put(
@@ -278,6 +406,256 @@ export async function ingestSourceDocuments(
   );
 
   return receipt;
+}
+
+function docsPathToMarkdownUrl(path: string) {
+  return `${revenueCatDocsBaseUrl}${path.replace(/\/+$/, "")}.md`;
+}
+
+function docsPathToUrl(path: string) {
+  return `${revenueCatDocsBaseUrl}${path.replace(/\/+$/, "")}`;
+}
+
+export function parseRevenueCatDocsIndex(
+  llmsText: string,
+): RevenueCatDocsIndexEntry[] {
+  const seen = new Set<string>();
+  const entries: RevenueCatDocsIndexEntry[] = [];
+
+  for (const line of llmsText.split("\n")) {
+    const match = line.match(/^- (\/\S+)\s+-\s+(.+)$/);
+    if (!match) continue;
+
+    const path = match[1];
+    if (seen.has(path)) continue;
+    seen.add(path);
+
+    entries.push({
+      path,
+      description: match[2].trim(),
+      url: docsPathToUrl(path),
+      markdownUrl: docsPathToMarkdownUrl(path),
+    });
+  }
+
+  return entries;
+}
+
+async function fetchText(url: string, timeoutMs = 8000): Promise<FetchTextResult> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: "text/markdown,text/plain;q=0.9,*/*;q=0.1",
+        "user-agent": "GrowthRat RevenueCat docs ingester",
+      },
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    return {
+      ok: response.ok,
+      status: response.status,
+      contentType: response.headers.get("content-type") ?? "",
+      text,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 0,
+      contentType: "",
+      text: "",
+      error: error instanceof Error ? error.message : "fetch failed",
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function isUsableMarkdown(text: string, contentType: string) {
+  const trimmed = text.trimStart();
+  if (trimmed.length < 100) return false;
+  if (contentType.includes("text/markdown")) return true;
+
+  const prefix = trimmed.slice(0, 120).toLowerCase();
+  return (
+    !prefix.startsWith("<!doctype") &&
+    !prefix.startsWith("<html") &&
+    !prefix.includes("404: not found")
+  );
+}
+
+function frontmatterTitle(markdown: string) {
+  const match = markdown.match(/^title:\s*["']?(.+?)["']?\s*$/m);
+  return match?.[1]?.trim() ?? "";
+}
+
+function documentForIndexOnlyEntry(
+  entry: RevenueCatDocsIndexEntry,
+  retrievedAt: string,
+): SourceCorpusDocument {
+  return {
+    id: `rc-docs-${entry.path}`,
+    sourceType: "revenuecat_docs",
+    title: `RevenueCat Docs: ${entry.description}`,
+    url: entry.url,
+    retrievedAt,
+    content: [
+      `# ${entry.description}`,
+      "",
+      `RevenueCat documentation index entry: ${entry.path}`,
+      "",
+      "The Markdown mirror for this path was unavailable during ingestion, so GrowthRat stores this index entry as a searchable placeholder rather than inventing page content.",
+      "",
+      `Canonical URL: ${entry.url}`,
+    ].join("\n"),
+  };
+}
+
+async function documentForRevenueCatEntry(
+  entry: RevenueCatDocsIndexEntry,
+  retrievedAt: string,
+) {
+  const response = await fetchText(entry.markdownUrl);
+  if (!response.ok || !isUsableMarkdown(response.text, response.contentType)) {
+    return {
+      document: documentForIndexOnlyEntry(entry, retrievedAt),
+      fullMarkdown: false,
+      status: response.status,
+      error: response.error ?? `unusable markdown response (${response.status})`,
+    };
+  }
+
+  return {
+    document: {
+      id: `rc-docs-${entry.path}`,
+      sourceType: "revenuecat_docs" as const,
+      title:
+        frontmatterTitle(response.text) || `RevenueCat Docs: ${entry.description}`,
+      url: entry.url,
+      retrievedAt,
+      content: response.text.trim(),
+    },
+    fullMarkdown: true,
+    status: response.status,
+    error: null,
+  };
+}
+
+export async function fetchRevenueCatDocsIndex() {
+  const response = await fetchText(revenueCatLlmsIndexUrl, 10000);
+  if (!response.ok || !response.text.trim()) {
+    throw new Error(
+      `RevenueCat llms.txt fetch failed (${response.status || "network"})`,
+    );
+  }
+
+  return parseRevenueCatDocsIndex(response.text);
+}
+
+export async function ingestRevenueCatDocsBatch(
+  env: Env,
+  options: RevenueCatDocsIngestOptions = {},
+) {
+  const startedAt = new Date().toISOString();
+  const entries = await fetchRevenueCatDocsIndex();
+  const cursor = clamp(Math.floor(Number(options.cursor ?? 0)), 0, entries.length);
+  const batchSize = clamp(Math.floor(Number(options.batchSize ?? 8)), 1, 12);
+  const selected = entries.slice(cursor, cursor + batchSize);
+  let documents = 0;
+  let chunks = 0;
+  const fetches: Array<{
+    path: string;
+    markdownUrl: string;
+    fullMarkdown: boolean;
+    status: number;
+    error: string | null;
+    chunks: number;
+  }> = [];
+
+  for (const entry of selected) {
+    const result = await documentForRevenueCatEntry(entry, startedAt);
+
+    if (!result.fullMarkdown && options.includeIndexOnlyFallback === false) {
+      fetches.push({
+        path: entry.path,
+        markdownUrl: entry.markdownUrl,
+        fullMarkdown: false,
+        status: result.status,
+        error: result.error,
+        chunks: 0,
+      });
+      continue;
+    }
+
+    let document = result.document;
+    let fullMarkdown = result.fullMarkdown;
+    let error = result.error;
+
+    try {
+      const receipt = await ingestSourceDocuments(env, [document]);
+      documents += receipt.documents;
+      chunks += receipt.chunks;
+      fetches.push({
+        path: entry.path,
+        markdownUrl: entry.markdownUrl,
+        fullMarkdown,
+        status: result.status,
+        error,
+        chunks: receipt.chunks,
+      });
+    } catch (ingestError) {
+      if (!result.fullMarkdown) {
+        throw ingestError;
+      }
+
+      document = documentForIndexOnlyEntry(entry, startedAt);
+      fullMarkdown = false;
+      error =
+        ingestError instanceof Error
+          ? `full markdown ingest failed: ${ingestError.message}`
+          : "full markdown ingest failed";
+
+      const receipt = await ingestSourceDocuments(env, [document]);
+      documents += receipt.documents;
+      chunks += receipt.chunks;
+      fetches.push({
+        path: entry.path,
+        markdownUrl: entry.markdownUrl,
+        fullMarkdown,
+        status: result.status,
+        error,
+        chunks: receipt.chunks,
+      });
+    }
+  }
+
+  const nextCursor = cursor + selected.length;
+  const batchReceipt = {
+    generatedAt: startedAt,
+    corpus: "revenuecat_docs",
+    cursor,
+    batchSize,
+    nextCursor: nextCursor < entries.length ? nextCursor : null,
+    totalEntries: entries.length,
+    attempted: selected.length,
+    documents,
+    chunks,
+    fullMarkdown: fetches.filter((fetch) => fetch.fullMarkdown).length,
+    indexOnly: fetches.filter((fetch) => !fetch.fullMarkdown).length,
+    fetches,
+  };
+
+  await env.ARTIFACT_BUCKET.put(
+    `source-ingest/revenuecat-docs-${startedAt.replaceAll(":", "-")}-${cursor}.json`,
+    JSON.stringify(batchReceipt, null, 2),
+    {
+      httpMetadata: { contentType: "application/json" },
+    },
+  );
+
+  return batchReceipt;
 }
 
 async function fallbackSourceSearch(env: Env, query: string, topK: number) {
@@ -336,7 +714,8 @@ export async function retrieveSources(
         const metadata = match.metadata ?? {};
         const content =
           typeof metadata.content === "string" ? metadata.content : "";
-        const title = typeof metadata.title === "string" ? metadata.title : match.id;
+        const title =
+          typeof metadata.title === "string" ? metadata.title : match.id;
         const url = typeof metadata.url === "string" ? metadata.url : null;
         return {
           id: match.id,

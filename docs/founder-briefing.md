@@ -31,7 +31,8 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
   state, R2 for proof bundles, Queues for backpressure, Workflows for durable
   weekly loops.
 - **AI/retrieval**: AI Gateway and Workers AI bindings are provisioned; Vectorize
-  is the active retrieval target while AI Search remains deferred.
+  is the active retrieval target for RevenueCat public docs while AI Search
+  remains deferred.
 - **Connectors**: Slack, social platforms, code repositories, keyword
   intelligence APIs, and RevenueCat private APIs activate only after credentials
   and approval gates are in place.

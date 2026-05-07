@@ -24,7 +24,7 @@ The active app shell is now:
 - D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 - experiment operations for variants, tracking links, behavioral events, metric
   snapshots, RevenueCat chart pulls, and readouts
-- source ingestion into Vectorize and source-grounded chat
+- RevenueCat docs ingestion into Vectorize and source-grounded chat
 - rate, budget, and kill-switch policy gates for chat/model/event paths
 
 The old Next.js and Convex implementation has been removed from the runnable
@@ -102,7 +102,7 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/activation` | Resource, secret, and gate snapshot |
 | `/api/policy` | Runtime policy and protected kill-switch/model toggle updates |
 | `/api/sources` | Source/retrieval index status |
-| `/api/sources/ingest` | Protected source corpus ingestion into Vectorize |
+| `/api/sources/ingest` | Protected seed or RevenueCat docs batch ingestion into Vectorize |
 | `/api/experiments` | Experiment register and authenticated create endpoint |
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot |
@@ -130,6 +130,21 @@ docs/                   Product, ops, interview, and public proof docs
 
 The activation gate lives in
 [docs/ops/cloudflare-activation-checklist.md](docs/ops/cloudflare-activation-checklist.md).
+
+## RevenueCat Docs Grounding
+
+The production retrieval path uses RevenueCat's public `llms.txt` docs index as
+the source inventory. The ingester stores full Markdown mirrors when RevenueCat
+serves them and writes an index-only placeholder for listed paths whose Markdown
+mirror is unavailable, so the system represents every indexed docs entry without
+inventing missing page content.
+
+Current production state from the 2026-05-07 refresh:
+
+- 333 RevenueCat docs index entries represented
+- 314 full Markdown mirrors
+- 19 explicit index-only fallbacks
+- 342 total sources and 1,982 indexed chunks including GrowthRat proof sources
 
 ## Experiment Loop
 

@@ -72,6 +72,9 @@ Verified in the Cloudflare account on 2026-05-06 and updated locally on
 - Vectorize `growthrat-doc-index-bge-base` is provisioned with the 768-dimensional `@cf/baai/bge-base-en-v1.5` preset.
 - Pipeline stream `growthrat_events` is provisioned.
 - AI Gateway `growthrat` is provisioned.
+- RevenueCat docs grounding is backed by the official `llms.txt` index, full
+  Markdown mirrors where available, D1 chunk receipts, R2 source snapshots, and
+  Vectorize embeddings.
 - Workers AI calls now route through the `growthrat` AI Gateway from the chat
   and weekly-draft paths.
 - Rate-limit bindings are declared for chat, model calls, and public event
@@ -142,24 +145,28 @@ Completed:
 - experiment register, tracking redirects, event capture, manual metric import,
   RevenueCat chart snapshots, and readouts exist.
 - protected manual weekly dry-run API exists.
-- source corpus ingest API exists at `/api/sources/ingest`.
-- production source seed has been ingested into D1 and Vectorize.
+- source ingest API exists at `/api/sources/ingest` for the seed corpus and
+  RevenueCat docs batches from the public `llms.txt` index.
+- production retrieval uses D1, R2, and Vectorize for RevenueCat docs chunks,
+  with index-only fallbacks for listed docs whose Markdown mirror is
+  unavailable.
+- production retrieval now represents 333 RevenueCat docs index entries: 314
+  full Markdown mirrors and 19 explicit index-only fallbacks.
 - chat retrieves indexed sources, cites them, and uses Workers AI through AI
   Gateway behind policy gates.
 - model calls have edge rate limits, D1 daily budget counters, and kill-switch
   controls.
 - public event writes have edge rate limits and D1 daily budget counters.
 - Wrangler dry-run recognizes the declared bindings.
+- protected weekly dry run created a D1 workflow row and wrote an R2 proof bundle.
+- a tracking redirect, manual metric import, and draft experiment readout were
+  smoke-tested in production.
 
 Remaining:
 
 - configure production secrets for RevenueCat, Slack, CMS, GitHub, and Typefully
   before calling connector paths live
 - configure a custom domain if `growthrat.com` should be the public URL
-- trigger one protected dry run and confirm D1/R2 receipts, including the weekly
-  experiment tracking links
-- run one live public tracking-link click and confirm the event appears in D1
-- import one manual metric and file one readout from `/experiments`
 - configure Pipeline R2 sink if we want event lake persistence
 - activate RevenueCat, Slack, CMS, GitHub, and social connectors after hire
 

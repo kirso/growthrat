@@ -32,6 +32,14 @@ Remote D1 seed counts:
 - source chunks, policy counters, runtime flags, and operator actions after
   `migrations/0003_agent_runtime_safety.sql`
 
+Production source state after the 2026-05-07 RevenueCat docs refresh:
+
+- 333 RevenueCat docs index entries represented in retrieval
+- 314 entries ingested as full Markdown mirrors
+- 19 entries stored as explicit index-only fallbacks because the Markdown mirror
+  was unavailable
+- 342 total sources and 1,982 indexed chunks, including GrowthRat proof sources
+
 ## Runtime Proof URLs
 
 | URL | Expected behavior |
@@ -41,7 +49,7 @@ Remote D1 seed counts:
 | `/api/activation` | Returns resource, secret, and gate state without secret values |
 | `/api/policy` | Returns runtime policy; authenticated POST toggles kill switch or model chat |
 | `/api/sources` | Returns source and Vectorize index status |
-| `/api/sources/ingest` | Authenticated source corpus ingestion into Vectorize and D1 |
+| `/api/sources/ingest` | Authenticated seed or RevenueCat docs batch ingestion into Vectorize and D1 |
 | `/api/experiments` | Returns experiment register; authenticated POST creates experiments |
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot import |
@@ -70,7 +78,7 @@ token does not match, it returns `401`.
 - Keep the latest `growthrat` Worker deployed with Wrangler.
 - Keep remote D1 migrated through `migrations/0003_agent_runtime_safety.sql`.
 - Re-run `/api/sources/ingest` with `GROWTHRAT_INTERNAL_SECRET` after changing
-  the source seed.
+  the seed corpus or refreshing RevenueCat docs from `llms.txt`.
 - Confirm Cloudflare lists the `growthrat` Worker and `growthrat-weekly-loop`
   Workflow.
 - Set all required Wrangler secrets and config values:
@@ -86,7 +94,7 @@ token does not match, it returns `401`.
 - Confirm `workflow_runs` receives a planned workflow row.
 - Confirm the dry run creates or reuses a weekly experiment with tracking links.
 - Click one `/r/:trackingId` link and confirm `experiment_events` receives a
-  `tracking_click` and tracked `page_view`.
+  `tracking_click`.
 - Import one manual metric and file one readout from `/experiments`.
 - Confirm public reads keep working if D1 is temporarily unavailable.
 - Confirm `/api/chat` returns citations when source chunks are indexed.
@@ -99,11 +107,39 @@ token does not match, it returns `401`.
 
 ## Current Blockers
 
-- Remote D1 migration, source ingest, and latest Worker deploy still need an
-  authenticated Wrangler session or scoped Cloudflare API token.
 - AI Search provisioning failed for this account; Vectorize is the active
   retrieval system.
 - Dedicated Secrets Store creation failed because the account already reached
   the current store quota.
 - RevenueCat private access, Slack, CMS, GitHub org, Charts, and social
   credentials are post-hire dependencies.
+
+## Latest Production Proof
+
+Verified on 2026-05-07:
+
+- `growthrat` Worker deployed to `https://growthrat.kirso.workers.dev`.
+- `GROWTHRAT_INTERNAL_SECRET` is configured.
+- `/api/sources` reports 342 sources, 1,982 indexed chunks, 1,982 vectors, and
+  768 dimensions.
+- `/api/chat` answered from the newly ingested MCP docs with RevenueCat
+  citations.
+- `/api/workflows/weekly-dry-run` created workflow
+  `b1023b71-13f3-436b-869d-b1d2cd972d2a`.
+- R2 contains `weekly-runs/2026-05-04/plan.json` with a draft and 5 citations.
+- `/r/weekly-agent-advocacy-2026-05-04-implementation` wrote a
+  `tracking_click`.
+- A manual `qualified_clicks` metric and draft readout were created for
+  `weekly-agent-advocacy-2026-05-04`.
+
+## RevenueCat Docs Ingestion
+
+The docs refresh path reads `https://www.revenuecat.com/docs/llms.txt`, fetches
+the corresponding Markdown mirror for each listed path, stores source snapshots
+in R2, writes chunk receipts in D1, and upserts embeddings into Vectorize through
+Workers AI and AI Gateway.
+
+If a listed docs path does not return usable Markdown, the ingester writes an
+index-only fallback with the canonical URL and an explicit note that page content
+was not mirrored. That keeps the inventory complete without hallucinating
+missing documentation.
