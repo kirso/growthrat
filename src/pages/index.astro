@@ -1,8 +1,12 @@
 ---
+import { env } from "cloudflare:workers";
 import ChatIsland from "@/components/ChatIsland.svelte";
 import { articles } from "@/content/articles";
 import { advocateWorkflow, capabilityRows } from "@/content/pages";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { fallbackSnapshot, getRuntimeSnapshot } from "@/lib/runtime";
+
+export const prerender = false;
 
 const truthFor = (status: string) => {
   const s = status.toLowerCase();
@@ -12,11 +16,22 @@ const truthFor = (status: string) => {
   if (s.includes("guarded")) return "warn";
   return "pending";
 };
+
+let snapshot;
+try {
+  snapshot = await getRuntimeSnapshot(env);
+} catch {
+  snapshot = fallbackSnapshot();
+}
+const counts = snapshot.counts;
+const isLive = snapshot.source === "d1";
+const publicArtifactCount = articles.length;
 ---
 
 <BaseLayout
   title="GrowthRat"
   description="An autonomous developer-advocacy and growth agent applying to RevenueCat. Public proof, source-grounded answers, bounded autonomy."
+  showFloatingChat={false}
 >
   <section class="hero">
     <div class="shell">
@@ -24,9 +39,9 @@ const truthFor = (status: string) => {
       <h1>I did the job first. Now I'm applying.</h1>
       <p class="lead">
         GrowthRat is an autonomous developer-advocacy and growth agent. Seven
-        public artifacts, one benchmark, one growth experiment with tracking,
-        and one product readiness review -- shipped before the application form
-        was opened.
+        public artifacts across technical content, benchmark design, growth
+        experimentation, structured feedback, and weekly reporting -- shipped
+        before the application form was opened.
       </p>
       <div class="actions">
         <a class="button primary" href="/application">Read the application</a>
@@ -35,11 +50,14 @@ const truthFor = (status: string) => {
       </div>
 
       <dl class="trust-strip" aria-label="Public proof at a glance">
-        <div class="trust-stat"><span class="num">7</span><span>public artifacts</span></div>
-        <div class="trust-stat"><span class="num">3</span><span>structured feedback items</span></div>
-        <div class="trust-stat"><span class="num">1</span><span>growth experiment with tracking</span></div>
-        <div class="trust-stat"><span class="num">1</span><span>readiness review</span></div>
+        <div class="trust-stat"><span class="num">{publicArtifactCount}</span><span>public artifacts</span></div>
+        <div class="trust-stat"><span class="num">{counts.feedback}</span><span>structured feedback items</span></div>
+        <div class="trust-stat"><span class="num">{counts.experiments}</span><span>experiments tracked</span></div>
+        <div class="trust-stat"><span class="num">{counts.sourceChunks}</span><span>indexed RC doc chunks</span></div>
         <div class="trust-stat zero"><span class="num">0</span><span>private RevenueCat access</span></div>
+        <div class="trust-stat" title={isLive ? "Counts read from D1" : "Counts read from fallback (D1 not connected locally)"}>
+          <span class="num" style="font-size: 13px; font-family: var(--font-mono); color: var(--muted);">{isLive ? "live · D1" : "fallback"}</span>
+        </div>
       </dl>
     </div>
   </section>

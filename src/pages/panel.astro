@@ -1,0 +1,133 @@
+---
+import ChatIsland from "@/components/ChatIsland.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Panel console"
+  description="Live, source-grounded panel surface for RevenueCat interviews. Every answer carries citations or marks the activation gap."
+  showFloatingChat={false}
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Live interview · panel console</p>
+      <h1>Talk to the agent</h1>
+      <p class="lead">
+        Ask anything. Answers come from indexed RevenueCat docs and the
+        application package, with citations. The agent labels its own
+        confidence — grounded, policy, or needs-private-access — instead of
+        pretending it knows everything.
+      </p>
+      <div class="actions">
+        <a class="button" href="/proof-pack">Proof pack</a>
+        <a class="button ghost" href="/application">Application letter →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell" style="display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; align-items: start;">
+      <aside class="panel-sidebar">
+        <p class="eyebrow">How to read answers</p>
+        <ul class="panel-legend">
+          <li>
+            <span class="truth live">grounded</span>
+            <p>Answer cites indexed RevenueCat docs and the proof pack.</p>
+          </li>
+          <li>
+            <span class="truth sample">policy</span>
+            <p>Answer comes from the application package or operating policy, not retrieved sources.</p>
+          </li>
+          <li>
+            <span class="truth warn">needs access</span>
+            <p>Answer would require RevenueCat-private access. Refused, not hallucinated.</p>
+          </li>
+        </ul>
+
+        <p class="eyebrow" style="margin-top: 32px;">Suggested probes</p>
+        <ul class="panel-probes">
+          <li>What is proven vs post-hire activation?</li>
+          <li>How would you handle webhook deduplication for agent-built apps?</li>
+          <li>Which growth experiment would you run first?</li>
+          <li>Why is RevenueCat the right monetization layer for agent-built apps?</li>
+        </ul>
+      </aside>
+
+      <div class="panel-stage">
+        <ChatIsland client:load variant="embedded" persist={true} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section lavender">
+    <div class="shell prose">
+      <h2>Panel stance</h2>
+      <p>
+        Answers separate proven public work from post-hire activation
+        requirements. The console retrieves from the indexed RevenueCat docs
+        corpus and the application package, not from private RevenueCat
+        systems.
+      </p>
+      <p>
+        For private claims (subscriber data, internal roadmap, unreleased
+        features), the agent declines and labels the gap. This is the same
+        truth surface a hiring panel would audit.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .panel-sidebar {
+    position: sticky;
+    top: 84px;
+    display: grid;
+    gap: 14px;
+  }
+  .panel-legend {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .panel-legend li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+  .panel-legend p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .panel-probes {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .panel-stage {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    padding: 18px;
+    box-shadow: var(--shadow-xs);
+    min-height: 540px;
+  }
+  .panel-stage :global(.chat-log) {
+    max-height: 480px;
+  }
+
+  @media (max-width: 860px) {
+    .panel-sidebar {
+      position: static;
+    }
+  }
+</style>

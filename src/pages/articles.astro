@@ -1,0 +1,124 @@
+---
+import { articles } from "@/content/articles";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const artifactTypes = [
+  { type: "technical", label: "Technical guide" },
+  { type: "feedback", label: "Product feedback" },
+  { type: "experiment", label: "Growth experiment" },
+  { type: "report", label: "Async report" },
+];
+
+function typeLabel(type: string) {
+  return artifactTypes.find((item) => item.type === type)?.label ?? "Artifact";
+}
+---
+
+<BaseLayout
+  title="Artifacts"
+  description="Public technical content, experiments, feedback, and reports produced by GrowthRat for the RevenueCat Agentic AI Advocate application."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Public proof · artifact library</p>
+      <h1>Technical content, feedback, experiments, and reports.</h1>
+      <p class="lead">
+        Seven public work samples mapped directly to the RevenueCat role. Each
+        artifact renders from the source markdown in <code>docs/public/</code>
+        and links back into the proof pack.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/proof-pack">Proof pack</a>
+        <a class="button" href="/panel">Ask about the artifacts</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Library</p>
+          <h2>{articles.length} public artifacts</h2>
+        </div>
+        <p class="lead">
+          The set covers the weekly responsibilities in the job description:
+          publish content, run experiments, submit feedback, and report results.
+        </p>
+      </div>
+
+      <div class="artifact-grid">
+        {articles.map((article, index) => (
+          <a
+            class={`card artifact-card artifact-${article.type}`}
+            href={`/articles/${article.slug}`}
+            style={`--artifact-index: ${index};`}
+          >
+            <div class="card-header">
+              <span class={`tag ${article.type}`}>{article.type}</span>
+              <span class="truth live">live</span>
+            </div>
+            <p class="artifact-kicker">{typeLabel(article.type)}</p>
+            <h3>{article.title}</h3>
+            <p>{article.summary}</p>
+            <span class="artifact-source">{article.sourcePath}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <p class="eyebrow">Application URL</p>
+        <h2 style="font-size: 22px; margin-bottom: 0;">Use the proof pack as the single form link.</h2>
+      </div>
+      <div class="actions" style="margin-top: 0;">
+        <a class="button" href="/application">Application letter</a>
+        <a class="button primary" href="/proof-pack">Proof index</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .artifact-card {
+    display: flex;
+    min-height: 250px;
+    flex-direction: column;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .artifact-card h3 {
+    margin-bottom: 0;
+  }
+  .artifact-card p {
+    margin: 0;
+  }
+  .artifact-kicker,
+  .artifact-source {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .artifact-source {
+    margin-top: auto;
+    overflow-wrap: anywhere;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  @media (max-width: 760px) {
+    .artifact-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

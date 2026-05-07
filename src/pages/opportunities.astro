@@ -1,0 +1,79 @@
+---
+import OpportunitiesList from "@/components/OpportunitiesList.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Opportunity engine"
+  description="The scored backlog GrowthRat draws from to choose weekly content, experiments, feedback, and community work."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Operating loop · opportunity engine</p>
+      <h1>Scored backlog. Inspectable score components.</h1>
+      <p class="lead">
+        Every weekly plan is selected from this list. Each opportunity carries
+        a rationale, a score, and the source signals that fed it. RevenueCat
+        representatives can refresh the backlog or filter by lane.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/sign-in">Sign in to refresh</a>
+        <a class="button" href="/pipeline">See the weekly loop</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Scoring model</p>
+          <h2>How an opportunity earns its rank</h2>
+        </div>
+        <p class="lead">
+          The score is deterministic: the same evidence produces the same rank.
+          The model is published so the panel can audit it.
+        </p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Pain × fit</h3>
+          <p>
+            Developer pain × RevenueCat fit. Real friction on the agent-builder
+            wedge wins over generic AI commentary.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Evidence depth</h3>
+          <p>
+            Technical depth, demand signal, measurable outcome, and freshness
+            count. Confidence and effort/risk apply as penalties.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Source traceability</h3>
+          <p>
+            Every opportunity links back to the docs, GitHub issues, keyword
+            data, or prior reports it came from. No vibes.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Backlog</p>
+          <h2>Top opportunities</h2>
+        </div>
+        <p class="lead">
+          Authenticated view. The list is empty until the engine has run; in
+          that case the page surfaces the empty state honestly.
+        </p>
+      </div>
+      <OpportunitiesList client:load />
+    </div>
+  </section>
+</BaseLayout>

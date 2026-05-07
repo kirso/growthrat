@@ -22,8 +22,8 @@ Verified in the Cloudflare account on 2026-05-06 and updated on 2026-05-07:
 
 Remote D1 seed counts:
 
-- 6 artifacts
-- 1 experiment
+- 7 artifacts
+- 3 experiments
 - 3 feedback items
 - 1 weekly report
 - 3 seeded experiment variants and tracking assets after
@@ -32,6 +32,8 @@ Remote D1 seed counts:
   `migrations/0003_agent_runtime_safety.sql`
 - run ledger, opportunity backlog, approval requests, and report deliveries
   after `migrations/0006_run_ledger_observability.sql`
+- benchmark artifact and experiment registration after
+  `migrations/0007_seed_benchmark_artifact.sql`
 
 Production source state after the 2026-05-07 RevenueCat docs refresh:
 

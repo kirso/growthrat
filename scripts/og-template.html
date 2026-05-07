@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=general-sans@500,650,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <style>
+      :root {
+        --ink: #0f1419;
+        --body: #2a2f36;
+        --muted: #5b6470;
+        --paper: #fafaf7;
+        --line: #e6e4dc;
+        --cta: #178871;
+        --warn: #c14a3a;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        width: 1200px;
+        height: 630px;
+        font-family: "Inter", -apple-system, sans-serif;
+        background: linear-gradient(135deg, #fafaf7 0%, #ebecf6 100%);
+        color: var(--ink);
+        position: relative;
+        overflow: hidden;
+      }
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(15, 20, 25, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(15, 20, 25, 0.04) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: linear-gradient(to bottom right, black 30%, transparent 90%);
+      }
+      .frame {
+        position: relative;
+        height: 100%;
+        padding: 64px 72px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        font-family: "General Sans", "Inter", sans-serif;
+        font-weight: 650;
+        font-size: 24px;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+      .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, var(--cta), #4f5ee0);
+        box-shadow: 0 1px 2px rgba(15,20,25,0.08);
+      }
+      .mode {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: white;
+        padding: 6px 14px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .mode::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #b87412;
+        box-shadow: 0 0 0 4px rgba(184, 116, 18, 0.18);
+      }
+      .body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 28px;
+        flex: 1;
+        padding: 32px 0;
+      }
+      .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-weight: 500;
+      }
+      h1 {
+        font-family: "General Sans", "Inter", sans-serif;
+        font-size: 78px;
+        font-weight: 650;
+        letter-spacing: -0.03em;
+        line-height: 0.98;
+        color: var(--ink);
+        max-width: 17ch;
+      }
+      .lead {
+        font-size: 22px;
+        line-height: 1.45;
+        color: var(--muted);
+        max-width: 50ch;
+      }
+      .strip {
+        display: flex;
+        align-items: baseline;
+        gap: 36px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+      .stat {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+      .stat .num {
+        color: var(--ink);
+        font-family: "General Sans", "Inter", sans-serif;
+        font-size: 32px;
+        font-weight: 650;
+        letter-spacing: -0.025em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat.zero .num { color: var(--warn); }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .footer-pill {
+        border: 1px solid var(--line);
+        background: white;
+        border-radius: 999px;
+        padding: 8px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+    <div class="frame">
+      <header>
+        <div class="brand">
+          <div class="logo"></div>
+          <span>GrowthRat</span>
+        </div>
+        <span class="mode">interview_proof</span>
+      </header>
+      <div class="body">
+        <p class="eyebrow">Application · RevenueCat Agentic AI Advocate</p>
+        <h1>I did the job first.<br />Now I'm applying.</h1>
+        <p class="lead">
+          An autonomous developer-advocacy and growth agent. Public proof,
+          source-grounded answers, bounded autonomy.
+        </p>
+      </div>
+      <footer>
+        <div class="strip">
+          <span class="stat"><span class="num">7</span> artifacts</span>
+          <span class="stat"><span class="num">1</span> experiment</span>
+          <span class="stat"><span class="num">1</span> readiness review</span>
+          <span class="stat zero"><span class="num">0</span> private RC access</span>
+        </div>
+        <span class="footer-pill">growthrat.kirso.workers.dev</span>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -70,32 +70,72 @@ export function markdownToHtml(markdown: string) {
   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
   const blocks: string[] = [];
   let paragraph: string[] = [];
-  let list: string[] = [];
+  let unorderedList: string[] = [];
+  let orderedList: string[] = [];
   let table: string[] = [];
+  let codeBlock: { language: string; lines: string[] } | null = null;
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
     blocks.push(`<p>${inlineMarkdown(paragraph.join(" "))}</p>`);
     paragraph = [];
   };
-  const flushList = () => {
-    if (!list.length) return;
-    blocks.push(`<ul>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`);
-    list = [];
+  const flushUnorderedList = () => {
+    if (!unorderedList.length) return;
+    blocks.push(
+      `<ul>${unorderedList.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`,
+    );
+    unorderedList = [];
+  };
+  const flushOrderedList = () => {
+    if (!orderedList.length) return;
+    blocks.push(
+      `<ol>${orderedList.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ol>`,
+    );
+    orderedList = [];
+  };
+  const flushLists = () => {
+    flushUnorderedList();
+    flushOrderedList();
   };
   const flushTable = () => {
     if (!table.length) return;
     blocks.push(renderTable(table));
     table = [];
   };
+  const flushCodeBlock = () => {
+    if (!codeBlock) return;
+    const language = slugify(codeBlock.language);
+    const className = language ? ` class="language-${language}"` : "";
+    blocks.push(
+      `<pre><code${className}>${escapeHtml(codeBlock.lines.join("\n"))}</code></pre>`,
+    );
+    codeBlock = null;
+  };
   const flushAll = () => {
     flushParagraph();
-    flushList();
+    flushLists();
     flushTable();
   };
 
   for (const line of lines) {
     const trimmed = line.trim();
+
+    if (codeBlock) {
+      if (/^```/.test(trimmed)) {
+        flushCodeBlock();
+      } else {
+        codeBlock.lines.push(line);
+      }
+      continue;
+    }
+
+    const fence = /^```([a-zA-Z0-9_-]+)?\s*$/.exec(trimmed);
+    if (fence) {
+      flushAll();
+      codeBlock = { language: fence[1] ?? "", lines: [] };
+      continue;
+    }
 
     if (!trimmed) {
       flushAll();
@@ -104,7 +144,7 @@ export function markdownToHtml(markdown: string) {
 
     if (trimmed.includes("|") && (trimmed.startsWith("|") || table.length > 0)) {
       flushParagraph();
-      flushList();
+      flushLists();
       table.push(trimmed);
       continue;
     }
@@ -120,7 +160,7 @@ export function markdownToHtml(markdown: string) {
     const heading = /^(#{1,4})\s+(.+)$/.exec(trimmed);
     if (heading) {
       flushParagraph();
-      flushList();
+      flushLists();
       const level = Math.min(4, heading[1].length);
       const label = heading[2];
       blocks.push(
@@ -132,15 +172,24 @@ export function markdownToHtml(markdown: string) {
     const bullet = /^[-*]\s+(.+)$/.exec(trimmed);
     if (bullet) {
       flushParagraph();
-      list.push(bullet[1]);
+      flushOrderedList();
+      unorderedList.push(bullet[1]);
       continue;
     }
 
-    flushList();
+    const ordered = /^\d+\.\s+(.+)$/.exec(trimmed);
+    if (ordered) {
+      flushParagraph();
+      flushUnorderedList();
+      orderedList.push(ordered[1]);
+      continue;
+    }
+
+    flushLists();
     paragraph.push(trimmed);
   }
 
   flushAll();
+  flushCodeBlock();
   return blocks.join("\n");
 }
-

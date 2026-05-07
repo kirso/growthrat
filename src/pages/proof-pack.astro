@@ -1,0 +1,264 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { articles } from "@/content/articles";
+
+type Status = "live" | "sample" | "pending";
+
+type ProofRow = {
+  artifact: string;
+  href: string;
+  type: string;
+  responsibility: string;
+  status: Status;
+};
+
+const articleRows: ProofRow[] = articles.map((article) => {
+  const responsibility =
+    article.type === "technical"
+      ? "Publish technical content"
+      : article.type === "feedback"
+        ? "Submit structured product feedback"
+        : article.type === "experiment"
+          ? "Run growth experiments"
+          : "Report weekly";
+  return {
+    artifact: article.title,
+    href: `/articles/${article.slug}`,
+    type: article.type,
+    responsibility,
+    status: "live",
+  };
+});
+
+const surfaceRows: ProofRow[] = [
+  {
+    artifact: "Live agent panel with citations",
+    href: "/panel",
+    type: "live surface",
+    responsibility: "Interact with APIs in public",
+    status: "live",
+  },
+  {
+    artifact: "Experiment operating console (D1-backed)",
+    href: "/experiments",
+    type: "live surface",
+    responsibility: "Run growth experiments",
+    status: "live",
+  },
+  {
+    artifact: "Activation truth dashboard",
+    href: "/dashboard",
+    type: "live surface",
+    responsibility: "Operate with bounded autonomy",
+    status: "live",
+  },
+  {
+    artifact: "RevenueCat for-agents readiness review",
+    href: "/readiness-review",
+    type: "audit",
+    responsibility: "Submit structured product feedback",
+    status: "live",
+  },
+  {
+    artifact: "Application letter",
+    href: "/application",
+    type: "letter",
+    responsibility: "Application submission",
+    status: "live",
+  },
+];
+
+const allRows = [...articleRows, ...surfaceRows];
+const liveCount = allRows.length;
+const articleCount = articles.length;
+---
+
+<BaseLayout
+  title="Proof pack"
+  description="A single scannable index of GrowthRat's public proof: artifacts, live surfaces, and how each one maps to a RevenueCat advocate responsibility."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Application proof · single-URL index</p>
+      <h1>Every artifact, mapped to the role.</h1>
+      <p class="lead">
+        This is the URL pasted into the application form's "links" field. One
+        page, one table. Each row maps a public artifact or live surface to a
+        RevenueCat advocate responsibility, and labels its activation status
+        honestly.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/application">Read the application</a>
+        <a class="button" href="/panel">Talk to the agent</a>
+      </div>
+
+      <dl class="trust-strip" aria-label="Proof at a glance">
+        <div class="trust-stat"><span class="num">{articleCount}</span><span>public artifacts</span></div>
+        <div class="trust-stat"><span class="num">{liveCount}</span><span>linked rows</span></div>
+        <div class="trust-stat"><span class="num">3</span><span>live surfaces</span></div>
+        <div class="trust-stat zero"><span class="num">0</span><span>private RevenueCat access</span></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Index</p>
+          <h2>Proof pack</h2>
+        </div>
+        <p class="lead">
+          Sorted with technical content first, then feedback, growth, reporting,
+          and the live surfaces that demonstrate API interaction.
+        </p>
+      </div>
+
+      <div class="proof-table" role="table" aria-label="Proof artifacts">
+        <div class="proof-row proof-head" role="row">
+          <span role="columnheader">Artifact</span>
+          <span role="columnheader">Type</span>
+          <span role="columnheader">Maps to RevenueCat responsibility</span>
+          <span role="columnheader" style="text-align: right;">Status</span>
+        </div>
+        {allRows.map((row) => (
+          <a class="proof-row" role="row" href={row.href}>
+            <span class="proof-artifact" role="cell">
+              {row.artifact}
+            </span>
+            <span role="cell"><span class={`tag ${row.type}`}>{row.type}</span></span>
+            <span class="proof-responsibility" role="cell">{row.responsibility}</span>
+            <span role="cell" style="text-align: right;">
+              <span class={`truth ${row.status}`}>{row.status}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell prose">
+      <h2>How to read this page</h2>
+      <p>
+        The application form asks for "links demonstrating ability to
+        autonomously produce technical content, run growth experiments, or
+        interact with APIs in public." This page is that link.
+      </p>
+      <p>
+        Every row above leads to either a working artifact or a live, public
+        surface that talks to GrowthRat's own API. Nothing on this page claims
+        private RevenueCat access. The "0 private RC access" stat in the trust
+        strip is deliberate — it is the honesty that makes the rest of the
+        claims credible.
+      </p>
+      <p>
+        Source for every artifact lives in
+        <code>docs/public/</code> in the public repo. The site is rendered
+        directly from that source. There are no offline artifacts, no
+        screenshots-of-screenshots, and no claims that cannot be verified by
+        clicking a row.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Pre-hire deliverable</p>
+          <h2>Pasting this into the application form</h2>
+        </div>
+      </div>
+      <div class="proof-form-help">
+        <div class="card">
+          <h3>Field: application letter URL</h3>
+          <p>
+            <code>https://growthrat.kirso.workers.dev/application</code>
+          </p>
+        </div>
+        <div class="card">
+          <h3>Field: proof links</h3>
+          <p>
+            <code>https://growthrat.kirso.workers.dev/proof-pack</code>
+          </p>
+          <p style="margin-top: 8px; font-size: 13px;">
+            One URL, all the rows above. Optional: also include
+            <code>https://github.com/kirso/growthrat</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .proof-table {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    overflow: hidden;
+  }
+  .proof-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 130px minmax(0, 1.4fr) 140px;
+    gap: 18px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+    color: inherit;
+    text-decoration: none;
+    align-items: center;
+    transition: background 160ms ease;
+  }
+  .proof-row:last-child {
+    border-bottom: 0;
+  }
+  a.proof-row:hover {
+    background: var(--surface-soft);
+  }
+  .proof-head {
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .proof-artifact {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .proof-responsibility {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .proof-form-help {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .proof-form-help h3 {
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .proof-form-help p {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  @media (max-width: 860px) {
+    .proof-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .proof-head {
+      display: none;
+    }
+    .proof-form-help {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,125 @@
+---
+import ConnectorConsole from "@/components/ConnectorConsole.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Connector onboarding"
+  description="RevenueCat-owned account onboarding for GrowthRat. Connect Slack, CMS, Charts, GitHub, and social distribution after the interview gate passes."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">RC activation · onboarding</p>
+      <h1>Connect the accounts GrowthRat operates on your behalf.</h1>
+      <p class="lead">
+        Same console as <a href="/sign-in" style="color: inherit; text-decoration: underline; text-underline-offset: 2px;">sign-in</a>,
+        framed for the post-interview onboarding flow. Each connector is
+        explicit: missing, pending, verified, or error. Connector loss fails
+        closed for side effects.
+      </p>
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">What you'll connect</p>
+          <h2>Five connectors run the weekly loop</h2>
+        </div>
+        <p class="lead">
+          Slack owns approvals and reports. CMS owns long-form publishing.
+          GitHub owns code samples and docs PRs. Postiz owns approved social
+          distribution. RevenueCat APIs own monetization truth.
+        </p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <span class="tag">Slack</span>
+          <h3 style="margin-top: 12px;">Team requests &amp; approvals</h3>
+          <p>
+            Plans, draft approvals, weekly reports, and stop/resume commands run
+            through Slack. Reaction-based approval promotes drafts only when
+            policy allows.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">CMS</span>
+          <h3 style="margin-top: 12px;">Long-form publishing</h3>
+          <p>
+            Generated artifacts stay in draft mode in your CMS until a
+            RevenueCat representative approves the final version.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">GitHub</span>
+          <h3 style="margin-top: 12px;">Code samples &amp; docs PRs</h3>
+          <p>
+            Sample repos, docs PRs, and feedback issues are filed under a
+            GrowthRat-affiliated account with audit trails on every action.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">Postiz</span>
+          <h3 style="margin-top: 12px;">Approved social distribution</h3>
+          <p>
+            One approved artifact produces multiple platform-specific drafts.
+            Distribution requires an idempotency key and approval state.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">RevenueCat</span>
+          <h3 style="margin-top: 12px;">Monetization truth</h3>
+          <p>
+            Charts and Metrics API access lets the agent reason about
+            subscription outcomes, not just behavioral funnels.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">DataForSEO</span>
+          <h3 style="margin-top: 12px;">Demand signals</h3>
+          <p>
+            Keyword difficulty, intent, and SERP data feed the opportunity
+            engine. Score components are inspectable per opportunity.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Connect now</p>
+          <h2>Onboarding console</h2>
+        </div>
+        <p class="lead">
+          You'll need an authenticated RevenueCat representative session.
+          Tokens are stored encrypted as connected-account records, not
+          platform secrets.
+        </p>
+      </div>
+      <ConnectorConsole client:load />
+    </div>
+  </section>
+
+  <section class="section lavender">
+    <div class="shell prose">
+      <h2>Trust boundaries</h2>
+      <p>
+        Platform secrets (operator-owned) live in Wrangler. Connector tokens
+        (RevenueCat-owned) live in encrypted connected-account records created
+        by an authenticated representative. The agent cannot read connector
+        secrets in plaintext and cannot operate connectors that fail
+        verification.
+      </p>
+      <p>
+        Each connector goes through one of: <code>missing</code>,
+        <code>pending</code>, <code>verified</code>, <code>manual_verification</code>,
+        or <code>error</code>. Connector loss must degrade reads clearly and
+        fail closed for side effects.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

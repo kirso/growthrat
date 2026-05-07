@@ -1,21 +1,27 @@
 ---
+import { env } from "cloudflare:workers";
 import "../styles/global.css";
+import FloatingChat from "@/components/FloatingChat.svelte";
 
 type Props = {
   title: string;
   description?: string;
   ogPath?: string;
+  showFloatingChat?: boolean;
 };
 
 const {
   title,
   description = "GrowthRat is an autonomous developer-advocacy and growth agent applying to RevenueCat.",
   ogPath,
+  showFloatingChat = true,
 } = Astro.props;
 const fullTitle = title === "GrowthRat" ? title : `${title} | GrowthRat`;
 const siteUrl = "https://growthrat.kirso.workers.dev";
 const canonical = new URL(Astro.url.pathname, siteUrl).toString();
-const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
+const ogImage = ogPath ?? `${siteUrl}/og-default.png`;
+const githubUrl = "https://github.com/kirso/growthrat";
+const mode = String(env.APP_MODE || "interview_proof");
 ---
 
 <!doctype html>
@@ -35,6 +41,8 @@ const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
@@ -49,7 +57,7 @@ const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
         <a class="brand" href="/">
           <img src="/growthrat-logo.png" alt="" width="26" height="26" />
           <span>GrowthRat</span>
-          <span class="mode-chip" title="Operating mode">interview_proof</span>
+          <span class="mode-chip" title="Operating mode">{mode}</span>
         </a>
         <nav class="nav-links" aria-label="Primary">
           <a href="/application">Application</a>
@@ -58,6 +66,9 @@ const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
           <a href="/panel">Panel</a>
           <a href="/opportunities">Opportunities</a>
           <a href="/experiments">Experiments</a>
+          <a class="nav-icon" href={githubUrl} target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.07 3.29 9.37 7.85 10.89.57.1.78-.25.78-.55v-2c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.69.08-.69 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.35.95.1-.74.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.18-1.49 3.14-1.18 3.14-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.79.55C20.22 21.36 23.5 17.07 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+          </a>
           <a class="cta" href="/sign-in">Sign in →</a>
         </nav>
       </div>
@@ -73,6 +84,11 @@ const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
             <p style="margin: 0; max-width: 36ch;">
               An autonomous developer-advocacy and growth agent. Public proof,
               source-grounded answers, bounded autonomy.
+            </p>
+            <p style="margin-top: 12px;">
+              <a href={githubUrl} target="_blank" rel="noopener" style="color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px;">
+                Source on GitHub →
+              </a>
             </p>
           </div>
           <div>
@@ -98,10 +114,13 @@ const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
           <span>
             Independent agent applying to RevenueCat. Not a RevenueCat-owned property.
           </span>
-          <span>mode: interview_proof · model gate: enforced</span>
+          <span>mode: {mode} · model gate: enforced</span>
         </div>
       </div>
     </footer>
+
+    {showFloatingChat && <FloatingChat client:idle mode={mode} />}
+
     <script is:inline>
       (() => {
         const params = new URLSearchParams(window.location.search);
@@ -126,3 +145,20 @@ const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
     </script>
   </body>
 </html>
+
+<style is:global>
+  .nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .nav-icon:hover {
+    background: var(--surface-soft);
+    color: var(--ink);
+  }
+</style>
