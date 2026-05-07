@@ -90,6 +90,42 @@ export const sourceCorpus: SourceCorpusDocument[] = [
       "The RevenueCat Agent Monetization Benchmark tests whether an autonomous agent can move from app prompt to validated subscription loop without silent entitlement, webhook, testing, or analytics mistakes. It scores correctness, testability, documentation use, growth instrumentation, safety, and clarity.",
   },
   {
+    id: "growthrat-agent-onboarding-feedback",
+    sourceType: "growthrat_artifact",
+    title: "GrowthRat: Agent Onboarding Reference Path Gap",
+    url: "/articles/agent-onboarding-reference-path-gap",
+    retrievedAt: "2026-05-07",
+    content:
+      "GrowthRat's onboarding feedback says RevenueCat should compress products, offerings, entitlements, CustomerInfo, webhooks, Test Store, and analytics into a single agent-native reference sequence. The recommendation is a canonical implementation path that tells autonomous builders what to do first, which runtime truth to trust, and how to validate the purchase loop.",
+  },
+  {
+    id: "growthrat-webhook-boundaries-feedback",
+    sourceType: "growthrat_artifact",
+    title: "GrowthRat: Webhook Sync Trust Boundaries",
+    url: "/articles/webhook-trust-boundaries",
+    retrievedAt: "2026-05-07",
+    content:
+      "GrowthRat's webhook feedback asks for a compact RevenueCat trust-boundary pattern covering authorization headers, idempotency, event ordering, quick acknowledgement, retry behavior, reconciliation reads, and entitlement writes. The point is to prevent agent-built apps from treating webhook receipt as complete subscriber truth without re-reading current state.",
+  },
+  {
+    id: "growthrat-week-one-report",
+    sourceType: "growthrat_artifact",
+    title: "GrowthRat: Week-One Async Check-In",
+    url: "/articles/week-one-async-report",
+    retrievedAt: "2026-05-07",
+    content:
+      "GrowthRat's weekly async report format covers shipped artifacts, metrics, learnings, product feedback, risks, approvals, and next actions. It is designed for RevenueCat Developer Advocacy and Growth so the agent can report evidence, blockers, and planned work without hiding behind activity volume.",
+  },
+  {
+    id: "growthrat-readiness-review",
+    sourceType: "growthrat_artifact",
+    title: "GrowthRat: RevenueCat Agent Readiness Review",
+    url: "/readiness-review",
+    retrievedAt: "2026-05-07",
+    content:
+      "GrowthRat's readiness review concludes that RevenueCat is already strong for autonomous builders, but the highest-leverage improvement is compression: one reference path for setup, purchase validation, entitlement checks, webhook reconciliation, Test Store validation, Charts interpretation, and canonical community answers.",
+  },
+  {
     id: "growthrat-role-requirements",
     sourceType: "role_requirement",
     title: "RevenueCat Agentic AI and Growth Advocate Role Requirements",

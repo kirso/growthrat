@@ -10,6 +10,15 @@ describe("formatAdvocateLoopSlackReport", () => {
       status: "planned",
       artifactId: "art_123",
       reportId: "report_123",
+      approvalRequests: [
+        {
+          approvalId: "appr_123",
+          subjectId: "dist_123",
+          channel: "postiz",
+          actionType: "draft_social_posts",
+          title: "Approve Postiz draft derivatives",
+        },
+      ],
       plan: {
         contentTopics: ["RevenueCat Test Store for agent-built apps"],
         experimentTopic: "Agent monetization benchmark",
@@ -43,6 +52,7 @@ describe("formatAdvocateLoopSlackReport", () => {
     expect(report).toContain("*GrowthRat weekly advocate run*");
     expect(report).toContain("RevenueCat Test Store for agent-built apps");
     expect(report).toContain("Publish the guide.");
+    expect(report).toContain("Command: approve appr_123");
     expect(report).toContain("Sensitive external actions remain gated");
   });
 });

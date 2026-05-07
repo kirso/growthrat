@@ -193,6 +193,16 @@ Current implementation status:
   protect public chat/model/event paths
 - public application routes render the full agent-authored application letter
   and the proof pack includes a RevenueCat Agent Monetization Benchmark
+- `/dashboard`, `/slack`, `/community`, `/feedback`, `/report`, and
+  `/take-home` now expose the client/operator surfaces that were missing from
+  the Cloudflare migration
+- `/api/ops/status` returns the authenticated operating snapshot for runs,
+  approvals, distribution actions, report deliveries, connector state, and
+  weekly reports
+- Slack reports expose approval IDs, and Slack reactions can approve or reject
+  pending distribution actions attached to a report thread
+- take-home execution now creates a run-ledger record and R2 package receipt in
+  dry-run mode instead of being only a thin task shim
 
 ### P2: RevenueCat-Connected Operation
 

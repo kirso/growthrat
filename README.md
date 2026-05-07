@@ -26,6 +26,8 @@ The active app shell is now:
   snapshots, RevenueCat chart pulls, and readouts
 - scored opportunity planning, approval requests, a D1 run ledger, and Slack
   report formatting for the weekly advocate loop
+- client/operator surfaces for runtime state, Slack approvals, weekly reports,
+  community signals, product feedback, and take-home task execution
 - RevenueCat docs ingestion into Vectorize and source-grounded chat
 - optional Langfuse trace mirroring with D1 remaining the source of truth
 - rate, budget, and kill-switch policy gates for chat/model/event paths
@@ -96,12 +98,17 @@ docs/                   Product, ops, interview, and public proof docs
 | `/articles/revenuecat-for-agent-built-apps` | Flagship technical sample |
 | `/articles/revenuecat-agent-monetization-benchmark` | Agent monetization benchmark |
 | `/readiness-review` | RevenueCat agent-builder readiness review |
+| `/feedback` | Structured product feedback queue |
+| `/report` | Weekly async report and delivery receipts |
 | `/interview-truth` | Proven vs. requires activation |
 | `/panel` | Live panel surface |
-| `/dashboard` | Operator status |
+| `/dashboard` | Operator status, run ledger, approvals, and connectors |
+| `/slack` | Slack command, approval, and report-delivery operating loop |
+| `/community` | Community signal and reply-draft queue |
+| `/take-home` | Authenticated take-home task execution surface |
 | `/go-live` | Activation checklist surface |
 | `/pipeline` | Weekly loop surface |
-| `/opportunities` | Opportunity engine explanation |
+| `/opportunities` | Authenticated scored opportunity backlog surface |
 | `/experiments` | Experiment operating surface |
 | `/api/runtime` | Runtime and binding snapshot |
 | `/api/proof` | Proof artifact index |
@@ -110,6 +117,7 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/auth/session` | RC representative session check |
 | `/api/agent-config` | Authenticated mode, review, focus topic, and budget policy config |
 | `/api/accounts/revenuecat/connectors` | Authenticated RC connected-account registry |
+| `/api/ops/status` | Authenticated operator snapshot for runs, approvals, reports, and connectors |
 | `/api/policy` | Runtime policy and protected kill-switch/model toggle updates |
 | `/api/opportunities` | Authenticated opportunity backlog list/rescore endpoint |
 | `/api/runs` | Authenticated D1 run-ledger list/detail endpoint |
@@ -185,7 +193,9 @@ GrowthRat now has a pre-production experiment operating system:
 This is enough to prove the weekly growth-experiment discipline before
 RevenueCat signs in and connects Slack, CMS, GitHub, Postiz social, keyword,
 community monitoring, and private Charts access through the connected-account
-flow.
+flow. The actual external traffic experiment is intentionally last: it should
+run only after the proof/product surfaces, approval loop, and measurement state
+are correct.
 
 ## Runtime Safety
 

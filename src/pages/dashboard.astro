@@ -1,0 +1,41 @@
+---
+import OpsConsole from "@/components/OpsConsole.svelte";
+import RuntimeStatus from "@/components/RuntimeStatus.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout
+  title="Operator Dashboard"
+  description="GrowthRat runtime, connector, approval, report, and run-ledger state."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Operator surface</p>
+      <h1>The break-glass view for the advocate loop.</h1>
+      <p class="lead">
+        Public reviewers see proof. RevenueCat representatives and the operator
+        see the state that matters when something needs inspection: mode,
+        connectors, runs, approvals, report deliveries, and side-effect gates.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/sign-in">Representative sign-in</a>
+        <a class="button" href="/slack">Slack operating loop</a>
+        <a class="button" href="/take-home">Take-home execution</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <RuntimeStatus client:load />
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell">
+      <OpsConsole client:load title="Run ledger and approvals" />
+    </div>
+  </section>
+</BaseLayout>

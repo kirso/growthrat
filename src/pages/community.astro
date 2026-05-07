@@ -1,0 +1,33 @@
+---
+import CommunityConsole from "@/components/CommunityConsole.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout
+  title="Community Queue"
+  description="GrowthRat's community signal and reply-draft queue for RevenueCat agent-builder advocacy."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Community engagement</p>
+      <h1>Fifty interactions starts with a queue.</h1>
+      <p class="lead">
+        GrowthRat should not spam channels to hit a number. It scans for real
+        developer friction, drafts source-grounded replies, and keeps posting
+        behind RevenueCat approval and connector policy.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/opportunities">View opportunity engine</a>
+        <a class="button" href="/slack">Review approval loop</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <CommunityConsole client:load />
+    </div>
+  </section>
+</BaseLayout>

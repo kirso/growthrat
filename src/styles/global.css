@@ -644,6 +644,97 @@ a.card {
   font-size: 0.92em;
 }
 
+.article-prose h2 {
+  margin: 36px 0 14px;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.article-prose h3 {
+  margin: 28px 0 8px;
+  font-size: 18px;
+}
+
+.article-prose h4 {
+  margin: 24px 0 6px;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.article-prose hr {
+  margin: 32px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.article-prose .table-wrap {
+  margin: 18px 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.article-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.article-prose thead {
+  background: var(--surface-soft);
+}
+
+.article-prose th,
+.article-prose td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.article-prose code {
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.article-prose ol,
+.article-prose ul {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 18px 22px;
+  padding: 0;
+}
+
+.article-prose li {
+  padding-left: 4px;
+}
+
+.article-prose pre {
+  margin: 18px 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  padding: 16px;
+}
+
+.article-prose pre code {
+  display: block;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--paper);
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre;
+}
+
 .application-letter {
   max-width: 820px;
 }

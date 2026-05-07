@@ -1,0 +1,214 @@
+---
+import { env } from "cloudflare:workers";
+import reportMarkdown from "../../docs/public/reports/week-one-async-check-in.md?raw";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { markdownToHtml } from "@/lib/markdown";
+
+export const prerender = false;
+
+type WeeklyReport = {
+  id: string;
+  week_start: string;
+  week_end: string;
+  status: string;
+  summary: string | null;
+  r2_key: string | null;
+  created_at: string;
+};
+
+type ReportDelivery = {
+  id: string;
+  report_id: string | null;
+  channel: string;
+  status: string;
+  destination: string | null;
+  error_message: string | null;
+  delivered_at: string | null;
+  created_at: string;
+};
+
+let reports: WeeklyReport[] = [];
+let deliveries: ReportDelivery[] = [];
+
+try {
+  const [reportRows, deliveryRows] = await Promise.all([
+    env.DB.prepare("select * from weekly_reports order by created_at desc limit 8").all<WeeklyReport>(),
+    env.DB.prepare("select * from report_deliveries order by created_at desc limit 8").all<ReportDelivery>(),
+  ]);
+  reports = reportRows.results;
+  deliveries = deliveryRows.results;
+} catch {
+  reports = [];
+  deliveries = [];
+}
+
+const reportHtml = markdownToHtml(reportMarkdown.replace(/^#\s+.+\n+/, ""));
+
+function truthFor(status: string) {
+  if (["sample", "planned", "delivered", "completed"].includes(status)) return "live";
+  if (["draft", "pending", "created"].includes(status)) return "sample";
+  if (["failed", "blocked", "error"].includes(status)) return "warn";
+  return "pending";
+}
+---
+
+<BaseLayout
+  title="Weekly Report"
+  description="GrowthRat's weekly async reporting surface for RevenueCat Developer Advocacy and Growth."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Async check-in</p>
+      <h1>Reports are the operating contract.</h1>
+      <p class="lead">
+        GrowthRat should not disappear into automation. Every week needs a
+        compact report: what shipped, what was measured, what changed, what
+        needs approval, and what comes next.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/articles/week-one-async-report">Open report artifact</a>
+        <a class="button" href="/dashboard">View run ledger</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell report-grid">
+      <article class="report-body article-prose" set:html={reportHtml} />
+      <aside class="report-side">
+        <article class="card">
+          <span class="tag">Stored reports</span>
+          <div class="report-number">{reports.length}</div>
+          <p>D1 weekly report rows currently visible to the Worker.</p>
+        </article>
+        <article class="card">
+          <span class="tag">Slack deliveries</span>
+          <div class="report-number">{deliveries.length}</div>
+          <p>Delivery receipts recorded after Slack report attempts.</p>
+        </article>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section lavender">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Live rows</p>
+          <h2>Report records and delivery receipts</h2>
+        </div>
+        <p class="lead">
+          Public sample content is visible above. Authenticated RevenueCat
+          representatives can inspect full run and delivery state on the
+          dashboard.
+        </p>
+      </div>
+
+      <div class="grid two">
+        <article class="card">
+          <h3>Weekly reports</h3>
+          {reports.length === 0 ? (
+            <p>No D1 reports found.</p>
+          ) : (
+            <div class="report-rows">
+              {reports.map((report) => (
+                <div class="report-row">
+                  <span>
+                    <strong>{report.week_start} to {report.week_end}</strong>
+                    <small>{report.summary ?? report.id}</small>
+                  </span>
+                  <span class={`truth ${truthFor(report.status)}`}>{report.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+
+        <article class="card">
+          <h3>Deliveries</h3>
+          {deliveries.length === 0 ? (
+            <p>No delivery receipts yet. Slack posting starts after connector activation.</p>
+          ) : (
+            <div class="report-rows">
+              {deliveries.map((delivery) => (
+                <div class="report-row">
+                  <span>
+                    <strong>{delivery.channel} → {delivery.destination ?? "unknown"}</strong>
+                    <small>{delivery.error_message ?? delivery.report_id ?? delivery.id}</small>
+                  </span>
+                  <span class={`truth ${truthFor(delivery.status)}`}>{delivery.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </article>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .report-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 34px;
+    align-items: start;
+  }
+  .report-body {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+    padding: 28px;
+  }
+  .report-side {
+    display: grid;
+    gap: 14px;
+  }
+  .report-number {
+    margin-top: 12px;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 38px;
+    font-weight: 650;
+    line-height: 1;
+  }
+  .report-rows {
+    display: grid;
+    gap: 10px;
+  }
+  .report-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+  }
+  .report-row:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .report-row span:first-child {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+  .report-row strong {
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .report-row small {
+    color: var(--muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 860px) {
+    .report-grid {
+      grid-template-columns: 1fr;
+    }
+    .report-row {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+</style>

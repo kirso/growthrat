@@ -37,7 +37,19 @@ export function formatAdvocateLoopSlackReport(result: AdvocateLoopResult) {
     `Artifact: ${result.artifactId ?? "none"}`,
     `Report: ${result.reportId ?? "none"}`,
     "",
+    "*Approvals*",
+    result.approvalRequests.length
+      ? result.approvalRequests
+          .map((request) =>
+            [
+              `${request.title}`,
+              `Approval: ${request.approvalId ?? request.subjectId}`,
+              `Command: approve ${request.approvalId ?? request.subjectId}`,
+            ].join("\n"),
+          )
+          .join("\n\n")
+      : "No approval requests queued.",
+    "",
     "Sensitive external actions remain gated until RevenueCat-connected accounts and approvals are active.",
   ].join("\n");
 }
-

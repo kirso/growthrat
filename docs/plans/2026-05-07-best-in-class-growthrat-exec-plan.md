@@ -39,6 +39,12 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 - [x] (2026-05-07T11:25:00Z) Added deterministic experiment auto-readouts so
   captured events and metric totals become a decision, learning, and next
   action without direct database edits.
+- [x] (2026-05-07T14:20:00Z) Restored the missing client/operator surfaces:
+  data-backed feedback, report, community, Slack, dashboard, and take-home
+  pages plus `/api/ops/status`.
+- [x] (2026-05-07T14:20:00Z) Closed the Slack approval contract so weekly
+  reports expose approval IDs and Slack reactions can approve or reject pending
+  distribution actions attached to the report thread.
 
 ## Surprises & Discoveries
 
@@ -46,14 +52,25 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
   Evidence: On 2026-05-07, `curl -sS https://growthrat.kirso.workers.dev/api/activation | jq '{hasConnectors: has("connectors"), missing: .secrets.missing}'` returned `hasConnectors: false` and included `TYPEFULLY_API_KEY` in missing secrets.
   Resolution: Later on 2026-05-07, Worker version `f7c46315-2e29-44b4-9d49-b6ba17a0249b` was deployed and `/api/activation` returned the connected-account model with no missing platform secrets and no `TYPEFULLY_API_KEY`.
 
-- Observation: The full application letter exists in `docs/public/application-letter.md`, but the routed public page `/application` is an abbreviated content-page summary, not the full letter the application form asks for.
-  Evidence: `docs/public/application-letter.md` starts with `# I Already Did The Job. Here's The Proof.` while `src/content/pages.ts` defines `/application` with a shorter section-based page.
+- Observation: The full application letter originally existed in
+  `docs/public/application-letter.md` while `/application` rendered a shorter
+  content-page summary.
+  Resolution: `/application` now renders the full Markdown application letter
+  and `/application-letter` redirects to it.
 
-- Observation: The current weekly planner is not yet a real idea engine.
-  Evidence: `src/lib/pipeline.ts` currently chooses from fixed seed topics plus optional DataForSEO keyword ideas in `planTopics`.
+- Observation: The weekly planner needed a visible idea engine rather than
+  fixed prompt-following.
+  Resolution: `src/lib/opportunities.ts`, `/api/opportunities`, and
+  `/opportunities` now expose scored content, experiment, feedback, and
+  community opportunities from seed knowledge, keyword connectors, and
+  community signals.
 
-- Observation: Slack exists as a command/event receiver, but it is not yet the product's primary client operating surface.
-  Evidence: `src/lib/slack.ts` supports `help`, `status`, `plan`, `report`, `write`, `stop`, and `resume`; reaction events are recorded but do not promote drafts into approved distribution actions.
+- Observation: Slack existed as a command/event receiver, but the approval loop
+  was incomplete because queued actions were not exposed as actionable approval
+  IDs in reports.
+  Resolution: Slack reports now include approval IDs and commands, and reaction
+  events can approve or reject pending distribution actions attached to the
+  report thread.
 
 - Observation: This repo does not define `env.production` in `wrangler.jsonc`.
   Evidence: `wrangler secret put ... --env production` targeted a new
@@ -84,7 +101,14 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 
 ## Outcomes & Retrospective
 
-Implementation now covers the missing product loop: scored opportunities, run ledger, approval records, Slack commands, optional Langfuse traces, and a public benchmark asset. Remote D1 has the new schema. The live Cloudflare Worker now serves the current code and reports the connected-account activation model with both platform secrets configured. Remaining `rc_live` work is RevenueCat-owned connector activation, optional Langfuse secrets, Pipeline R2 sink configuration, and post-hire approval-policy validation.
+Implementation now covers the missing product loop: scored opportunities, run
+ledger, approval records, Slack commands and reactions, optional Langfuse
+traces, public proof artifacts, data-backed report/feedback/community pages,
+and a take-home execution surface. Remote D1 has the new schema. The live
+Cloudflare Worker serves the connected-account activation model with both
+platform secrets configured. Remaining `rc_live` work is RevenueCat-owned
+connector activation, optional Langfuse secrets, Pipeline R2 sink configuration,
+post-hire approval-policy validation, and the actual external growth experiment.
 
 ## Context and Orientation
 

@@ -1,5 +1,10 @@
 import { getAgentConfig, saveAgentConfig } from "./agent-config";
-import { approveRequest, rejectRequest } from "./approvals";
+import {
+  approveRequest,
+  attachRunApprovalsToSlackThread,
+  decideApprovalBySlackThread,
+  rejectRequest,
+} from "./approvals";
 import { resolveConnectorCredentials } from "./connected-accounts";
 import { listTopOpportunities, refreshOpportunities } from "./opportunities";
 import { runWeeklyAdvocateLoop } from "./pipeline";
@@ -220,6 +225,13 @@ export async function handleSlackCommand(
     });
     const text = formatAdvocateLoopSlackReport(run);
     const delivery = await reply(text);
+    if (delivery.posted && "ts" in delivery) {
+      await attachRunApprovalsToSlackThread(env, {
+        runId: run.runLedgerId,
+        channel: input.channel,
+        threadTs: delivery.ts,
+      }).catch(() => undefined);
+    }
     await recordReportDelivery(env, {
       reportId: run.reportId,
       runId: run.runLedgerId,
@@ -277,6 +289,48 @@ export async function handleSlackEventPayload(env: Env, payload: unknown) {
   }
 
   if (event.type === "reaction_added") {
+    const reaction = typeof event.reaction === "string" ? event.reaction : "";
+    const item =
+      event.item && typeof event.item === "object"
+        ? (event.item as Record<string, unknown>)
+        : {};
+    const itemChannel = typeof item.channel === "string" ? item.channel : channel;
+    const itemTs = typeof item.ts === "string" ? item.ts : "";
+    const actor = typeof event.user === "string" ? event.user : "slack";
+
+    if (["white_check_mark", "+1", "heavy_check_mark"].includes(reaction)) {
+      const result = await decideApprovalBySlackThread(env, {
+        channel: itemChannel,
+        threadTs: itemTs,
+        status: "approved",
+        by: actor,
+      });
+      await postSlackMessage(env, {
+        channel: itemChannel,
+        threadTs: itemTs,
+        text: result.ok
+          ? `*Approved by reaction.* ${result.approvalId}`
+          : `*Approval reaction ignored.* ${result.reason ?? "No pending request on this thread."}`,
+      });
+    }
+
+    if (["x", "-1", "no_entry"].includes(reaction)) {
+      const result = await decideApprovalBySlackThread(env, {
+        channel: itemChannel,
+        threadTs: itemTs,
+        status: "rejected",
+        by: actor,
+        reason: `Slack reaction :${reaction}:`,
+      });
+      await postSlackMessage(env, {
+        channel: itemChannel,
+        threadTs: itemTs,
+        text: result.ok
+          ? `*Rejected by reaction.* ${result.approvalId}`
+          : `*Rejection reaction ignored.* ${result.reason ?? "No pending request on this thread."}`,
+      });
+    }
+
     await recordEvent(env, {
       type: "slack_reaction_received",
       path: "/api/slack/events",

@@ -1,0 +1,34 @@
+---
+import TakeHomeConsole from "@/components/TakeHomeConsole.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout
+  title="Take-Home Execution"
+  description="GrowthRat's take-home assignment execution surface for source-grounded content and growth strategy packages."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Interview stage two</p>
+      <h1>The 48-hour task needs a first-class path.</h1>
+      <p class="lead">
+        Shortlisted candidates get a content and growth strategy assignment.
+        GrowthRat should decompose the prompt, retrieve RevenueCat sources,
+        generate artifacts, run quality gates, package evidence, and report the
+        result without waiting for manual project management.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/dashboard">Inspect generated runs</a>
+        <a class="button" href="/panel">Ask the agent</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <TakeHomeConsole client:load />
+    </div>
+  </section>
+</BaseLayout>

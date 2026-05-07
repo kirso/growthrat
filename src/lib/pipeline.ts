@@ -30,6 +30,13 @@ export type AdvocateLoopResult = {
   };
   artifactId: string | null;
   reportId: string | null;
+  approvalRequests: Array<{
+    approvalId: string | null;
+    subjectId: string;
+    channel: string;
+    actionType: string;
+    title: string;
+  }>;
 };
 
 type LoopInput = {
@@ -299,7 +306,7 @@ async function maybeQueueDistribution(
         now,
       )
       .run();
-    await requestDistributionApproval(env, {
+    const approvalId = await requestDistributionApproval(env, {
       runId,
       distributionActionId,
       title: `Approve Postiz draft derivatives for ${title}`,
@@ -308,7 +315,15 @@ async function maybeQueueDistribution(
       actionType: "draft_social_posts",
       slug,
     });
-    return { published: false, reason: "queued for approval" };
+    return {
+      published: false,
+      reason: "queued for approval",
+      approvalId,
+      distributionActionId,
+      channel: "postiz",
+      actionType: "draft_social_posts",
+      title: `Approve Postiz draft derivatives for ${title}`,
+    };
   }
 
   const github = await publishMarkdownToGitHub(env, { title, slug, content });
@@ -376,6 +391,7 @@ export async function runWeeklyAdvocateLoop(
       plan: { contentTopics: [], feedbackTopics: [], experimentTopic: null },
       artifactId: null,
       reportId: null,
+      approvalRequests: [],
     };
   }
 
@@ -405,6 +421,7 @@ export async function runWeeklyAdvocateLoop(
   let artifactId: string | null = null;
   let quality: QualityGate[] = [];
   let draft: ContentDraft | null = null;
+  const approvalRequests: AdvocateLoopResult["approvalRequests"] = [];
 
   const topic = plan.contentTopics[0];
   if (topic) {
@@ -423,7 +440,7 @@ export async function runWeeklyAdvocateLoop(
       draft,
       quality,
     });
-    await maybeQueueDistribution(
+    const distribution = await maybeQueueDistribution(
       env,
       artifactId,
       draft.title,
@@ -432,6 +449,15 @@ export async function runWeeklyAdvocateLoop(
       input.dryRun ?? String(env.APP_MODE) !== "rc_live",
       ledgerRunId,
     );
+    if ("approvalId" in distribution) {
+      approvalRequests.push({
+        approvalId: distribution.approvalId,
+        subjectId: distribution.distributionActionId,
+        channel: distribution.channel,
+        actionType: distribution.actionType,
+        title: distribution.title,
+      });
+    }
     await recordRunEvent(env, {
       runId: ledgerRunId,
       eventType: "artifact_created",
@@ -490,13 +516,21 @@ export async function runWeeklyAdvocateLoop(
     .bind(
       workflowRunId,
       json(input),
-      json({ plan, artifactId, reportId, quality, draft }),
+      json({ plan, artifactId, reportId, approvalRequests, quality, draft }),
       now,
       now,
     )
     .run();
 
-  const output = { plan, artifactId, reportId, quality, draft, workflowRunId };
+  const output = {
+    plan,
+    artifactId,
+    reportId,
+    approvalRequests,
+    quality,
+    draft,
+    workflowRunId,
+  };
   await finishRun(env, {
     runId: ledgerRunId,
     status: "planned",
@@ -542,6 +576,7 @@ export async function runWeeklyAdvocateLoop(
     plan,
     artifactId,
     reportId,
+    approvalRequests,
   };
 }
 
@@ -550,14 +585,31 @@ export async function executeTakeHomeTask(
   input: { prompt: string; deadline?: string },
 ) {
   const prompt = input.prompt.trim();
+  const takeHomeRunId = await startRun(env, {
+    runType: "take_home_task",
+    triggerType: "http",
+    title: "Take-home execution package",
+    input,
+  });
   const topics = prompt
     .split(/[.;\n]/)
     .map((part) => part.trim())
     .filter(Boolean)
     .slice(0, 3);
   const results = [];
+  const selectedTopics = topics.length ? topics : [prompt];
 
-  for (const topic of topics.length ? topics : [prompt]) {
+  await recordRunEvent(env, {
+    runId: takeHomeRunId,
+    eventType: "take_home_decomposed",
+    status: "succeeded",
+    detail: {
+      deadline: input.deadline ?? "48 hours",
+      topics: selectedTopics,
+    },
+  });
+
+  for (const topic of selectedTopics) {
     results.push(
       await runWeeklyAdvocateLoop(env, {
         trigger: "task",
@@ -567,10 +619,36 @@ export async function executeTakeHomeTask(
     );
   }
 
-  return {
+  const packageKey = `take-home/${new Date()
+    .toISOString()
+    .replaceAll(":", "-")}-${id("pkg")}.json`;
+  const output = {
     prompt,
     deadline: input.deadline ?? "48 hours",
     subtasks: results.length,
+    runLedgerId: takeHomeRunId,
+    packageKey,
     results,
   };
+
+  await env.ARTIFACT_BUCKET.put(packageKey, JSON.stringify(output, null, 2), {
+    httpMetadata: { contentType: "application/json" },
+  }).catch(() => undefined);
+
+  await recordRunEvent(env, {
+    runId: takeHomeRunId,
+    eventType: "take_home_packaged",
+    status: "succeeded",
+    detail: {
+      packageKey,
+      subtasks: results.length,
+    },
+  });
+  await finishRun(env, {
+    runId: takeHomeRunId,
+    status: "completed",
+    output,
+  });
+
+  return output;
 }

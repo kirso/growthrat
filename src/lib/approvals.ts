@@ -60,18 +60,33 @@ export async function requestDistributionApproval(
       )
       .run();
 
+    const row = await env.DB.prepare(
+      `select id from approval_requests
+       where subject_type = 'distribution_action'
+         and subject_id = ?
+         and action_type = ?
+       limit 1`,
+    )
+      .bind(input.distributionActionId, input.actionType)
+      .first<{ id: string }>();
+    const storedApprovalId = row?.id ?? approvalId;
+
     await recordRunEvent(env, {
       runId: input.runId,
       eventType: "approval_requested",
       subjectType: "distribution_action",
       subjectId: input.distributionActionId,
-      detail: { approvalId, channel: input.channel, title: input.title },
+      detail: {
+        approvalId: storedApprovalId,
+        channel: input.channel,
+        title: input.title,
+      },
     });
+
+    return storedApprovalId;
   } catch {
     return null;
   }
-
-  return approvalId;
 }
 
 async function decideApproval(
@@ -123,3 +138,73 @@ export async function rejectRequest(
   return await decideApproval(env, { approvalId, status: "rejected", by, reason });
 }
 
+export async function attachRunApprovalsToSlackThread(
+  env: Env,
+  input: { runId?: string | null; channel: string; threadTs?: string | null },
+) {
+  if (!input.runId || !input.threadTs) return 0;
+
+  const events = await env.DB.prepare(
+    `select detail_json from agent_run_events
+     where run_id = ? and event_type = 'approval_requested'
+     order by created_at desc limit 20`,
+  )
+    .bind(input.runId)
+    .all<{ detail_json: string }>();
+
+  const approvalIds = events.results
+    .map((event) => {
+      try {
+        const parsed = JSON.parse(event.detail_json) as { approvalId?: unknown };
+        return typeof parsed.approvalId === "string" ? parsed.approvalId : "";
+      } catch {
+        return "";
+      }
+    })
+    .filter(Boolean);
+
+  const now = new Date().toISOString();
+  let updated = 0;
+  for (const approvalId of approvalIds) {
+    await env.DB.prepare(
+      `update approval_requests
+       set slack_channel = ?, slack_thread_ts = ?, updated_at = ?
+       where id = ? and status = 'pending'`,
+    )
+      .bind(input.channel, input.threadTs, now, approvalId)
+      .run();
+    updated += 1;
+  }
+
+  return updated;
+}
+
+export async function decideApprovalBySlackThread(
+  env: Env,
+  input: {
+    channel: string;
+    threadTs: string;
+    status: "approved" | "rejected";
+    by: string;
+    reason?: string;
+  },
+) {
+  const row = await env.DB.prepare(
+    `select id from approval_requests
+     where slack_channel = ?
+       and slack_thread_ts = ?
+       and status = 'pending'
+     order by created_at asc limit 1`,
+  )
+    .bind(input.channel, input.threadTs)
+    .first<{ id: string }>();
+
+  if (!row) return { ok: false, reason: "approval request not found" };
+
+  return await decideApproval(env, {
+    approvalId: row.id,
+    status: input.status,
+    by: input.by,
+    reason: input.reason,
+  });
+}

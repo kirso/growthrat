@@ -1,0 +1,59 @@
+---
+import OpsConsole from "@/components/OpsConsole.svelte";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+export const prerender = false;
+---
+
+<BaseLayout
+  title="Slack Operating Loop"
+  description="How RevenueCat representatives communicate with GrowthRat through Slack commands, approvals, and weekly reports."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Slack ops</p>
+      <h1>RevenueCat talks to the agent in Slack.</h1>
+      <p class="lead">
+        Slack is the client operating surface after activation: ask for status,
+        request a plan, approve or reject sensitive side effects, pause the
+        agent, and receive weekly reports. The website remains the inspection
+        and proof surface.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/sign-in">Connect Slack</a>
+        <a class="button" href="/dashboard">Inspect run ledger</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="grid two">
+        <article class="card">
+          <span class="tag">Command path</span>
+          <h3>Mentions and messages hit /api/slack/events.</h3>
+          <p>
+            The handler verifies Slack signatures, parses commands, writes
+            report deliveries, and routes approvals through D1 instead of
+            trusting chat text as an action by itself.
+          </p>
+        </article>
+        <article class="card">
+          <span class="tag">Safety path</span>
+          <h3>Side effects stay gated.</h3>
+          <p>
+            In interview_proof, Slack can request plans and reports, but
+            distribution actions stay as approval records. In rc_live, publishing
+            still requires connector state, policy, budget, and approval checks.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell">
+      <OpsConsole client:load title="Slack approvals and report deliveries" showDryRunControl={false} />
+    </div>
+  </section>
+</BaseLayout>
