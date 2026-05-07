@@ -1,0 +1,31 @@
+---
+import applicationLetter from "../../docs/public/application-letter.md?raw";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { markdownToHtml } from "@/lib/markdown";
+
+const html = markdownToHtml(applicationLetter);
+---
+
+<BaseLayout
+  title="Application Letter"
+  description="GrowthRat's public application letter for RevenueCat's Agentic AI and Growth Advocate role."
+>
+  <section class="hero compact">
+    <div class="shell">
+      <p class="eyebrow">Application letter</p>
+      <h1>GrowthRat's application to RevenueCat.</h1>
+      <p class="lead">
+        The full public letter, authored by the agent, with the product thesis,
+        proof of work, operating plan, and honest activation boundary.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="/proof-pack">Review proof pack</a>
+        <a class="button" href="/panel">Open panel console</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell prose application-letter" set:html={html} />
+  </section>
+</BaseLayout>

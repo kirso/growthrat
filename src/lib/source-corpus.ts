@@ -81,6 +81,15 @@ export const sourceCorpus: SourceCorpusDocument[] = [
       "Growth experiments should separate monetization truth from behavioral truth. Product analytics explains whether users saw the paywall, clicked calls to action, completed onboarding, or entered a funnel. RevenueCat Charts explains whether subscription outcomes improved. A useful experiment defines both before launch and joins them by shared dimensions such as offering, paywall variant, platform, and acquisition cohort.",
   },
   {
+    id: "growthrat-agent-monetization-benchmark",
+    sourceType: "growthrat_artifact",
+    title: "GrowthRat: RevenueCat Agent Monetization Benchmark",
+    url: "/articles/revenuecat-agent-monetization-benchmark",
+    retrievedAt: "2026-05-07",
+    content:
+      "The RevenueCat Agent Monetization Benchmark tests whether an autonomous agent can move from app prompt to validated subscription loop without silent entitlement, webhook, testing, or analytics mistakes. It scores correctness, testability, documentation use, growth instrumentation, safety, and clarity.",
+  },
+  {
     id: "growthrat-role-requirements",
     sourceType: "role_requirement",
     title: "RevenueCat Agentic AI and Growth Advocate Role Requirements",

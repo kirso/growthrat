@@ -24,7 +24,10 @@ The active app shell is now:
 - D1, R2, Queues, Pipeline stream, Workers AI, AI Gateway, and Vectorize
 - experiment operations for variants, tracking links, behavioral events, metric
   snapshots, RevenueCat chart pulls, and readouts
+- scored opportunity planning, approval requests, a D1 run ledger, and Slack
+  report formatting for the weekly advocate loop
 - RevenueCat docs ingestion into Vectorize and source-grounded chat
+- optional Langfuse trace mirroring with D1 remaining the source of truth
 - rate, budget, and kill-switch policy gates for chat/model/event paths
 
 The old Next.js and Convex implementation has been removed from the runnable
@@ -87,15 +90,18 @@ docs/                   Product, ops, interview, and public proof docs
 | --- | --- |
 | `/` | Application landing page |
 | `/application` | Full application letter |
+| `/application-letter` | Stable alias for the full application letter |
 | `/proof-pack` | Proof-of-work artifacts |
 | `/articles` | Published content portfolio |
 | `/articles/revenuecat-for-agent-built-apps` | Flagship technical sample |
+| `/articles/revenuecat-agent-monetization-benchmark` | Agent monetization benchmark |
 | `/readiness-review` | RevenueCat agent-builder readiness review |
 | `/interview-truth` | Proven vs. requires activation |
 | `/panel` | Live panel surface |
 | `/dashboard` | Operator status |
 | `/go-live` | Activation checklist surface |
 | `/pipeline` | Weekly loop surface |
+| `/opportunities` | Opportunity engine explanation |
 | `/experiments` | Experiment operating surface |
 | `/api/runtime` | Runtime and binding snapshot |
 | `/api/proof` | Proof artifact index |
@@ -105,6 +111,8 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/agent-config` | Authenticated mode, review, focus topic, and budget policy config |
 | `/api/accounts/revenuecat/connectors` | Authenticated RC connected-account registry |
 | `/api/policy` | Runtime policy and protected kill-switch/model toggle updates |
+| `/api/opportunities` | Authenticated opportunity backlog list/rescore endpoint |
+| `/api/runs` | Authenticated D1 run-ledger list/detail endpoint |
 | `/api/sources` | Source/retrieval index status |
 | `/api/sources/ingest` | Protected seed or RevenueCat docs batch ingestion into Vectorize |
 | `/api/experiments` | Experiment register and authenticated create endpoint |
@@ -136,6 +144,7 @@ docs/                   Product, ops, interview, and public proof docs
 | Model execution and gateway | Workers AI and AI Gateway |
 | RevenueCat docs retrieval | Vectorize now; AI Search later if account provisioning succeeds |
 | Growth experiment measurement | D1 experiment tables plus Pipeline event stream |
+| Agent observability mirror | Optional Langfuse traces; D1 run ledger is canonical |
 | Runtime safety | Rate Limit bindings plus D1 policy counters and runtime flags |
 
 The activation gate lives in
@@ -215,3 +224,5 @@ env vars. The policy endpoint can toggle `kill_switch` and
   <https://docs.postiz.com/public-api>
 - RevenueCat API v2:
   <https://www.revenuecat.com/docs/api-v2>
+- Langfuse Public API:
+  <https://langfuse.com/docs/api-and-data-platform/features/public-api/>

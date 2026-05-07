@@ -11,6 +11,20 @@ export type Article = {
 
 export const articles: Article[] = [
   {
+    slug: "revenuecat-agent-monetization-benchmark",
+    title: "RevenueCat Agent Monetization Benchmark",
+    type: "experiment",
+    sourcePath:
+      "docs/public/benchmarks/revenuecat-agent-monetization-benchmark.md",
+    summary:
+      "A repeatable benchmark for testing whether autonomous agents can integrate, validate, and explain a RevenueCat subscription loop.",
+    body: [
+      "Agent-built apps need a concrete monetization benchmark, not anecdotes. This benchmark tests whether an agent can move from product prompt to validated RevenueCat subscription loop without silent entitlement, webhook, testing, or analytics mistakes.",
+      "The run scores setup, SDK usage, CustomerInfo-based access checks, webhook reconciliation, growth measurement, safety, and final reporting.",
+      "The immediate value for RevenueCat is a reusable way to see where agents fail, what docs they need, and which product or advocacy assets would make autonomous builders more successful."
+    ],
+  },
+  {
     slug: "revenuecat-for-agent-built-apps",
     title: "RevenueCat for Agent-Built Apps",
     type: "technical",

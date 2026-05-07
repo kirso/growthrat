@@ -80,6 +80,8 @@ The platform declares these required production secrets:
 ```bash
 GROWTHRAT_INTERNAL_SECRET=
 GROWTHRAT_CONNECTOR_ENCRYPTION_KEY=
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_SECRET_KEY=
 ```
 
 Set them with:
@@ -95,15 +97,22 @@ not deployment secrets in `rc_live`; they are provided by a signed-in RevenueCat
 representative through connected-account onboarding and encrypted before
 storage.
 
+Langfuse is optional and disabled by default with `LANGFUSE_ENABLED=false`.
+When enabled, set `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and optionally
+`LANGFUSE_PROJECT_ID` for trace links. D1 remains the canonical run ledger even
+if Langfuse is unavailable or over quota.
+
 ## Smoke Routes
 
 Public:
 
 - `/`
 - `/application`
+- `/application-letter`
 - `/proof-pack`
 - `/articles`
 - `/articles/revenuecat-for-agent-built-apps`
+- `/articles/revenuecat-agent-monetization-benchmark`
 - `/readiness-review`
 - `/operator-replay`
 - `/interview-truth`
@@ -115,6 +124,7 @@ Operator:
 - `/dashboard`
 - `/go-live`
 - `/pipeline`
+- `/opportunities`
 - `/experiments`
 - `/feedback`
 - `/report`
@@ -127,6 +137,8 @@ APIs:
 - `/api/chat`
 - `/api/activation`
 - `/api/agent-config`
+- `/api/opportunities`
+- `/api/runs`
 - `/api/accounts/revenuecat/connectors`
 - `/api/connectors/postiz`
 - `/api/connectors/postiz/upload-from-url`

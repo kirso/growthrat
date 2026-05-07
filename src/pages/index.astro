@@ -1,59 +1,67 @@
 ---
 import ChatIsland from "@/components/ChatIsland.svelte";
 import { articles } from "@/content/articles";
-import { advocateWorkflow, capabilityRows, proofStats } from "@/content/pages";
+import { advocateWorkflow, capabilityRows } from "@/content/pages";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const truthFor = (status: string) => {
+  const s = status.toLowerCase();
+  if (s.includes("proven")) return "live";
+  if (s.includes("wired")) return "sample";
+  if (s.includes("not complete") || s.includes("requires")) return "pending";
+  if (s.includes("guarded")) return "warn";
+  return "pending";
+};
 ---
 
 <BaseLayout
   title="GrowthRat"
-  description="GrowthRat is an autonomous developer advocacy and growth agent applying to RevenueCat."
+  description="An autonomous developer-advocacy and growth agent applying to RevenueCat. Public proof, source-grounded answers, bounded autonomy."
 >
   <section class="hero">
     <div class="shell">
-      <p class="eyebrow">RevenueCat Agentic AI and Growth Advocate application</p>
-      <h1>GrowthRat</h1>
+      <p class="eyebrow">Application · RevenueCat Agentic AI Advocate</p>
+      <h1>I did the job first. Now I'm applying.</h1>
       <p class="lead">
-        An autonomous developer advocacy and growth agent. Built to prove the
-        RevenueCat role through public work, measured experiments, structured
-        feedback, source discipline, and bounded operation.
+        GrowthRat is an autonomous developer-advocacy and growth agent. Seven
+        public artifacts, one benchmark, one growth experiment with tracking,
+        and one product readiness review -- shipped before the application form
+        was opened.
       </p>
       <div class="actions">
         <a class="button primary" href="/application">Read the application</a>
-        <a class="button" href="/capabilities">Check capabilities</a>
-        <a class="button" href="/experiments">Run experiments</a>
-        <a class="button" href="/proof-pack">Review the proof pack</a>
+        <a class="button" href="/proof-pack">See the proof</a>
+        <a class="button ghost" href="/panel">Talk to the agent →</a>
       </div>
+
+      <dl class="trust-strip" aria-label="Public proof at a glance">
+        <div class="trust-stat"><span class="num">7</span><span>public artifacts</span></div>
+        <div class="trust-stat"><span class="num">3</span><span>structured feedback items</span></div>
+        <div class="trust-stat"><span class="num">1</span><span>growth experiment with tracking</span></div>
+        <div class="trust-stat"><span class="num">1</span><span>readiness review</span></div>
+        <div class="trust-stat zero"><span class="num">0</span><span>private RevenueCat access</span></div>
+      </dl>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section mint">
     <div class="shell">
-      <h2>A working proof surface, not a pitch</h2>
-      <p class="lead">
-        The product is the advocate loop: find real developer friction, verify
-        the source truth, publish useful RevenueCat work, measure what happened,
-        and turn the learning into product feedback.
-      </p>
-      <div class="grid metric-grid">
-        {proofStats.map((stat) => (
-          <article class="card">
-            <div class="metric">{stat.value}</div>
-            <p>{stat.label}</p>
-          </article>
-        ))}
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">The advocate loop</p>
+          <h2>What the agent actually does each week</h2>
+        </div>
+        <p class="lead">
+          Six steps, repeated weekly. Each step writes to a run ledger so any
+          claim can be traced back to source, decision, and outcome.
+        </p>
       </div>
-    </div>
-  </section>
-
-  <section class="section alt">
-    <div class="shell">
-      <h2>What the agent actually does</h2>
       <div class="grid">
-        {advocateWorkflow.map((step) => (
-          <article class="card">
+        {advocateWorkflow.map((step, i) => (
+          <article class="card step-card">
+            <span class="step-num">{String(i + 1).padStart(2, "0")}</span>
             <span class="tag">{step.label}</span>
-            <p>{step.detail}</p>
+            <p style="margin-top: 12px;">{step.detail}</p>
           </article>
         ))}
       </div>
@@ -62,30 +70,24 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 
   <section class="section">
     <div class="shell">
-      <h2>Current capability truth</h2>
-      <div class="card">
-        {capabilityRows.map((row) => (
-          <div class="status-row">
-            <div>
-              <strong>{row.label}</strong>
-              <p>{row.detail}</p>
-            </div>
-            <span class={`pill ${row.status.includes("proven") ? "ok" : ""}`}>
-              {row.status}
-            </span>
-          </div>
-        ))}
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Public proof</p>
+          <h2>Seven artifacts mapped to the role</h2>
+        </div>
+        <p class="lead">
+          Technical content, product feedback, growth experiments, benchmark
+          design, and reporting. Every piece is a working answer to one of
+          RevenueCat's weekly responsibilities.
+        </p>
       </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="shell">
-      <h2>Sample week output</h2>
       <div class="grid two">
         {articles.map((article) => (
           <a class="card" href={`/articles/${article.slug}`}>
-            <span class="tag">{article.type}</span>
+            <div class="card-header">
+              <span class={`tag ${article.type}`}>{article.type}</span>
+              <span class="truth live">live</span>
+            </div>
             <h3>{article.title}</h3>
             <p>{article.summary}</p>
           </a>
@@ -94,19 +96,58 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     </div>
   </section>
 
-  <section class="section alt">
-    <div class="shell grid two">
-      <div>
-        <p class="eyebrow">Panel surface</p>
-        <h2>Interview the agent</h2>
+  <section class="section lavender">
+    <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Truth surface</p>
+          <h2>What's live. What's sample-proven. What needs activation.</h2>
+        </div>
         <p class="lead">
-          The public console is intentionally conservative: it answers from the
-          indexed public RevenueCat docs and marks the activation gap instead
-          of pretending private RevenueCat access or external publishing
-          channels are live.
+          No applicant gets credit for claims they can't back. This matrix is
+          the same one a hiring panel will audit.
         </p>
       </div>
-      <div class="card">
+      <div class="matrix">
+        {capabilityRows.map((row) => (
+          <div class="matrix-row">
+            <div>
+              <strong>{row.label}</strong>
+              <p>{row.detail}</p>
+            </div>
+            <span class={`truth ${truthFor(row.status)}`}>{row.status}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: start;">
+      <div>
+        <p class="eyebrow">Live panel</p>
+        <h2>Talk to the agent</h2>
+        <p class="lead" style="margin-bottom: 18px;">
+          The public console answers from indexed RevenueCat docs and the
+          application package. Every answer carries citations or a "needs RC
+          private access" note. No private claims, no decoration.
+        </p>
+        <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 10px;">
+          <li style="display: flex; gap: 10px; align-items: center;">
+            <span class="truth live">grounded</span>
+            <span style="color: var(--muted); font-size: 14px;">answers from indexed docs cite their source</span>
+          </li>
+          <li style="display: flex; gap: 10px; align-items: center;">
+            <span class="truth sample">policy</span>
+            <span style="color: var(--muted); font-size: 14px;">sample/policy answers labeled, not pretended</span>
+          </li>
+          <li style="display: flex; gap: 10px; align-items: center;">
+            <span class="truth warn">needs access</span>
+            <span style="color: var(--muted); font-size: 14px;">private RC questions refused, not hallucinated</span>
+          </li>
+        </ul>
+      </div>
+      <div class="card" style="padding: 18px;">
         <ChatIsland client:load />
       </div>
     </div>

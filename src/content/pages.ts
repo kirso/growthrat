@@ -12,7 +12,7 @@ export type RoutePage = {
 };
 
 export const proofStats = [
-  { value: "6", label: "public work samples mapped to the role" },
+  { value: "7", label: "public work samples mapped to the role" },
   { value: "3", label: "structured RevenueCat feedback artifacts" },
   { value: "1", label: "seeded growth experiment with tracking links" },
   { value: "333", label: "RevenueCat docs index entries represented in retrieval" },
@@ -116,6 +116,7 @@ export const pages: RoutePage[] = [
         title: "Why GrowthRat",
         body: [
           "GrowthRat already shipped the public application package: technical content, feedback reports, a growth experiment, a sample weekly report, and an agent-builder readiness review.",
+          "It now includes a concrete RevenueCat Agent Monetization Benchmark so the application creates immediate value for RevenueCat, not only a narrative about future work.",
           "The system is built around evidence, bounded autonomy, explicit activation states, and source-backed artifacts. That is the role, not a mascot layer around the role.",
           "The honest boundary is that public proof, representative sign-in, and the gated runtime exist today, while live RevenueCat operation still requires RC-owned accounts, private context, and approved connector side effects.",
         ],
@@ -133,6 +134,7 @@ export const pages: RoutePage[] = [
         title: "What this product is",
         body: [
           "GrowthRat is an autonomous developer advocacy and growth agent for RevenueCat-style work: source-grounded technical content, growth experiments, community answers, product feedback, and weekly reporting.",
+          "GrowthRat is the agent. The operator is the break-glass human. RevenueCat is the client that connects accounts, chats in Slack, approves sensitive actions, and receives reports.",
           "The product is not the framework, the hosting stack, or a chatbot demo. The product is the operating loop that turns developer friction into useful public work and measurable learning.",
           "The current app is the public proof and operator surface for that loop. It can run source-grounded chat and weekly artifacts, but it is not yet a live employee because RevenueCat-owned external systems are not connected through representative onboarding.",
         ],
@@ -141,7 +143,7 @@ export const pages: RoutePage[] = [
         title: "Working or sample-proven now",
         body: [
           "Public application narrative and proof pack are available as first-class pages.",
-          "Six public work samples cover technical content, product feedback, growth experimentation, and weekly reporting.",
+          "Seven public work samples cover technical content, product feedback, growth experimentation, benchmarking, and weekly reporting.",
           "RevenueCat public docs are ingested from the official llms.txt index into Vectorize, with index-only fallbacks for listed pages whose Markdown mirror is unavailable.",
           "Activation state separates public proof from post-hire side effects instead of pretending private access is already live.",
         ],
@@ -175,7 +177,7 @@ export const pages: RoutePage[] = [
       {
         title: "What is included",
         body: [
-          "Two flagship technical or growth pieces, three structured feedback items, one growth experiment, one weekly async report, and one readiness review.",
+          "One technical guide, three structured feedback items, two growth experiment or benchmark artifacts, one weekly async report, and one readiness review.",
           `Current artifact count: ${articles.length} public pieces available on the proof site.`,
           "Each artifact maps to a responsibility in the RevenueCat role: content, experimentation, product feedback, or reporting.",
         ],
@@ -369,6 +371,38 @@ export const pages: RoutePage[] = [
           "Every generated artifact needs source links and confidence state.",
           "Every external action needs an idempotency key, approval state, rate limit, and audit record.",
           "Every weekly report needs enough metrics to distinguish real learning from activity theater.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "opportunities",
+    title: "Opportunity engine",
+    eyebrow: "Idea selection",
+    summary:
+      "How GrowthRat chooses content, experiments, product feedback, and community work instead of waiting for manual prompts.",
+    sections: [
+      {
+        title: "How ideas enter the system",
+        body: [
+          "GrowthRat collects candidate work from RevenueCat docs, SDK and changelog changes, GitHub/community signals, keyword demand, Postiz or social analytics, RevenueCat chart gaps, prior readouts, and direct Slack requests.",
+          "Before RevenueCat connects private systems, the engine uses public docs, public community signals, seed benchmarks, and manual metrics. After activation, the same scoring path incorporates RC-owned connectors.",
+          "The operator can inspect the backlog, but the weekly loop should not depend on the operator hand-picking topics.",
+        ],
+      },
+      {
+        title: "How work is scored",
+        body: [
+          "Every opportunity is scored across developer pain, RevenueCat fit, technical depth, demand signal, measurable outcome, freshness, confidence, effort, and risk.",
+          "The weekly plan selects the highest-leverage content, experiment, feedback, and community opportunities, then records why those bets were chosen in the run ledger.",
+          "Slack reports include the chosen opportunities so RevenueCat can challenge the agent's reasoning instead of guessing how the plan appeared.",
+        ],
+      },
+      {
+        title: "Why this matters",
+        body: [
+          "The job is not to generate content on command. The job is to notice where the agent-developer community is stuck, turn that into useful public work, measure whether it helped, and feed the result back to RevenueCat.",
+          "A best-in-class advocate agent needs an idea engine because growth experiments are only valuable when the agent can explain the source of the bet and the expected learning.",
         ],
       },
     ],

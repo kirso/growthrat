@@ -14,21 +14,41 @@ const showRuntimeStatus =
 if (!article && !page) {
   return Astro.redirect("/");
 }
+
+const articleResponsibility = (type: string) => {
+  switch (type) {
+    case "technical": return "Publish technical content";
+    case "feedback": return "Submit structured product feedback";
+    case "experiment": return "Run growth experiments";
+    case "report": return "Report weekly";
+    default: return "Public artifact";
+  }
+};
 ---
 
 <BaseLayout
   title={article?.title ?? page!.title}
   description={article?.summary ?? page!.summary}
 >
-  <section class="hero">
+  <section class="hero compact">
     <div class="shell">
       <p class="eyebrow">{article ? article.type : page!.eyebrow}</p>
       <h1>{article?.title ?? page!.title}</h1>
       <p class="lead">{article?.summary ?? page!.summary}</p>
       {article && (
+        <div class="article-meta">
+          <span class={`tag ${article.type}`}>{article.type}</span>
+          <span class="truth live">live</span>
+          <span class="dot"></span>
+          <span>Maps to: {articleResponsibility(article.type)}</span>
+          <span class="dot"></span>
+          <span>Source: {article.sourcePath}</span>
+        </div>
+      )}
+      {article && (
         <div class="actions">
-          <a class="button" href="/articles">Back to articles</a>
-          <span class="button">Public work sample</span>
+          <a class="button" href="/articles">← All artifacts</a>
+          <a class="button ghost" href="/proof-pack">Proof pack →</a>
         </div>
       )}
     </div>
@@ -49,19 +69,22 @@ if (!article && !page) {
       </div>
     </section>
   ) : (
-    page!.sections.map((section, index) => (
-      <section class={`section ${index % 2 === 1 ? "alt" : ""}`}>
-        <div class="shell prose">
-          <h2>{section.title}</h2>
-          {section.body.length > 3 ? (
-            <ul>
-              {section.body.map((item) => <li>{item}</li>)}
-            </ul>
-          ) : (
-            section.body.map((paragraph) => <p>{paragraph}</p>)
-          )}
-        </div>
-      </section>
-    ))
+    page!.sections.map((section, index) => {
+      const tone = ["", "mint", "", "lavender"][index % 4];
+      return (
+        <section class={`section ${tone}`}>
+          <div class="shell prose">
+            <h2>{section.title}</h2>
+            {section.body.length > 3 ? (
+              <ul>
+                {section.body.map((item) => <li>{item}</li>)}
+              </ul>
+            ) : (
+              section.body.map((paragraph) => <p>{paragraph}</p>)
+            )}
+          </div>
+        </section>
+      );
+    })
   )}
 </BaseLayout>

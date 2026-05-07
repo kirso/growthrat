@@ -1,5 +1,7 @@
 import { buildChatAnswer, recordEvent } from "./runtime";
 import { enforceChatPolicy, enforceModelPolicy } from "./policy";
+import { sendLangfuseTrace } from "./observability/langfuse";
+import { finishRun, recordRunEvent, startRun } from "./run-ledger";
 import {
   getSourceStats,
   retrieveSources,
@@ -67,6 +69,52 @@ async function recordChatMessage(
     .run();
 }
 
+async function finishChatRun(
+  env: Env,
+  input: {
+    runId: string | null;
+    traceId: string;
+    status: "completed" | "blocked";
+    message: string;
+    response: AgentChatResponse | { error: string; detail: string };
+    citations: number;
+    reason?: string;
+  },
+) {
+  await finishRun(env, {
+    runId: input.runId,
+    status: input.status,
+    output: {
+      source: "source" in input.response ? input.response.source : "blocked",
+      citations: input.citations,
+      reason: input.reason ?? null,
+    },
+  });
+  await sendLangfuseTrace(env, {
+    traceId: input.traceId,
+    name: "agent_chat",
+    userId: "public",
+    input: input.message,
+    output: input.response,
+    metadata: {
+      mode: env.APP_MODE,
+      status: input.status,
+      citations: input.citations,
+      reason: input.reason ?? null,
+      runId: input.runId,
+    },
+    events: [
+      {
+        name: input.status === "blocked" ? "chat_blocked" : "chat_answered",
+        output: {
+          citations: input.citations,
+          reason: input.reason ?? null,
+        },
+      },
+    ],
+  });
+}
+
 function deterministicResponse(
   env: Env,
   message: string,
@@ -108,6 +156,14 @@ export async function answerAgentChat(
   threadId: string = crypto.randomUUID(),
 ): Promise<{ status: number; body: AgentChatResponse | { error: string; detail: string } }> {
   await recordChatMessage(env, threadId, "user", message).catch(() => undefined);
+  const traceId = crypto.randomUUID().replaceAll("-", "");
+  const runId = await startRun(env, {
+    runType: "agent_chat",
+    triggerType: "http",
+    title: "Source-grounded chat",
+    input: { message: message.slice(0, 2000), threadId },
+    langfuseTraceId: traceId,
+  });
   const chatPolicy = await enforceChatPolicy(env, request, message);
   if (!chatPolicy.ok) {
     await recordEvent(env, {
@@ -117,6 +173,27 @@ export async function answerAgentChat(
         error: chatPolicy.error,
         status: chatPolicy.status,
       },
+    });
+    await recordRunEvent(env, {
+      runId,
+      eventType: "chat_policy_blocked",
+      status: "blocked",
+      detail: {
+        error: chatPolicy.error,
+        detail: chatPolicy.detail,
+      },
+    });
+    await finishChatRun(env, {
+      runId,
+      traceId,
+      status: "blocked",
+      message,
+      response: {
+        error: chatPolicy.error,
+        detail: chatPolicy.detail,
+      },
+      citations: 0,
+      reason: chatPolicy.detail,
     });
 
     return {
@@ -157,6 +234,21 @@ export async function answerAgentChat(
       source: response.source,
       citations: sources.length,
     }).catch(() => undefined);
+    await recordRunEvent(env, {
+      runId,
+      eventType: "chat_answered_without_model",
+      status: "succeeded",
+      detail: { reason: "source retrieval returned no indexed sources" },
+    });
+    await finishChatRun(env, {
+      runId,
+      traceId,
+      status: "completed",
+      message,
+      response,
+      citations: sources.length,
+      reason: "source retrieval returned no indexed sources",
+    });
 
     return { status: 200, body: response };
   }
@@ -186,6 +278,21 @@ export async function answerAgentChat(
       source: response.source,
       citations: sources.length,
     }).catch(() => undefined);
+    await recordRunEvent(env, {
+      runId,
+      eventType: "model_policy_blocked",
+      status: "blocked",
+      detail: { reason },
+    });
+    await finishChatRun(env, {
+      runId,
+      traceId,
+      status: "completed",
+      message,
+      response,
+      citations: sources.length,
+      reason,
+    });
 
     return { status: 200, body: response };
   }
@@ -254,19 +361,38 @@ export async function answerAgentChat(
     aiGatewayLogId,
   }).catch(() => undefined);
 
-  return {
-    status: 200,
-    body: {
-      answer,
-      mode: env.APP_MODE,
-      threadId,
-      source: "rag",
-      policy: {
-        chat: chatPolicy.detail,
-        model: modelPolicy.detail,
-      },
-      citations: citationsForSources(sources),
+  const response: AgentChatResponse = {
+    answer,
+    mode: env.APP_MODE,
+    threadId,
+    source: "rag",
+    policy: {
+      chat: chatPolicy.detail,
+      model: modelPolicy.detail,
+    },
+    citations: citationsForSources(sources),
+    aiGatewayLogId,
+  };
+  await recordRunEvent(env, {
+    runId,
+    eventType: "chat_answered_with_model",
+    status: "succeeded",
+    detail: {
+      citations: sources.length,
       aiGatewayLogId,
     },
+  });
+  await finishChatRun(env, {
+    runId,
+    traceId,
+    status: "completed",
+    message,
+    response,
+    citations: sources.length,
+  });
+
+  return {
+    status: 200,
+    body: response,
   };
 }

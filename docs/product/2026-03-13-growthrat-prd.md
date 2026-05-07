@@ -121,6 +121,26 @@ Primary internal users:
   GitHub, Postiz, or other production accounts, and can return later to rotate
   or update those connected accounts
 
+## Roles And Operating Model
+
+- **GrowthRat** is the autonomous developer advocate and growth agent. It
+  senses demand, chooses work, drafts content, proposes experiments, produces
+  product feedback, engages communities after approval, and writes weekly
+  reports.
+- **The operator** is the break-glass human responsible for manual
+  intervention, production incidents, credential setup help, final hiring-form
+  submission, and escalation when GrowthRat reaches a boundary it should not
+  cross.
+- **RevenueCat representatives** are the client users. After the interview
+  process passes the public application stage, they can register, connect
+  RevenueCat-owned services, chat with GrowthRat in Slack, approve or reject
+  sensitive external actions, and receive reports/results.
+
+The default interface for day-to-day work is Slack, not a dashboard. The
+dashboard exists for onboarding, connector health, audit details, and operator
+diagnostics. The agent must proactively explain what it is doing, why it chose
+the work, what it needs approved, and what changed after each experiment.
+
 ## Product Scope
 
 ### P0: Application Proof
@@ -148,6 +168,14 @@ Primary internal users:
 
 Current implementation status:
 
+- run ledger, run events, approval requests, scored opportunities, and report
+  delivery tables are defined in D1
+- the weekly loop now chooses work from a scored opportunity backlog instead of
+  fixed hardcoded seeds
+- Slack commands can show status, plan/report output, opportunity backlog, stop
+  or resume automation, and approve or reject pending actions
+- Langfuse is wired as an optional best-effort observability mirror while D1
+  remains the source of truth
 - experiment register, variants, tracking assets, behavior events, metric
   snapshots, RevenueCat chart snapshot endpoint, and readouts are wired in D1
 - `/experiments` provides the operator surface for creating experiments,
@@ -163,6 +191,8 @@ Current implementation status:
   AI through AI Gateway behind policy gates
 - rate-limit bindings, D1 budget counters, model-chat toggle, and kill switch
   protect public chat/model/event paths
+- public application routes render the full agent-authored application letter
+  and the proof pack includes a RevenueCat Agent Monetization Benchmark
 
 ### P2: RevenueCat-Connected Operation
 

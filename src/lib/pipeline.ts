@@ -1,9 +1,15 @@
 import { getAgentConfig } from "./agent-config";
-import { fetchKeywordIdeas } from "./dataforseo";
 import { ensureWeeklyExperiment, slugify } from "./experiments";
 import { createGitHubIssue, publishMarkdownToGitHub } from "./github";
+import {
+  planWeeklyOpportunities,
+  type OpportunityRow,
+} from "./opportunities";
 import { createPostizPost, listPostizIntegrations } from "./postiz";
 import { generateSourceGroundedDraft, type ContentDraft } from "./content-draft";
+import { requestDistributionApproval } from "./approvals";
+import { sendLangfuseTrace } from "./observability/langfuse";
+import { finishRun, recordRunEvent, startRun } from "./run-ledger";
 
 export type QualityGate = {
   key: string;
@@ -14,11 +20,13 @@ export type QualityGate = {
 
 export type AdvocateLoopResult = {
   workflowRunId: string;
+  runLedgerId: string | null;
   status: "blocked" | "planned" | "completed";
   plan: {
     contentTopics: string[];
     feedbackTopics: string[];
     experimentTopic: string | null;
+    selectedOpportunities?: OpportunityRow[];
   };
   artifactId: string | null;
   reportId: string | null;
@@ -232,38 +240,33 @@ async function planTopics(env: Env, overrideTopic?: string) {
         "Webhook sync trust boundaries",
       ],
       experimentTopic: overrideTopic.trim(),
+      selectedOpportunities: [],
       keywords: [],
     };
   }
 
-  const seeds = [
-    "RevenueCat agent built apps",
-    "RevenueCat webhooks for AI agents",
-    "mobile subscription growth experiments",
-    "RevenueCat charts product analytics",
-    "RevenueCat test store automation",
-  ];
-  const keywords = await fetchKeywordIdeas(env, seeds);
-  const usable = keywords
-    .filter((keyword) => keyword.keyword)
-    .sort(
-      (a, b) =>
-        (b.volume ?? 0) - (a.volume ?? 0) -
-        ((b.difficulty ?? 100) - (a.difficulty ?? 100)),
-    );
-  const contentTopics = (usable.length ? usable : seeds.map((keyword) => ({ keyword })))
-    .slice(0, 2)
-    .map((keyword) => keyword.keyword);
+  const planned = await planWeeklyOpportunities(env).catch(() => null);
+  if (planned) {
+    return {
+      ...planned,
+      selectedOpportunities: planned.selected,
+      keywords: [],
+    };
+  }
 
   return {
-    contentTopics,
-    feedbackTopics: [
-      "Agent onboarding reference path",
-      "Charts plus behavioral analytics bridge",
-      "Webhook sync trust boundaries",
+    contentTopics: [
+      "RevenueCat Test Store for agent-built apps",
+      "Webhook trust boundaries for autonomous builders",
     ],
-    experimentTopic: contentTopics[1] ?? contentTopics[0] ?? null,
-    keywords,
+    feedbackTopics: [
+      "Charts plus behavioral analytics decision tree",
+      "Agent onboarding reference path",
+      "Webhook trust boundaries for autonomous builders",
+    ],
+    experimentTopic: "Agent monetization benchmark",
+    selectedOpportunities: [],
+    keywords: [],
   };
 }
 
@@ -274,11 +277,13 @@ async function maybeQueueDistribution(
   slug: string,
   content: string,
   dryRun: boolean,
+  runId?: string | null,
 ) {
   const config = await getAgentConfig(env);
   const now = new Date().toISOString();
 
   if (dryRun || !config.budgetPolicy.allowAutoPublish) {
+    const distributionActionId = id("dist");
     await env.DB.prepare(
       `insert or ignore into distribution_actions (
         id, artifact_id, channel, action_type, status, idempotency_key,
@@ -286,7 +291,7 @@ async function maybeQueueDistribution(
       ) values (?, ?, 'postiz', 'draft_social_posts', 'planned', ?, ?, ?, ?)`,
     )
       .bind(
-        id("dist"),
+        distributionActionId,
         artifactId,
         `postiz:${artifactId}:draft`,
         json({ title, slug }),
@@ -294,6 +299,15 @@ async function maybeQueueDistribution(
         now,
       )
       .run();
+    await requestDistributionApproval(env, {
+      runId,
+      distributionActionId,
+      title: `Approve Postiz draft derivatives for ${title}`,
+      artifactId,
+      channel: "postiz",
+      actionType: "draft_social_posts",
+      slug,
+    });
     return { published: false, reason: "queued for approval" };
   }
 
@@ -322,6 +336,13 @@ export async function runWeeklyAdvocateLoop(
 ): Promise<AdvocateLoopResult> {
   const now = new Date().toISOString();
   const workflowRunId = id("run");
+  const ledgerRunId = await startRun(env, {
+    runType: "weekly_advocate_loop",
+    triggerType: input.trigger,
+    title: input.topic ? `Weekly loop: ${input.topic}` : "Weekly advocate loop",
+    input: { ...input, workflowRunId },
+    langfuseTraceId: workflowRunId,
+  });
   const config = await getAgentConfig(env);
   const week = currentWeekKey();
 
@@ -337,8 +358,20 @@ export async function runWeeklyAdvocateLoop(
         now,
       )
       .run();
+    await recordRunEvent(env, {
+      runId: ledgerRunId,
+      eventType: "blocked",
+      status: "blocked",
+      detail: { reason: "agent config inactive or dormant" },
+    });
+    await finishRun(env, {
+      runId: ledgerRunId,
+      status: "blocked",
+      output: { reason: "agent config inactive or dormant", workflowRunId },
+    });
     return {
       workflowRunId,
+      runLedgerId: ledgerRunId,
       status: "blocked",
       plan: { contentTopics: [], feedbackTopics: [], experimentTopic: null },
       artifactId: null,
@@ -347,6 +380,22 @@ export async function runWeeklyAdvocateLoop(
   }
 
   const plan = await planTopics(env, input.topic);
+  await recordRunEvent(env, {
+    runId: ledgerRunId,
+    eventType: "plan_created",
+    status: "succeeded",
+    detail: {
+      contentTopics: plan.contentTopics,
+      feedbackTopics: plan.feedbackTopics,
+      experimentTopic: plan.experimentTopic,
+      selectedOpportunities: plan.selectedOpportunities?.map((item) => ({
+        id: item.id,
+        title: item.title,
+        lane: item.lane,
+        score: item.score,
+      })),
+    },
+  });
   await storeOpportunities(env, workflowRunId, plan.keywords);
   await createFeedbackItems(env, plan.feedbackTopics);
   const experiment = plan.experimentTopic
@@ -381,7 +430,20 @@ export async function runWeeklyAdvocateLoop(
       `${slug}-${workflowRunId.slice(-6)}`,
       draft.body,
       input.dryRun ?? String(env.APP_MODE) !== "rc_live",
+      ledgerRunId,
     );
+    await recordRunEvent(env, {
+      runId: ledgerRunId,
+      eventType: "artifact_created",
+      status: blockingPassed ? "succeeded" : "blocked",
+      detail: {
+        artifactId,
+        title: draft.title,
+        slug: `${slug}-${workflowRunId.slice(-6)}`,
+        blockingPassed,
+        quality,
+      },
+    });
   }
 
   const reportId = id("report");
@@ -390,6 +452,12 @@ export async function runWeeklyAdvocateLoop(
     `Topics: ${plan.contentTopics.join(", ") || "none"}.`,
     `Feedback: ${plan.feedbackTopics.join(", ")}.`,
     `Experiment: ${experiment?.title ?? "not created"}.`,
+    `Opportunity rationale: ${
+      plan.selectedOpportunities
+        ?.slice(0, 3)
+        .map((item) => `${item.title} (${Math.round(Number(item.score))})`)
+        .join(", ") || "fallback seeds"
+    }.`,
     `Artifact: ${artifactId ?? "none"}.`,
   ].join("\n");
 
@@ -409,6 +477,12 @@ export async function runWeeklyAdvocateLoop(
       now,
     )
     .run();
+  await recordRunEvent(env, {
+    runId: ledgerRunId,
+    eventType: "weekly_report_created",
+    status: "succeeded",
+    detail: { reportId, week, summary },
+  });
 
   await env.DB.prepare(
     "insert into workflow_runs (id, workflow_type, status, input_json, output_json, created_at, updated_at) values (?, 'weekly_advocate_loop', 'planned', ?, ?, ?, ?)",
@@ -422,8 +496,48 @@ export async function runWeeklyAdvocateLoop(
     )
     .run();
 
+  const output = { plan, artifactId, reportId, quality, draft, workflowRunId };
+  await finishRun(env, {
+    runId: ledgerRunId,
+    status: "planned",
+    output,
+  });
+  await sendLangfuseTrace(env, {
+    traceId: workflowRunId,
+    name: "weekly_advocate_loop",
+    userId: "growthrat",
+    input,
+    output,
+    metadata: {
+      mode: env.APP_MODE,
+      trigger: input.trigger,
+      dryRun: input.dryRun ?? String(env.APP_MODE) !== "rc_live",
+      ledgerRunId,
+    },
+    events: [
+      {
+        name: "plan_created",
+        input: input.topic ?? null,
+        output: {
+          contentTopics: plan.contentTopics,
+          experimentTopic: plan.experimentTopic,
+          opportunityCount: plan.selectedOpportunities?.length ?? 0,
+        },
+      },
+      {
+        name: "quality_gates",
+        output: quality,
+      },
+      {
+        name: "weekly_report_created",
+        output: { reportId },
+      },
+    ],
+  });
+
   return {
     workflowRunId,
+    runLedgerId: ledgerRunId,
     status: "planned",
     plan,
     artifactId,

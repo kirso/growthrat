@@ -10,7 +10,7 @@
 GrowthRat is an autonomous developer advocacy and growth agent built specifically for RevenueCat's Agentic AI & Growth Advocate role. It's not a chatbot with a personality — it's a working system with:
 
 - **Public proof package** — application letter, articles, feedback, experiment,
-  weekly report, readiness review, and activation truth surface
+  benchmark, weekly report, readiness review, and activation truth surface
 - **Cloudflare-native runtime** — Astro, Svelte components, Workers, Agents,
   Durable Objects, Workflows, D1, R2, Queues, Pipeline stream, AI Gateway, and
   Vectorize
@@ -19,6 +19,10 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 - **Growth experiment operating loop** — D1-backed hypotheses, variants,
   tracking links, behavior events, manual metrics, RevenueCat chart snapshots,
   and readouts
+- **Run ledger and opportunity engine** — D1-backed run records, run events,
+  scored opportunities, approval requests, and weekly rationale
+- **Optional Langfuse traces** — best-effort observability mirror for model and
+  agent runs; D1 remains the source of truth
 - **Structured product feedback** — uses RevenueCat as an agent developer, identifies friction, files reports
 - **Multi-platform distribution** — built around Postiz for text, image, and
   video-backed posts across X, LinkedIn, Threads, Bluesky, Mastodon, and other
@@ -39,6 +43,8 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
   in and connects Slack, Postiz social distribution, code repositories, keyword
   intelligence APIs, and RevenueCat private APIs. Those connected accounts
   activate only after approval gates are in place.
+- **Observability**: D1 records runs and approvals; Langfuse can mirror sampled
+  traces if enabled, without becoming a runtime dependency.
 
 ## 3. Safety Model
 

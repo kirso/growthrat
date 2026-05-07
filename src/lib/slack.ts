@@ -1,7 +1,14 @@
 import { getAgentConfig, saveAgentConfig } from "./agent-config";
+import { approveRequest, rejectRequest } from "./approvals";
 import { resolveConnectorCredentials } from "./connected-accounts";
+import { listTopOpportunities, refreshOpportunities } from "./opportunities";
 import { runWeeklyAdvocateLoop } from "./pipeline";
+import { recordReportDelivery } from "./report-deliveries";
 import { recordEvent } from "./runtime";
+import {
+  formatAdvocateLoopSlackReport,
+  formatOpportunitiesSlackReport,
+} from "./slack-report";
 
 export type SlackConfig = {
   botToken: string;
@@ -137,6 +144,9 @@ export async function handleSlackCommand(
         "`plan` - run weekly planning",
         "`status` - show mode and review policy",
         "`report` - generate weekly report",
+        "`opportunities` - rescore and show the top work backlog",
+        "`approve [id]` - approve a pending distribution action",
+        "`reject [id] because [reason]` - reject a pending action",
         "`stop` - pause automation",
         "`resume` - resume automation",
         "`write about [topic]` - create a source-grounded draft",
@@ -148,6 +158,44 @@ export async function handleSlackCommand(
     const config = await getAgentConfig(env);
     return await reply(
       `*GrowthRat status*\nMode: ${config.mode}\nReview: ${config.reviewMode}\nPaused: ${config.paused ? "yes" : "no"}\nFocus: ${config.focusTopics.join(", ")}`,
+    );
+  }
+
+  if (command === "opportunities" || command === "backlog" || command === "ideas") {
+    await refreshOpportunities(env).catch(() => []);
+    const opportunities = await listTopOpportunities(env, { limit: 5 }).catch(
+      () => [],
+    );
+    return await reply(formatOpportunitiesSlackReport(opportunities));
+  }
+
+  if (command.startsWith("approve ")) {
+    const requestId = input.command.replace(/^approve\s+/i, "").trim().split(/\s+/)[0];
+    if (!requestId) {
+      return await reply("Usage: `approve [approval_id_or_distribution_id]`");
+    }
+
+    const result = await approveRequest(env, requestId, "slack");
+    return await reply(
+      result.ok
+        ? `*Approved.* ${requestId}`
+        : `*Approval failed.* ${result.reason ?? "unknown error"}`,
+    );
+  }
+
+  if (command.startsWith("reject ")) {
+    const raw = input.command.replace(/^reject\s+/i, "").trim();
+    const [requestId = "", ...rest] = raw.split(/\s+/);
+    const reason = rest.join(" ").replace(/^because\s+/i, "").trim();
+    if (!requestId) {
+      return await reply("Usage: `reject [approval_id_or_distribution_id] because [reason]`");
+    }
+
+    const result = await rejectRequest(env, requestId, "slack", reason);
+    return await reply(
+      result.ok
+        ? `*Rejected.* ${requestId}${reason ? `\nReason: ${reason}` : ""}`
+        : `*Rejection failed.* ${result.reason ?? "unknown error"}`,
     );
   }
 
@@ -170,9 +218,23 @@ export async function handleSlackCommand(
       dryRun: String(env.APP_MODE) !== "rc_live",
       topic,
     });
-    return await reply(
-      `*Workflow queued.*\nRun: ${run.workflowRunId}\nStatus: ${run.status}\nPrimary topic: ${run.plan.contentTopics[0] ?? "none"}`,
-    );
+    const text = formatAdvocateLoopSlackReport(run);
+    const delivery = await reply(text);
+    await recordReportDelivery(env, {
+      reportId: run.reportId,
+      runId: run.runLedgerId,
+      channel: "slack",
+      status: delivery.posted ? "delivered" : "failed",
+      destination: input.channel,
+      externalId: "ts" in delivery ? delivery.ts ?? null : null,
+      errorMessage: delivery.posted
+        ? null
+        : "reason" in delivery
+          ? delivery.reason
+          : "Slack delivery failed",
+      detail: { command: input.command.slice(0, 120) },
+    });
+    return delivery;
   }
 
   await recordEvent(env, {

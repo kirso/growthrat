@@ -9,12 +9,12 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">Growth experiments</p>
-      <h1>Experiment operating system</h1>
+      <p class="eyebrow">Growth · Experiment console</p>
+      <h1>One experiment per week. Measured, not described.</h1>
       <p class="lead">
         The role asks for one new growth experiment every week. This surface
-        turns that requirement into a measurable loop: variants, tracking links,
-        behavioral events, RevenueCat metric snapshots, and readouts.
+        turns that requirement into a loop: variants, tracking links, behavioral
+        events, RevenueCat metric snapshots, and readouts.
       </p>
       <div class="actions">
         <a class="button primary" href="/r/week-one-reference">Try a tracking link</a>
@@ -23,39 +23,58 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     </div>
   </section>
 
-  <section class="section">
+  <section class="section mint">
     <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Operating principles</p>
+          <h2>Hypothesis first. Readout always.</h2>
+        </div>
+      </div>
       <div class="grid">
-        <article class="card">
-          <span class="tag">Plan</span>
-          <h3>Hypothesis before output</h3>
+        <article class="card step-card">
+          <span class="step-num">01</span>
+          <span class="tag experiment">Plan</span>
+          <h3 style="margin-top: 12px;">Hypothesis before output</h3>
           <p>
             Every experiment starts with a specific audience, channel, variant,
             expected movement, and stop condition.
           </p>
         </article>
-        <article class="card">
-          <span class="tag">Measure</span>
-          <h3>Behavior plus monetization</h3>
+        <article class="card step-card">
+          <span class="step-num">02</span>
+          <span class="tag experiment">Measure</span>
+          <h3 style="margin-top: 12px;">Behavior plus monetization</h3>
           <p>
             Product events explain the funnel. RevenueCat Charts explain
             subscription outcomes when project access is configured.
           </p>
         </article>
-        <article class="card">
-          <span class="tag">Learn</span>
-          <h3>Readout or it did not happen</h3>
+        <article class="card step-card">
+          <span class="step-num">03</span>
+          <span class="tag experiment">Learn</span>
+          <h3 style="margin-top: 12px;">Readout or it didn't happen</h3>
           <p>
             A run ends with a decision, a learning, and the next action. Volume
-            without a readout does not count.
+            without a readout doesn't count.
           </p>
         </article>
       </div>
     </div>
   </section>
 
-  <section class="section alt">
+  <section class="section">
     <div class="shell">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Live console</p>
+          <h2>Run an experiment, end-to-end</h2>
+        </div>
+        <p class="lead">
+          The console writes to D1: experiments, variants, tracking assets,
+          behavior events, metric snapshots, and readouts. No mock data.
+        </p>
+      </div>
       <ExperimentConsole client:load />
     </div>
   </section>

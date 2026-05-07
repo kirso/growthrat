@@ -157,7 +157,14 @@ keyword data until a keyword/SERP connector is activated:
 - **Legacy migration status** — the old Next.js/Convex runtime has been removed
   from the runnable repo. The active code path is Cloudflare-native.
 - **Model layer** — Workers AI and AI Gateway are provisioned as the target
-  routing layer; provider keys remain required before live model side effects.
+  routing layer for public proof. Provider-specific keys are needed only for
+  non-Workers-AI models or external services.
+- **Run ledger** — D1 records agent runs, run events, opportunity decisions,
+  approval requests, and reports. Langfuse is an optional trace mirror, not the
+  source of truth.
+- **Opportunity engine** — weekly planning now scores content, experiment,
+  feedback, and community opportunities from seed knowledge, keyword demand,
+  community signals, and prior results.
 - **Retrieval** — Vectorize is the active retrieval path. RevenueCat public docs
   are ingested from the official `llms.txt` index, with full Markdown mirrors
   where available and index-only fallbacks for listed paths that do not expose a

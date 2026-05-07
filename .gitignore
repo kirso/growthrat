@@ -20,6 +20,8 @@ next-env.d.ts
 .wrangler/
 dist/
 build/
+.playwright-cli/
+output/
 
 # OS
 .DS_Store

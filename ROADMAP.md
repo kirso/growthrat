@@ -2,6 +2,8 @@
 
 This roadmap is the current execution plan for GrowthRat. Product requirements
 live in [the PRD](docs/product/2026-03-13-growthrat-prd.md).
+The current end-to-end implementation plan lives in
+[the best-in-class GrowthRat ExecPlan](docs/plans/2026-05-07-best-in-class-growthrat-exec-plan.md).
 
 ## North Star
 
@@ -31,6 +33,8 @@ The repo now has one runnable runtime:
 - D1 migrations and seed data in `migrations/0001_growthrat_core.sql` and
   `migrations/0002_experiment_operations.sql`
 - agent runtime safety schema in `migrations/0003_agent_runtime_safety.sql`
+- advocate runtime port, connected-account, and run-ledger schema through
+  `migrations/0006_run_ledger_observability.sql`
 
 The old Next.js and Convex runtime has been deleted. Historical behavior lives
 only in the PRD, roadmap, public artifacts, and migration notes.
@@ -55,6 +59,10 @@ The current app has useful surfaces:
 - protected manual weekly dry-run endpoint
 - experiment APIs for create, metric import, RevenueCat chart snapshot, readout,
   public event capture, and tracking redirects
+- scored opportunity backlog, D1 run ledger, approval requests, and Slack
+  approval/report commands
+- public RevenueCat Agent Monetization Benchmark as an immediate-value proof
+  artifact
 
 The current app is a gated production-capable proof system. It is not yet a
 RevenueCat-owned live advocate because RevenueCat access, Slack/CMS/GitHub/social
@@ -163,9 +171,20 @@ Completed:
 - protected weekly dry run created a D1 workflow row and wrote an R2 proof bundle.
 - a tracking redirect, manual metric import, and draft experiment readout were
   smoke-tested in production.
+- the local app now has D1 schema and code for `agent_runs`,
+  `agent_run_events`, `opportunities`, `approval_requests`, and
+  `report_deliveries`; remote D1 migration `0006` was applied through the
+  Cloudflare API on 2026-05-07
+- Slack command handling now supports opportunity backlog, formatted weekly
+  reports, and approval/rejection commands
+- the full application letter is served at both `/application` and
+  `/application-letter`
 
 Remaining:
 
+- redeploy the Worker after this code lands so production no longer serves stale
+  activation or application output
+- set Langfuse secrets only if optional trace mirroring should be enabled
 - have a RevenueCat representative sign in and connect RevenueCat, Slack, CMS,
   GitHub, and Postiz before calling connector paths live
 - configure a custom domain if `growthrat.com` should be the public URL
@@ -183,6 +202,8 @@ Required checks:
 - budget and rate gates run before provider calls
 - connector loss cannot silently approve, publish, or report success
 - approval policy is explicit and test-covered
+- opportunity scoring explains why the agent chose the week's work
+- Slack plan/report commands return a useful client-facing summary
 - panel token behavior is fail-closed in production
 - missing secrets and remote-only Cloudflare products are documented as
   pre-production warnings

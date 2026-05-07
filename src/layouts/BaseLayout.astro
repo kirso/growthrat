@@ -4,11 +4,18 @@ import "../styles/global.css";
 type Props = {
   title: string;
   description?: string;
+  ogPath?: string;
 };
 
-const { title, description = "GrowthRat public application and proof surface." } =
-  Astro.props;
+const {
+  title,
+  description = "GrowthRat is an autonomous developer-advocacy and growth agent applying to RevenueCat.",
+  ogPath,
+} = Astro.props;
 const fullTitle = title === "GrowthRat" ? title : `${title} | GrowthRat`;
+const siteUrl = "https://growthrat.kirso.workers.dev";
+const canonical = new URL(Astro.url.pathname, siteUrl).toString();
+const ogImage = ogPath ?? `${siteUrl}/growthrat-logo.png`;
 ---
 
 <!doctype html>
@@ -18,23 +25,40 @@ const fullTitle = title === "GrowthRat" ? title : `${title} | GrowthRat`;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{fullTitle}</title>
+
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/png" href="/growthrat-logo.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="GrowthRat" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <meta name="theme-color" content="#fafaf7" />
   </head>
   <body>
     <header class="site-header">
       <div class="shell nav">
         <a class="brand" href="/">
-          <img src="/growthrat-logo.png" alt="" />
+          <img src="/growthrat-logo.png" alt="" width="26" height="26" />
           <span>GrowthRat</span>
+          <span class="mode-chip" title="Operating mode">interview_proof</span>
         </a>
         <nav class="nav-links" aria-label="Primary">
           <a href="/application">Application</a>
-          <a href="/capabilities">Capabilities</a>
           <a href="/proof-pack">Proof</a>
           <a href="/articles">Articles</a>
-          <a href="/experiments">Experiments</a>
           <a href="/panel">Panel</a>
-          <a href="/dashboard">Activation</a>
-          <a href="/sign-in">Sign in</a>
+          <a href="/opportunities">Opportunities</a>
+          <a href="/experiments">Experiments</a>
+          <a class="cta" href="/sign-in">Sign in →</a>
         </nav>
       </div>
     </header>
@@ -43,8 +67,39 @@ const fullTitle = title === "GrowthRat" ? title : `${title} | GrowthRat`;
     </main>
     <footer class="footer">
       <div class="shell">
-        GrowthRat is an independent agent applying to RevenueCat, not a
-        RevenueCat-owned property.
+        <div class="footer-grid">
+          <div>
+            <h4>GrowthRat</h4>
+            <p style="margin: 0; max-width: 36ch;">
+              An autonomous developer-advocacy and growth agent. Public proof,
+              source-grounded answers, bounded autonomy.
+            </p>
+          </div>
+          <div>
+            <h4>Public</h4>
+            <ul>
+              <li><a href="/application">Application letter</a></li>
+              <li><a href="/proof-pack">Proof pack</a></li>
+              <li><a href="/articles">Articles</a></li>
+              <li><a href="/readiness-review">Readiness review</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Surfaces</h4>
+            <ul>
+              <li><a href="/panel">Live panel</a></li>
+              <li><a href="/experiments">Experiment console</a></li>
+              <li><a href="/dashboard">Activation</a></li>
+              <li><a href="/capabilities">Capabilities</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bar">
+          <span>
+            Independent agent applying to RevenueCat. Not a RevenueCat-owned property.
+          </span>
+          <span>mode: interview_proof · model gate: enforced</span>
+        </div>
       </div>
     </footer>
     <script is:inline>

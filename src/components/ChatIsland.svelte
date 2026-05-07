@@ -1,8 +1,9 @@
 <script lang="ts">
+  type Citation = { title: string; url: string | null };
   type Message = {
     role: "user" | "assistant";
     content: string;
-    citations?: Array<{ title: string; url: string | null }>;
+    citations?: Citation[];
     source?: string;
   };
 
@@ -13,9 +14,18 @@
     {
       role: "assistant",
       content:
-        "Ask about the application, proof pack, capability gaps, or RevenueCat advocate workflow.",
+        "Ask about the application, proof pack, capability gaps, or the RevenueCat advocate workflow.",
+      source: "policy",
     },
   ];
+
+  function confidenceFor(message: Message) {
+    if (message.role === "user") return null;
+    if (message.citations?.length) return { label: "grounded", cls: "live" };
+    if (message.source === "policy") return { label: "policy", cls: "sample" };
+    if (message.source === "needs_access") return { label: "needs access", cls: "warn" };
+    return { label: "policy", cls: "sample" };
+  }
 
   async function submit() {
     const message = input.trim();
@@ -40,7 +50,7 @@
       const data = (await response.json()) as {
         answer: string;
         source?: string;
-        citations?: Array<{ title: string; url: string | null }>;
+        citations?: Citation[];
       };
       messages = [
         ...messages,
@@ -62,15 +72,28 @@
 <div class="chat-panel">
   <div class="chat-log" aria-live="polite">
     {#each messages as message}
+      {@const conf = confidenceFor(message)}
       <div class={`message ${message.role === "user" ? "user" : ""}`}>
-        {message.content}
+        {#if conf}
+          <div class="message-head">
+            <span class={`truth ${conf.cls}`}>{conf.label}</span>
+          </div>
+        {/if}
+        <div class="message-body">{message.content}</div>
         {#if message.citations?.length}
           <div class="message-sources">
+            <span class="message-sources-label">Sources</span>
             {#each message.citations as citation, index}
               {#if citation.url}
-                <a href={citation.url}>{index + 1}. {citation.title}</a>
+                <a href={citation.url} target="_blank" rel="noopener">
+                  <span class="cite-num">[{index + 1}]</span>
+                  <span class="cite-title">{citation.title}</span>
+                </a>
               {:else}
-                <span>{index + 1}. {citation.title}</span>
+                <span>
+                  <span class="cite-num">[{index + 1}]</span>
+                  <span class="cite-title">{citation.title}</span>
+                </span>
               {/if}
             {/each}
           </div>
@@ -86,11 +109,52 @@
       placeholder="Ask about proof, capabilities, or activation"
     />
     <button type="submit" disabled={pending}>
-      {pending ? "Sending" : "Ask"}
+      {pending ? "Thinking…" : "Ask"}
     </button>
   </form>
 
   {#if error}
-    <p class="pill">{error}</p>
+    <p class="truth warn">{error}</p>
   {/if}
 </div>
+
+<style>
+  .message {
+    display: grid;
+    gap: 8px;
+  }
+  .message-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .message-body {
+    color: inherit;
+  }
+  .message-sources-label {
+    color: var(--faint);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .message-sources a,
+  .message-sources span {
+    display: inline-flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+  .cite-num {
+    color: var(--faint);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .cite-title {
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+  }
+  .message-sources a:hover .cite-title {
+    color: var(--accent);
+  }
+</style>

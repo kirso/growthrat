@@ -5,8 +5,7 @@ This is the production gate for moving GrowthRat from `interview_proof` to
 
 ## Current Account Resources
 
-Verified in the Cloudflare account on 2026-05-06 and updated locally on
-2026-05-07:
+Verified in the Cloudflare account on 2026-05-06 and updated on 2026-05-07:
 
 | Product | Resource | Status |
 | --- | --- | --- |
@@ -31,6 +30,8 @@ Remote D1 seed counts:
   `migrations/0002_experiment_operations.sql`
 - source chunks, policy counters, runtime flags, and operator actions after
   `migrations/0003_agent_runtime_safety.sql`
+- run ledger, opportunity backlog, approval requests, and report deliveries
+  after `migrations/0006_run_ledger_observability.sql`
 
 Production source state after the 2026-05-07 RevenueCat docs refresh:
 
@@ -49,6 +50,8 @@ Production source state after the 2026-05-07 RevenueCat docs refresh:
 | `/api/activation` | Returns resource, platform secret, connected-account, and gate state without secret values |
 | `/api/agent-config` | Authenticated mode, review policy, focus topics, and autonomy budget |
 | `/api/policy` | Returns runtime policy; authenticated POST toggles kill switch or model chat |
+| `/api/opportunities` | Authenticated list/rescore for the agent's opportunity backlog |
+| `/api/runs` | Authenticated list/detail for the D1 run ledger |
 | `/api/sources` | Returns source and Vectorize index status |
 | `/api/sources/ingest` | Authenticated seed or RevenueCat docs batch ingestion into Vectorize and D1 |
 | `/api/experiments` | Returns experiment register; authenticated POST creates experiments |
@@ -81,7 +84,7 @@ token does not match, it returns `401`.
 ## Required Before `rc_live`
 
 - Keep the latest `growthrat` Worker deployed with Wrangler.
-- Keep remote D1 migrated through `migrations/0005_advocate_runtime_port.sql`.
+- Keep remote D1 migrated through `migrations/0006_run_ledger_observability.sql`.
 - Re-run `/api/sources/ingest` with an RC representative session or
   `GROWTHRAT_INTERNAL_SECRET` after changing the seed corpus or refreshing
   RevenueCat docs from `llms.txt`.
@@ -106,6 +109,8 @@ token does not match, it returns `401`.
   `tracking_click`.
 - Import one manual metric and file one readout from `/experiments`.
 - Confirm public reads keep working if D1 is temporarily unavailable.
+- Confirm `/api/opportunities` can rescore the work backlog.
+- Confirm `/api/runs` shows the weekly/chat run ledger after a protected run.
 - Confirm `/api/chat` returns citations when source chunks are indexed.
 - Confirm `/api/policy` can enable kill switch and block chat/model/event writes
   without redeploying.
@@ -122,10 +127,14 @@ token does not match, it returns `401`.
   the current store quota.
 - RevenueCat private access, Slack, CMS, GitHub org, Charts, and social
   credentials are post-hire dependencies.
+- Remote D1 has migration `0006` applied, but this repository still has newer
+  local Worker code than the live Worker until the next Wrangler deploy is
+  completed.
 
-## Latest Production Proof
+## Last Verified Production Proof Before Worker Redeploy
 
-Verified on 2026-05-07:
+Verified on 2026-05-07, before the local run-ledger/opportunity Worker code in
+this branch is deployed:
 
 - `growthrat` Worker deployed to `https://growthrat.kirso.workers.dev`.
 - `GROWTHRAT_INTERNAL_SECRET` is configured.
