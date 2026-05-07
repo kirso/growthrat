@@ -648,6 +648,99 @@ export async function createExperimentReadout(
   return getExperimentDetail(env, experiment.id);
 }
 
+function eventCount(experiment: ExperimentDetail, eventType: string) {
+  return experiment.eventTotals
+    .filter((event) => event.event_type === eventType)
+    .reduce((total, event) => total + Number(event.count ?? 0), 0);
+}
+
+function metricTotal(experiment: ExperimentDetail, pattern: RegExp) {
+  return experiment.metricTotals
+    .filter((metric) => pattern.test(metric.metric_key))
+    .reduce((total, metric) => total + Number(metric.total ?? 0), 0);
+}
+
+export function buildExperimentReadoutSuggestion(
+  experiment: ExperimentDetail,
+): Required<Pick<ReadoutInput, "status" | "decision" | "summary" | "learning" | "nextAction">> {
+  const trackingClicks = eventCount(experiment, "tracking_click");
+  const ctaClicks = eventCount(experiment, "cta_click");
+  const qualifiedClicks =
+    eventCount(experiment, "qualified_click") +
+    metricTotal(experiment, /qualified[_-]?click/i);
+  const signups = eventCount(experiment, "signup");
+  const paywallViews = eventCount(experiment, "paywall_view");
+  const trials =
+    eventCount(experiment, "trial_start") +
+    metricTotal(experiment, /trial|subscription/i);
+  const purchases =
+    eventCount(experiment, "purchase") +
+    metricTotal(experiment, /purchase|revenue|conversion/i);
+  const totalBehavior =
+    trackingClicks + ctaClicks + qualifiedClicks + signups + paywallViews;
+  const totalMonetization = trials + purchases;
+
+  if (totalBehavior === 0 && totalMonetization === 0) {
+    return {
+      status: "draft",
+      decision: "keep_running",
+      summary: `${experiment.title} has no captured behavior or monetization signal yet.`,
+      learning:
+        "There is not enough evidence to evaluate the hypothesis. The next run needs tracked distribution before the agent can compare hooks or diagnose the funnel.",
+      nextAction:
+        "Publish or distribute one approved variant with tracking links, then wait for qualified clicks or RevenueCat chart data before closing the experiment.",
+    };
+  }
+
+  if (totalMonetization > 0) {
+    return {
+      status: "completed",
+      decision: "continue",
+      summary: `${experiment.title} produced ${totalBehavior} behavior signals and ${totalMonetization} monetization signals.`,
+      learning:
+        "The experiment has downstream subscription signal, so the next decision should optimize the strongest hook rather than restart the topic from scratch.",
+      nextAction:
+        "Promote the best-performing variant into the next content/distribution plan and compare it against one sharper CTA.",
+    };
+  }
+
+  if (qualifiedClicks + signups + paywallViews >= 5 && totalMonetization === 0) {
+    return {
+      status: "completed",
+      decision: "iterate_funnel",
+      summary: `${experiment.title} generated ${qualifiedClicks} qualified clicks, ${signups} signups, and ${paywallViews} paywall views without confirmed monetization.`,
+      learning:
+        "The message can create intent, but the conversion path is not yet proving subscription value. That usually points to CTA mismatch, onboarding friction, or missing RevenueCat chart coverage.",
+      nextAction:
+        "Keep the topic, revise the CTA and landing path, and pull RevenueCat conversion or trial-start data before scaling distribution.",
+    };
+  }
+
+  return {
+    status: "inconclusive",
+    decision: "collect_more_signal",
+    summary: `${experiment.title} captured ${totalBehavior} behavior signals and no confirmed monetization signal.`,
+    learning:
+      "The experiment has early attention but not enough qualified or revenue-linked evidence to choose a winner.",
+    nextAction:
+      "Run one more distribution pass, prioritize channels with qualified replies or saves, and import the next RevenueCat chart snapshot.",
+  };
+}
+
+export async function generateExperimentReadout(
+  env: Env,
+  experimentIdentifier: string,
+) {
+  const experiment = await getExperimentDetail(env, experimentIdentifier);
+  if (!experiment) return null;
+
+  return createExperimentReadout(
+    env,
+    experiment.id,
+    buildExperimentReadoutSuggestion(experiment),
+  );
+}
+
 export async function resolveTrackingDestination(env: Env, trackingId: string) {
   const asset = await env.DB.prepare(
     "select * from experiment_assets where tracking_id = ? limit 1",

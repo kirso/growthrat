@@ -119,6 +119,7 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot |
 | `/api/experiments/:id/readout` | Authenticated experiment readout creation |
+| `/api/experiments/:id/auto-readout` | Authenticated deterministic readout from captured events and metrics |
 | `/api/connectors/postiz` | Authenticated Postiz social connector health and draft/schedule endpoint |
 | `/api/connectors/postiz/upload-from-url` | Authenticated Postiz media upload by public asset URL |
 | `/api/slack/events` | Slack event/mention/reaction receiver with signature verification |
@@ -178,7 +179,8 @@ GrowthRat now has a pre-production experiment operating system:
 4. import external metrics manually when connectors are unavailable
 5. pull RevenueCat chart snapshots when the RevenueCat account is connected
    by an RC representative
-6. file a readout with decision, learning, next action, and metric summary
+6. generate or file a readout with decision, learning, next action, and metric
+   summary
 
 This is enough to prove the weekly growth-experiment discipline before
 RevenueCat signs in and connects Slack, CMS, GitHub, Postiz social, keyword,

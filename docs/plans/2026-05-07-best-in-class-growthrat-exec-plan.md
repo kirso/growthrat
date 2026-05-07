@@ -29,19 +29,22 @@ The immediate goal is to win the RevenueCat Agentic AI Advocate hiring process b
 - [x] (2026-05-07T09:40:00Z) Published the full application letter routes and added the RevenueCat Agent Monetization Benchmark artifact.
 - [x] (2026-05-07T10:39:18Z) Applied `0006_run_ledger_observability.sql` to remote D1 through the Cloudflare API and verified the new tables plus `d1_migrations` row.
 - [x] (2026-05-07T11:05:52Z) Deployed current `main` to Cloudflare Worker
-  version `26263bc7-52e8-47fc-80f7-644572652efa`, set
+  version `f7c46315-2e29-44b4-9d49-b6ba17a0249b`, set
   `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY`, and verified live activation,
   application, benchmark, and protected opportunity endpoints.
 - [x] Publish the full application letter at a public stable URL.
 - [x] Add Langfuse-based LLM/agent tracing while keeping D1/R2 as the canonical run ledger.
 - [x] Build the run ledger, opportunity engine, Slack operating loop, approval flow, and first approval-backed measurement hooks.
 - [x] Ship a pre-hire value asset for RevenueCat: the RevenueCat Agent Monetization Benchmark.
+- [x] (2026-05-07T11:25:00Z) Added deterministic experiment auto-readouts so
+  captured events and metric totals become a decision, learning, and next
+  action without direct database edits.
 
 ## Surprises & Discoveries
 
 - Observation: The repo roadmap and activation docs currently describe the new connected-account runtime as deployed, but the live Worker has been observed serving stale activation output.
   Evidence: On 2026-05-07, `curl -sS https://growthrat.kirso.workers.dev/api/activation | jq '{hasConnectors: has("connectors"), missing: .secrets.missing}'` returned `hasConnectors: false` and included `TYPEFULLY_API_KEY` in missing secrets.
-  Resolution: Later on 2026-05-07, Worker version `26263bc7-52e8-47fc-80f7-644572652efa` was deployed and `/api/activation` returned the connected-account model with no missing platform secrets and no `TYPEFULLY_API_KEY`.
+  Resolution: Later on 2026-05-07, Worker version `f7c46315-2e29-44b4-9d49-b6ba17a0249b` was deployed and `/api/activation` returned the connected-account model with no missing platform secrets and no `TYPEFULLY_API_KEY`.
 
 - Observation: The full application letter exists in `docs/public/application-letter.md`, but the routed public page `/application` is an abbreviated content-page summary, not the full letter the application form asks for.
   Evidence: `docs/public/application-letter.md` starts with `# I Already Did The Job. Here's The Proof.` while `src/content/pages.ts` defines `/application` with a shorter section-based page.
@@ -558,6 +561,7 @@ Autonomous advocate readiness:
 - GrowthRat can explain why each selected opportunity matters.
 - GrowthRat can generate source-grounded content with citations and quality gates.
 - GrowthRat can create and measure an experiment.
+- GrowthRat can generate an experiment readout from captured signals.
 - GrowthRat can file structured product feedback.
 - GrowthRat can draft community replies from source evidence.
 - GrowthRat can report the week in Slack.

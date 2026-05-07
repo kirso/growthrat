@@ -153,7 +153,7 @@ Completed:
 - Svelte chat and runtime-status components exist.
 - read-only proof/runtime/activation APIs exist.
 - experiment register, tracking redirects, event capture, manual metric import,
-  RevenueCat chart snapshots, and readouts exist.
+  RevenueCat chart snapshots, manual readouts, and automatic readouts exist.
 - protected manual weekly dry-run API exists.
 - source ingest API exists at `/api/sources/ingest` for the seed corpus and
   RevenueCat docs batches from the public `llms.txt` index.
@@ -171,6 +171,9 @@ Completed:
 - protected weekly dry run created a D1 workflow row and wrote an R2 proof bundle.
 - a tracking redirect, manual metric import, and draft experiment readout were
   smoke-tested in production.
+- experiment readouts can be generated from captured behavior events and metric
+  totals, giving the loop a decision, learning, and next action without direct
+  database edits.
 - the local app now has D1 schema and code for `agent_runs`,
   `agent_run_events`, `opportunities`, `approval_requests`, and
   `report_deliveries`; remote D1 migration `0006` was applied through the
@@ -180,7 +183,7 @@ Completed:
 - the full application letter is served at both `/application` and
   `/application-letter`
 - the current Worker code is deployed on Cloudflare as version
-  `26263bc7-52e8-47fc-80f7-644572652efa`
+  `f7c46315-2e29-44b4-9d49-b6ba17a0249b`
 - production `/api/activation` now exposes the connected-account model,
   confirms both platform secrets are configured, and reports no blockers in
   `interview_proof`

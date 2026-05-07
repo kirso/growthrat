@@ -258,6 +258,14 @@
     });
   }
 
+  async function generateReadout() {
+    if (!selected) return;
+    await runAction(async () => {
+      await internalRequest(`/api/experiments/${selected.id}/auto-readout`, {});
+      message = "Auto-readout generated.";
+    });
+  }
+
   onMount(() => {
     void Promise.all([loadSession(), loadExperiments()]);
   });
@@ -506,7 +514,17 @@
     </div>
 
     <form class="card form-stack" on:submit|preventDefault={createReadout}>
-      <h3>Close with readout</h3>
+      <div class="runtime-header compact">
+        <h3>Close with readout</h3>
+        <button
+          class="button"
+          type="button"
+          disabled={actionPending || !canMutate || !selected}
+          on:click={generateReadout}
+        >
+          Generate from metrics
+        </button>
+      </div>
       <label class="field">
         Status
         <select bind:value={readoutForm.status}>

@@ -17,7 +17,7 @@ Verified in the Cloudflare account on 2026-05-06 and updated on 2026-05-07:
 | AI Gateway | `growthrat` | provisioned |
 | AI Search | none | deferred; provisioning failed |
 | Secrets Store | default store | dedicated store blocked by account quota |
-| Workers / Workflows | `growthrat` Worker, `growthrat-weekly-loop` Workflow | deployed on workers.dev as Worker version `26263bc7-52e8-47fc-80f7-644572652efa` |
+| Workers / Workflows | `growthrat` Worker, `growthrat-weekly-loop` Workflow | deployed on workers.dev as Worker version `f7c46315-2e29-44b4-9d49-b6ba17a0249b` |
 | Rate Limits | chat/model/event bindings | declared in config |
 
 Remote D1 seed counts:
@@ -58,6 +58,7 @@ Production source state after the 2026-05-07 RevenueCat docs refresh:
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot import |
 | `/api/experiments/:id/readout` | Authenticated readout creation |
+| `/api/experiments/:id/auto-readout` | Authenticated deterministic readout from captured events and metrics |
 | `/api/events` | Public behavior event capture |
 | `/api/workflows/weekly-dry-run` | Protected POST that creates a dry weekly Workflow run |
 | `/api/workflows/weekly-run` | Protected POST that runs the full advocate loop |
@@ -107,7 +108,7 @@ token does not match, it returns `401`.
 - Confirm the dry run creates or reuses a weekly experiment with tracking links.
 - Click one `/r/:trackingId` link and confirm `experiment_events` receives a
   `tracking_click`.
-- Import one manual metric and file one readout from `/experiments`.
+- Import one manual metric and file or generate one readout from `/experiments`.
 - Confirm public reads keep working if D1 is temporarily unavailable.
 - Confirm `/api/opportunities` can rescore the work backlog.
 - Confirm `/api/runs` shows the weekly/chat run ledger after a protected run.
@@ -133,7 +134,7 @@ token does not match, it returns `401`.
 Verified on 2026-05-07 after deploying the run-ledger/opportunity Worker code:
 
 - `growthrat` Worker deployed to `https://growthrat.kirso.workers.dev`.
-- Worker version `26263bc7-52e8-47fc-80f7-644572652efa` is live.
+- Worker version `f7c46315-2e29-44b4-9d49-b6ba17a0249b` is live.
 - `GROWTHRAT_INTERNAL_SECRET` and `GROWTHRAT_CONNECTOR_ENCRYPTION_KEY` are
   configured.
 - `/api/activation` returns the connected-account model, both platform secrets
