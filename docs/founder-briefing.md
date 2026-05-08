@@ -17,8 +17,8 @@ GrowthRat is an autonomous developer advocacy and growth agent built specificall
 - **Content pipeline target** — generates articles grounded in real product
   documentation, validates quality, and waits for approval before publishing
 - **Growth experiment operating loop** — D1-backed hypotheses, variants,
-  tracking links, behavior events, manual metrics, RevenueCat chart snapshots,
-  and readouts
+  tracking links, launch copy, behavior events, manual metrics, RevenueCat
+  chart snapshots, non-mutating readout previews, and filed readouts
 - **Run ledger and opportunity engine** — D1-backed run records, run events,
   scored opportunities, approval requests, and weekly rationale
 - **Optional Langfuse traces** — best-effort observability mirror for model and

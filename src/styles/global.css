@@ -975,6 +975,31 @@ a.card {
   gap: 14px;
 }
 
+.launch-kit {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.launch-item {
+  align-items: stretch;
+}
+
+.launch-copy {
+  width: 100%;
+  min-height: 112px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  color: var(--body);
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
 .field {
   display: grid;
   gap: 6px;

@@ -60,6 +60,8 @@ The app now has a D1-backed experiment loop for this test:
   behavior events.
 - `experiment_metric_snapshots` stores manual metrics and RevenueCat chart
   snapshots once the RevenueCat connector is active.
+- `/api/experiments/:id/readout-preview` shows the current decision,
+  learning, and next action without mutating state.
 - `experiment_readouts` stores the final decision, learning, and next action.
 
 ### Public-surface metrics

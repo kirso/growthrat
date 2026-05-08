@@ -152,8 +152,9 @@ Completed:
 - public routes resolve.
 - Svelte chat and runtime-status components exist.
 - read-only proof/runtime/activation APIs exist.
-- experiment register, tracking redirects, event capture, manual metric import,
-  RevenueCat chart snapshots, manual readouts, and automatic readouts exist.
+- experiment register, tracking redirects, event capture, launch-copy kit,
+  manual metric import, RevenueCat chart snapshots, public readout previews,
+  manual readouts, and automatic readouts exist.
 - protected manual weekly dry-run API exists.
 - source ingest API exists at `/api/sources/ingest` for the seed corpus and
   RevenueCat docs batches from the public `llms.txt` index.
@@ -171,9 +172,9 @@ Completed:
 - protected weekly dry run created a D1 workflow row and wrote an R2 proof bundle.
 - a tracking redirect, manual metric import, and draft experiment readout were
   smoke-tested in production.
-- experiment readouts can be generated from captured behavior events and metric
-  totals, giving the loop a decision, learning, and next action without direct
-  database edits.
+- experiment readout previews can be generated from captured behavior events
+  and metric totals without mutating state; authenticated representatives can
+  then file or auto-generate the official readout without direct database edits.
 - the local app now has D1 schema and code for `agent_runs`,
   `agent_run_events`, `opportunities`, `approval_requests`, and
   `report_deliveries`; remote D1 migration `0006` was applied through the

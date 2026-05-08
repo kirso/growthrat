@@ -13,6 +13,7 @@
 
   type ExperimentAsset = {
     id: string;
+    variant_id: string | null;
     title: string;
     tracking_id: string;
     channel: string;
@@ -43,6 +44,14 @@
     created_at: string;
   };
 
+  type ReadoutPreview = {
+    status: string;
+    decision: string;
+    summary: string;
+    learning: string;
+    nextAction: string;
+  };
+
   type Session = {
     email: string;
     role: string;
@@ -65,15 +74,18 @@
     readouts: Readout[];
   };
 
-  let experiments: Experiment[] = [];
-  let selectedId = "";
-  let session: Session | null = null;
-  let pending = true;
-  let actionPending = false;
-  let message = "";
-  let error = "";
+  let experiments = $state<Experiment[]>([]);
+  let selectedId = $state("");
+  let session = $state<Session | null>(null);
+  let pending = $state(true);
+  let actionPending = $state(false);
+  let previewPending = $state(false);
+  let readoutPreview = $state<ReadoutPreview | null>(null);
+  let siteOrigin = $state("");
+  let message = $state("");
+  let error = $state("");
 
-  let createForm = {
+  let createForm = $state({
     title: "",
     hypothesis: "",
     audience: "agent developers building paid subscription apps",
@@ -82,39 +94,40 @@
       "A win requires qualified clicks plus a clear RevenueCat funnel diagnosis.",
     variants:
       "implementation | Implementation hook | I built a RevenueCat subscription loop an agent can reason about. | Open the implementation guide | /articles/revenuecat-for-agent-built-apps\nmeasurement | Measurement hook | RevenueCat Charts tell you if money moved. | Open the measurement guide | /articles/charts-behavioral-analytics-bridge",
-  };
+  });
 
-  let metricForm = {
+  let metricForm = $state({
     source: "manual",
     metricKey: "qualified_clicks",
     value: "",
     variantKey: "",
-  };
+  });
 
-  let eventForm = {
+  let eventForm = $state({
     trackingId: "",
     eventType: "qualified_click",
-  };
+  });
 
-  let revenueCatForm = {
+  let revenueCatForm = $state({
     chartName: "conversion_to_paying",
     metricKey: "conversion_to_paying",
     variantKey: "",
-  };
+  });
 
-  let readoutForm = {
+  let readoutForm = $state({
     status: "completed",
     decision: "inconclusive",
     summary: "",
     learning: "",
     nextAction: "",
-  };
+  });
 
-  $: selected =
+  const selected = $derived(
     experiments.find((experiment) => experiment.id === selectedId) ??
-    experiments[0] ??
-    null;
-  $: canMutate = Boolean(session);
+      experiments[0] ??
+      null,
+  );
+  const canMutate = $derived(Boolean(session));
 
   function parseVariants(value: string) {
     return value
@@ -146,7 +159,14 @@
       }
       const data = (await response.json()) as { experiments?: Experiment[] };
       experiments = data.experiments ?? [];
-      selectedId = selectedId || experiments[0]?.id || "";
+      selectedId = experiments.some((experiment) => experiment.id === selectedId)
+        ? selectedId
+        : experiments[0]?.id || "";
+      if (selectedId) {
+        await loadReadoutPreview(selectedId);
+      } else {
+        readoutPreview = null;
+      }
     } catch (err) {
       error = err instanceof Error ? err.message : "Could not load experiments.";
     } finally {
@@ -163,6 +183,60 @@
       session?: Session | null;
     };
     session = data.authenticated ? (data.session ?? null) : null;
+  }
+
+  async function loadReadoutPreview(experimentId: string) {
+    previewPending = true;
+
+    try {
+      const response = await fetch(
+        `/api/experiments/${experimentId}/readout-preview`,
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        suggestion?: ReadoutPreview;
+      };
+      readoutPreview = response.ok ? (data.suggestion ?? null) : null;
+    } catch {
+      readoutPreview = null;
+    } finally {
+      previewPending = false;
+    }
+  }
+
+  function variantForAsset(asset: ExperimentAsset) {
+    return (
+      selected?.variants.find((variant) => variant.id === asset.variant_id) ??
+      selected?.variants.find(
+        (variant) => variant.destination_url === asset.url,
+      ) ??
+      null
+    );
+  }
+
+  function trackingPath(asset: ExperimentAsset) {
+    return `/r/${asset.tracking_id}`;
+  }
+
+  function trackingUrl(asset: ExperimentAsset) {
+    return `${siteOrigin || ""}${trackingPath(asset)}`;
+  }
+
+  function launchCopy(asset: ExperimentAsset) {
+    const variant = variantForAsset(asset);
+    const hook = variant?.hook ?? asset.title;
+    const cta = variant?.cta ?? "Open the tracked artifact";
+    return `${hook}\n\n${cta}: ${trackingUrl(asset)}\n\n#RevenueCat #AgenticAI`;
+  }
+
+  function useReadoutPreview() {
+    if (!readoutPreview) return;
+    readoutForm = {
+      status: readoutPreview.status,
+      decision: readoutPreview.decision,
+      summary: readoutPreview.summary,
+      learning: readoutPreview.learning,
+      nextAction: readoutPreview.nextAction,
+    };
   }
 
   async function internalRequest(path: string, body: Record<string, unknown>) {
@@ -267,6 +341,7 @@
   }
 
   onMount(() => {
+    siteOrigin = window.location.origin;
     void Promise.all([loadSession(), loadExperiments()]);
   });
 </script>
@@ -277,7 +352,7 @@
       <p class="eyebrow">Experiment OS</p>
       <h2>Run, measure, and close the loop</h2>
     </div>
-    <button class="button" type="button" on:click={loadExperiments}>
+    <button class="button" type="button" onclick={loadExperiments}>
       Refresh
     </button>
   </div>
@@ -295,8 +370,11 @@
         {:else}
           <label class="field">
             Active experiment
-            <select bind:value={selectedId}>
-              {#each experiments as experiment}
+            <select
+              bind:value={selectedId}
+              onchange={() => void loadReadoutPreview(selectedId)}
+            >
+              {#each experiments as experiment (experiment.id)}
                 <option value={experiment.id}>{experiment.title}</option>
               {/each}
             </select>
@@ -315,7 +393,7 @@
           </div>
 
           <h3>Variants</h3>
-          {#each selected.variants as variant}
+          {#each selected.variants as variant (variant.id)}
             <div class="status-row compact">
               <div>
                 <strong>{variant.name}</strong>
@@ -331,12 +409,12 @@
       <article class="card">
         <h3>Tracking links</h3>
         {#if selected}
-          {#each selected.assets as asset}
+          {#each selected.assets as asset (asset.id)}
             <div class="status-row compact">
               <div>
                 <strong>{asset.title}</strong>
                 <p>
-                  <a href={`/r/${asset.tracking_id}`}>
+                  <a href={trackingPath(asset)}>
                     /r/{asset.tracking_id}
                   </a>
                 </p>
@@ -352,13 +430,39 @@
     </div>
 
     {#if selected}
+      <article class="card">
+        <div class="runtime-header compact">
+          <h3>Launch kit</h3>
+          <span class="pill {canMutate ? 'ok' : ''}">
+            {canMutate ? "Ready for approved channels" : "Draft until sign-in"}
+          </span>
+        </div>
+        <p>
+          These are the current tracked variants the agent can hand to Postiz,
+          GitHub, forums, or Slack approval once RevenueCat connects the
+          relevant account.
+        </p>
+        <div class="launch-kit">
+          {#each selected.assets as asset (asset.id)}
+            <div class="status-row compact launch-item">
+              <div>
+                <strong>{variantForAsset(asset)?.name ?? asset.title}</strong>
+                <p>{variantForAsset(asset)?.hook ?? asset.title}</p>
+                <textarea class="launch-copy" rows="4" readonly>{launchCopy(asset)}</textarea>
+              </div>
+              <a class="button" href={trackingPath(asset)}>Open</a>
+            </div>
+          {/each}
+        </div>
+      </article>
+
       <div class="grid two runtime-detail">
         <article class="card">
           <h3>Behavioral events</h3>
           {#if selected.eventTotals.length === 0}
             <p>No behavior events recorded yet.</p>
           {:else}
-            {#each selected.eventTotals as event}
+            {#each selected.eventTotals as event (event.event_type)}
               <div class="status-row compact">
                 <strong>{event.event_type}</strong>
                 <span class="metric small">{event.count}</span>
@@ -372,7 +476,7 @@
           {#if selected.metricTotals.length === 0}
             <p>No metric snapshots recorded yet.</p>
           {:else}
-            {#each selected.metricTotals as metric}
+            {#each selected.metricTotals as metric (`${metric.source}:${metric.metric_key}:${metric.variant_id ?? "all"}`)}
               <div class="status-row compact">
                 <div>
                   <strong>{metric.metric_key}</strong>
@@ -385,17 +489,43 @@
         </article>
       </div>
 
-      <article class="card">
-        <h3>Latest readout</h3>
-        {#if selected.readouts.length === 0}
-          <p>No readout has been filed. The experiment is still open.</p>
-        {:else}
-          <strong>{selected.readouts[0].decision}</strong>
-          <p>{selected.readouts[0].summary}</p>
-          <p>{selected.readouts[0].learning}</p>
-          <p>{selected.readouts[0].next_action}</p>
-        {/if}
-      </article>
+      <div class="grid two runtime-detail">
+        <article class="card">
+          <h3>Latest readout</h3>
+          {#if selected.readouts.length === 0}
+            <p>No readout has been filed. The experiment is still open.</p>
+          {:else}
+            <strong>{selected.readouts[0].decision}</strong>
+            <p>{selected.readouts[0].summary}</p>
+            <p>{selected.readouts[0].learning}</p>
+            <p>{selected.readouts[0].next_action}</p>
+          {/if}
+        </article>
+
+        <article class="card">
+          <div class="runtime-header compact">
+            <h3>Readout preview</h3>
+            <button
+              class="button"
+              type="button"
+              disabled={previewPending}
+              onclick={() => void loadReadoutPreview(selected.id)}
+            >
+              Refresh preview
+            </button>
+          </div>
+          {#if previewPending}
+            <p>Building readout from current metrics.</p>
+          {:else if readoutPreview}
+            <strong>{readoutPreview.decision}</strong>
+            <p>{readoutPreview.summary}</p>
+            <p>{readoutPreview.learning}</p>
+            <p>{readoutPreview.nextAction}</p>
+          {:else}
+            <p>No preview is available for this experiment.</p>
+          {/if}
+        </article>
+      </div>
     {/if}
 
     <div class="card operator-panel">
@@ -415,7 +545,13 @@
     </div>
 
     <div class="grid two runtime-detail">
-      <form class="card form-stack" on:submit|preventDefault={createExperiment}>
+      <form
+        class="card form-stack"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void createExperiment();
+        }}
+      >
         <h3>Create experiment</h3>
         <label class="field">
           Title
@@ -446,7 +582,13 @@
         </button>
       </form>
 
-      <form class="card form-stack" on:submit|preventDefault={addMetric}>
+      <form
+        class="card form-stack"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void addMetric();
+        }}
+      >
         <h3>Import manual metric</h3>
         <label class="field">
           Source
@@ -469,7 +611,13 @@
         </button>
       </form>
 
-      <form class="card form-stack" on:submit|preventDefault={addManualEvent}>
+      <form
+        class="card form-stack"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void addManualEvent();
+        }}
+      >
         <h3>Record behavior event</h3>
         <label class="field">
           Tracking id
@@ -493,7 +641,13 @@
         </button>
       </form>
 
-      <form class="card form-stack" on:submit|preventDefault={addRevenueCatMetric}>
+      <form
+        class="card form-stack"
+        onsubmit={(event) => {
+          event.preventDefault();
+          void addRevenueCatMetric();
+        }}
+      >
         <h3>Pull RevenueCat chart</h3>
         <label class="field">
           Chart name
@@ -513,16 +667,30 @@
       </form>
     </div>
 
-    <form class="card form-stack" on:submit|preventDefault={createReadout}>
+    <form
+      class="card form-stack"
+      onsubmit={(event) => {
+        event.preventDefault();
+        void createReadout();
+      }}
+    >
       <div class="runtime-header compact">
         <h3>Close with readout</h3>
         <button
           class="button"
           type="button"
           disabled={actionPending || !canMutate || !selected}
-          on:click={generateReadout}
+          onclick={generateReadout}
         >
           Generate from metrics
+        </button>
+        <button
+          class="button"
+          type="button"
+          disabled={!readoutPreview}
+          onclick={useReadoutPreview}
+        >
+          Use preview
         </button>
       </div>
       <label class="field">

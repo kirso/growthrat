@@ -126,6 +126,7 @@ docs/                   Product, ops, interview, and public proof docs
 | `/api/experiments` | Experiment register and authenticated create endpoint |
 | `/api/experiments/:id/metrics` | Authenticated manual metric import |
 | `/api/experiments/:id/revenuecat` | Authenticated RevenueCat chart snapshot |
+| `/api/experiments/:id/readout-preview` | Public non-mutating readout suggestion from current events and metrics |
 | `/api/experiments/:id/readout` | Authenticated experiment readout creation |
 | `/api/experiments/:id/auto-readout` | Authenticated deterministic readout from captured events and metrics |
 | `/api/connectors/postiz` | Authenticated Postiz social connector health and draft/schedule endpoint |
@@ -169,12 +170,13 @@ serves them and writes an index-only placeholder for listed paths whose Markdown
 mirror is unavailable, so the system represents every indexed docs entry without
 inventing missing page content.
 
-Current production state from the 2026-05-07 refresh:
+Current production state from the 2026-05-08 refresh:
 
-- 333 RevenueCat docs index entries represented
-- 314 full Markdown mirrors
-- 19 explicit index-only fallbacks
-- 342 total sources and 1,982 indexed chunks including GrowthRat proof sources
+- 339 RevenueCat docs source rows represented
+- 1,979 RevenueCat docs chunks indexed
+- 347 total sources and 1,987 indexed chunks including GrowthRat proof and role
+  sources
+- bundled GrowthRat proof corpus freshness reports `fresh`
 
 ## Experiment Loop
 
@@ -187,7 +189,9 @@ GrowthRat now has a pre-production experiment operating system:
 4. import external metrics manually when connectors are unavailable
 5. pull RevenueCat chart snapshots when the RevenueCat account is connected
    by an RC representative
-6. generate or file a readout with decision, learning, next action, and metric
+6. preview a readout without mutating state so reviewers can see the current
+   decision logic before sign-in
+7. generate or file a readout with decision, learning, next action, and metric
    summary
 
 This is enough to prove the weekly growth-experiment discipline before

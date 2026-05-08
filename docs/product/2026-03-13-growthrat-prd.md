@@ -177,10 +177,11 @@ Current implementation status:
 - Langfuse is wired as an optional best-effort observability mirror while D1
   remains the source of truth
 - experiment register, variants, tracking assets, behavior events, metric
-  snapshots, RevenueCat chart snapshot endpoint, and readouts are wired in D1
+  snapshots, RevenueCat chart snapshot endpoint, readout previews, and readouts
+  are wired in D1
 - `/experiments` provides the operator surface for creating experiments,
-  importing metrics, recording events, pulling RevenueCat charts, and filing
-  readouts
+  importing metrics, recording events, pulling RevenueCat charts, previewing
+  launch/readout state, and filing readouts
 - `/r/:trackingId` records experiment clicks and redirects to the tracked asset
 - `/api/events` records public experiment events, including tracked page views
 - weekly Workflow now ensures a weekly experiment exists and writes tracking
