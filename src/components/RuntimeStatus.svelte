@@ -58,14 +58,25 @@
       indexedChunks: number;
       vectorCount: number | null;
       vectorDimensions: number | null;
+      freshness: {
+        status: "fresh" | "missing" | "stale" | "unknown";
+        expectedDocuments: number;
+        observedDocuments: number;
+        expectedChunks: number;
+        observedChunks: number;
+        observedIndexedChunks: number;
+        missingSourceIds: string[];
+        staleSourceIds: string[];
+        detail: string;
+      };
     };
     readyForApplicationReview: boolean;
     readyForRcLive: boolean;
   };
 
-  let snapshot: ActivationSnapshot | null = null;
-  let pending = true;
-  let error = "";
+  let snapshot = $state<ActivationSnapshot | null>(null);
+  let pending = $state(true);
+  let error = $state("");
 
   const statusLabel: Record<CheckStatus, string> = {
     ready: "Ready",
@@ -149,7 +160,9 @@
       <article class="card">
         <span class="tag">Sources</span>
         <div class="metric">{snapshot.sources.indexedChunks}</div>
-        <p>Indexed source chunks for retrieval</p>
+        <p>
+          Proof corpus: {snapshot.sources.freshness.status}
+        </p>
       </article>
       <article class="card">
         <span class="tag">Policy</span>
@@ -167,7 +180,7 @@
     <div class="grid two runtime-detail">
       <article class="card">
         <h3>Resources</h3>
-        {#each snapshot.resources as item}
+        {#each snapshot.resources as item (item.key)}
           <div class="status-row compact">
             <div>
               <strong>{item.label}</strong>
@@ -182,7 +195,7 @@
 
       <article class="card">
         <h3>Activation gates</h3>
-        {#each snapshot.gates as item}
+        {#each snapshot.gates as item (item.key)}
           <div class="status-row compact">
             <div>
               <strong>{item.label}</strong>
@@ -197,7 +210,7 @@
 
       <article class="card">
         <h3>Connected accounts</h3>
-        {#each snapshot.connectors as item}
+        {#each snapshot.connectors as item (item.key)}
           <div class="status-row compact">
             <div>
               <strong>{item.label}</strong>
@@ -208,6 +221,29 @@
             </span>
           </div>
         {/each}
+      </article>
+
+      <article class="card">
+        <h3>Source corpus</h3>
+        <div class="status-row compact">
+          <div>
+            <strong>Bundled proof docs</strong>
+            <p>{snapshot.sources.freshness.detail}</p>
+          </div>
+          <span class="pill {snapshot.sources.freshness.status === 'fresh' ? 'ok' : ''}">
+            {snapshot.sources.freshness.status}
+          </span>
+        </div>
+        <div class="status-row compact">
+          <div>
+            <strong>Expected vs observed</strong>
+            <p>
+              {snapshot.sources.freshness.observedDocuments}/{snapshot.sources.freshness.expectedDocuments}
+              docs · {snapshot.sources.freshness.observedIndexedChunks}/{snapshot.sources.freshness.expectedChunks}
+              indexed chunks
+            </p>
+          </div>
+        </div>
       </article>
     </div>
 

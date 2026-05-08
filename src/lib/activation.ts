@@ -148,14 +148,20 @@ export async function getActivationSnapshot(
       key: "vectorize",
       label: "Vectorize",
       status:
-        hasBinding(env, "DOC_INDEX") && sources.indexedChunks > 0
+        hasBinding(env, "DOC_INDEX") &&
+        sources.indexedChunks > 0 &&
+        sources.freshness.status === "fresh"
           ? "ready"
-          : hasBinding(env, "DOC_INDEX")
+          : hasBinding(env, "DOC_INDEX") && sources.indexedChunks > 0
             ? "gated"
-            : "blocked",
+            : hasBinding(env, "DOC_INDEX")
+              ? "gated"
+              : "blocked",
       detail:
-        sources.indexedChunks > 0
-          ? `${sources.indexedChunks} source chunks are indexed for retrieval.`
+        sources.indexedChunks > 0 && sources.freshness.status === "fresh"
+          ? `${sources.indexedChunks} source chunks are indexed for retrieval; bundled proof corpus is fresh.`
+          : sources.indexedChunks > 0
+            ? `${sources.indexedChunks} source chunks are indexed, but bundled proof corpus is ${sources.freshness.status}: ${sources.freshness.detail}`
           : "Retrieval index is provisioned; RevenueCat docs ingestion is still required.",
     },
     {

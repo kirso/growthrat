@@ -6,6 +6,7 @@ import {
   type WorkflowStep,
 } from "cloudflare:workers";
 import { runWeeklyAdvocateLoop } from "./lib/pipeline";
+import { ensureSeedSourceCorpus } from "./lib/sources";
 
 type AgentState = {
   mode: string;
@@ -17,6 +18,7 @@ type AgentState = {
 type WeeklyLoopParams = {
   trigger: "manual" | "schedule" | "queue";
   dryRun?: boolean;
+  syncOnly?: boolean;
 };
 
 function currentWeekKey(now = new Date()) {
@@ -88,15 +90,35 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
   async run(event: Readonly<WorkflowEvent<WeeklyLoopParams>>, step: WorkflowStep) {
     const now = new Date().toISOString();
     const week = currentWeekKey();
-    const result = await step.do("run advocate loop", async () =>
-      runWeeklyAdvocateLoop(this.env, {
-        trigger: event.payload.trigger === "schedule" ? "schedule" : "manual",
-        dryRun: event.payload.dryRun ?? true,
-      }),
+    const sourceSync = await step.do("sync seed source corpus", async () =>
+      ensureSeedSourceCorpus(this.env),
     );
+    const result = event.payload.syncOnly
+      ? {
+          workflowRunId: event.instanceId,
+          runLedgerId: null,
+          status: "completed" as const,
+          plan: {
+            contentTopics: [],
+            feedbackTopics: [],
+            experimentTopic: null,
+          },
+          sourceSync,
+          artifactId: null,
+          reportId: null,
+          approvalRequests: [],
+        }
+      : await step.do("run advocate loop", async () =>
+          runWeeklyAdvocateLoop(this.env, {
+            trigger: event.payload.trigger === "schedule" ? "schedule" : "manual",
+            dryRun: event.payload.dryRun ?? true,
+          }),
+        );
 
     const r2Key = await step.do("write weekly proof bundle", async () => {
-      const key = `weekly-runs/${week.start}/plan.json`;
+      const key = event.payload.syncOnly
+        ? `source-sync/${now.replaceAll(":", "-")}.json`
+        : `weekly-runs/${week.start}/plan.json`;
       await this.env.ARTIFACT_BUCKET.put(
         key,
         JSON.stringify(
@@ -123,8 +145,8 @@ export class GrowthRatWeeklyWorkflow extends WorkflowEntrypoint<
       )
         .bind(
           event.instanceId,
-          "weekly_loop",
-          "planned",
+          event.payload.syncOnly ? "source_corpus_sync" : "weekly_loop",
+          event.payload.syncOnly ? "completed" : "planned",
           JSON.stringify(event.payload),
           JSON.stringify({ ...result, r2Key }),
           new Date().toISOString(),

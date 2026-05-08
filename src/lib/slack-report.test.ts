@@ -8,6 +8,7 @@ describe("formatAdvocateLoopSlackReport", () => {
       workflowRunId: "run_123",
       runLedgerId: "run_ledger_123",
       status: "planned",
+      sourceSync: null,
       artifactId: "art_123",
       reportId: "report_123",
       approvalRequests: [

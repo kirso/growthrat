@@ -10,6 +10,7 @@ import { generateSourceGroundedDraft, type ContentDraft } from "./content-draft"
 import { requestDistributionApproval } from "./approvals";
 import { sendLangfuseTrace } from "./observability/langfuse";
 import { finishRun, recordRunEvent, startRun } from "./run-ledger";
+import { ensureSeedSourceCorpus, type SourceCorpusSyncResult } from "./sources";
 
 export type QualityGate = {
   key: string;
@@ -28,6 +29,7 @@ export type AdvocateLoopResult = {
     experimentTopic: string | null;
     selectedOpportunities?: OpportunityRow[];
   };
+  sourceSync: SourceCorpusSyncResult | null;
   artifactId: string | null;
   reportId: string | null;
   approvalRequests: Array<{
@@ -389,11 +391,32 @@ export async function runWeeklyAdvocateLoop(
       runLedgerId: ledgerRunId,
       status: "blocked",
       plan: { contentTopics: [], feedbackTopics: [], experimentTopic: null },
+      sourceSync: null,
       artifactId: null,
       reportId: null,
       approvalRequests: [],
     };
   }
+
+  const sourceSync = await ensureSeedSourceCorpus(env);
+  await recordRunEvent(env, {
+    runId: ledgerRunId,
+    eventType: "source_corpus_checked",
+    status: sourceSync.ok ? "succeeded" : "blocked",
+    detail: {
+      refreshed: sourceSync.refreshed,
+      before: sourceSync.before.status,
+      after: sourceSync.after.status,
+      missingBefore: sourceSync.before.missingSourceIds.length,
+      staleBefore: sourceSync.before.staleSourceIds.length,
+      receipt: sourceSync.receipt
+        ? {
+            documents: sourceSync.receipt.documents,
+            chunks: sourceSync.receipt.chunks,
+          }
+        : null,
+    },
+  });
 
   const plan = await planTopics(env, input.topic);
   await recordRunEvent(env, {
@@ -524,6 +547,7 @@ export async function runWeeklyAdvocateLoop(
 
   const output = {
     plan,
+    sourceSync,
     artifactId,
     reportId,
     approvalRequests,
@@ -574,6 +598,7 @@ export async function runWeeklyAdvocateLoop(
     runLedgerId: ledgerRunId,
     status: "planned",
     plan,
+    sourceSync,
     artifactId,
     reportId,
     approvalRequests,

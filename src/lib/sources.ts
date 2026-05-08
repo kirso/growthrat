@@ -29,12 +29,46 @@ export type SourceStats = {
   sources: number;
   vectorCount: number | null;
   vectorDimensions: number | null;
+  freshness: SourceCorpusFreshness;
   byType: Array<{
     sourceType: string;
     sources: number;
     chunks: number;
     indexedChunks: number;
   }>;
+};
+
+export type ExpectedSourceCorpusStats = {
+  documents: number;
+  chunks: number;
+  byType: Array<{
+    sourceType: SourceCorpusDocument["sourceType"];
+    documents: number;
+    chunks: number;
+  }>;
+  sourceIds: string[];
+};
+
+export type SourceCorpusFreshness = {
+  status: "fresh" | "missing" | "stale" | "unknown";
+  checkedAt: string;
+  expectedDocuments: number;
+  observedDocuments: number;
+  expectedChunks: number;
+  observedChunks: number;
+  observedIndexedChunks: number;
+  missingSourceIds: string[];
+  staleSourceIds: string[];
+  expectedByType: ExpectedSourceCorpusStats["byType"];
+  detail: string;
+};
+
+export type SourceCorpusSyncResult = {
+  ok: boolean;
+  refreshed: boolean;
+  before: SourceCorpusFreshness;
+  after: SourceCorpusFreshness;
+  receipt: Awaited<ReturnType<typeof ingestSourceDocuments>> | null;
 };
 
 export type RevenueCatDocsIndexEntry = {
@@ -88,6 +122,10 @@ function slug(value: string, maxLength = 52) {
   return `${prefix.replace(/-+$/g, "")}-${suffix}`;
 }
 
+export function sourceIdForDocument(document: SourceCorpusDocument) {
+  return slug(document.id);
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -111,6 +149,183 @@ function chunksForDocument(document: SourceCorpusDocument) {
   }
 
   return chunks.length > 0 ? chunks : [raw];
+}
+
+export function getExpectedSourceCorpusStats(
+  documents: SourceCorpusDocument[] = sourceCorpus,
+): ExpectedSourceCorpusStats {
+  const byType = new Map<
+    SourceCorpusDocument["sourceType"],
+    { sourceType: SourceCorpusDocument["sourceType"]; documents: number; chunks: number }
+  >();
+  let chunks = 0;
+
+  for (const document of documents) {
+    const documentChunks = chunksForDocument(document).length;
+    chunks += documentChunks;
+    const existing =
+      byType.get(document.sourceType) ?? {
+        sourceType: document.sourceType,
+        documents: 0,
+        chunks: 0,
+      };
+    existing.documents += 1;
+    existing.chunks += documentChunks;
+    byType.set(document.sourceType, existing);
+  }
+
+  return {
+    documents: documents.length,
+    chunks,
+    byType: Array.from(byType.values()).sort((left, right) =>
+      left.sourceType.localeCompare(right.sourceType),
+    ),
+    sourceIds: documents.map(sourceIdForDocument),
+  };
+}
+
+async function expectedCorpusSources(documents: SourceCorpusDocument[]) {
+  return Promise.all(
+    documents.map(async (document) => {
+      const chunks = chunksForDocument(document);
+      const contentHashes = await Promise.all(chunks.map(sha256Hex));
+      return {
+        sourceId: sourceIdForDocument(document),
+        sourceType: document.sourceType,
+        title: document.title,
+        chunks: chunks.length,
+        contentHashes,
+      };
+    }),
+  );
+}
+
+function unknownFreshness(
+  detail: string,
+  documents: SourceCorpusDocument[] = sourceCorpus,
+): SourceCorpusFreshness {
+  const expected = getExpectedSourceCorpusStats(documents);
+  return {
+    status: "unknown",
+    checkedAt: new Date().toISOString(),
+    expectedDocuments: expected.documents,
+    observedDocuments: 0,
+    expectedChunks: expected.chunks,
+    observedChunks: 0,
+    observedIndexedChunks: 0,
+    missingSourceIds: [],
+    staleSourceIds: [],
+    expectedByType: expected.byType,
+    detail,
+  };
+}
+
+export async function getSourceCorpusFreshness(
+  env: Env,
+  documents: SourceCorpusDocument[] = sourceCorpus,
+): Promise<SourceCorpusFreshness> {
+  const bindings = env as Partial<Env>;
+  if (!bindings.DB) {
+    return unknownFreshness("D1 binding is unavailable.", documents);
+  }
+
+  const expected = getExpectedSourceCorpusStats(documents);
+  if (expected.sourceIds.length === 0) {
+    return {
+      status: "fresh",
+      checkedAt: new Date().toISOString(),
+      expectedDocuments: 0,
+      observedDocuments: 0,
+      expectedChunks: 0,
+      observedChunks: 0,
+      observedIndexedChunks: 0,
+      missingSourceIds: [],
+      staleSourceIds: [],
+      expectedByType: [],
+      detail: "No bundled source corpus documents are expected.",
+    };
+  }
+
+  const expectedSources = await expectedCorpusSources(documents);
+  const placeholders = expected.sourceIds.map(() => "?").join(", ");
+  const rows = await bindings.DB.prepare(
+    `select
+      source_id as sourceId,
+      chunk_index as chunkIndex,
+      content_hash as contentHash,
+      indexed_at as indexedAt
+    from source_chunks
+    where source_id in (${placeholders})
+    order by source_id, chunk_index`,
+  )
+    .bind(...expected.sourceIds)
+    .all<{
+      sourceId: string;
+      chunkIndex: number;
+      contentHash: string;
+      indexedAt: string | null;
+    }>()
+    .then((result) => result.results)
+    .catch(() => null);
+
+  if (!rows) {
+    return unknownFreshness("D1 source freshness query failed.", documents);
+  }
+
+  const rowsBySource = new Map<string, typeof rows>();
+  for (const row of rows) {
+    rowsBySource.set(row.sourceId, [
+      ...(rowsBySource.get(row.sourceId) ?? []),
+      row,
+    ]);
+  }
+
+  const missingSourceIds: string[] = [];
+  const staleSourceIds: string[] = [];
+
+  for (const source of expectedSources) {
+    const sourceRows = rowsBySource.get(source.sourceId) ?? [];
+    if (sourceRows.length === 0) {
+      missingSourceIds.push(source.sourceId);
+      continue;
+    }
+
+    const hasMissingChunks = sourceRows.length !== source.chunks;
+    const hasUnindexedChunks = sourceRows.some((row) => !row.indexedAt);
+    const hasContentDrift = source.contentHashes.some(
+      (contentHash, chunkIndex) =>
+        sourceRows.find((row) => Number(row.chunkIndex) === chunkIndex)
+          ?.contentHash !== contentHash,
+    );
+
+    if (hasMissingChunks || hasUnindexedChunks || hasContentDrift) {
+      staleSourceIds.push(source.sourceId);
+    }
+  }
+
+  const status =
+    missingSourceIds.length > 0
+      ? "missing"
+      : staleSourceIds.length > 0
+        ? "stale"
+        : "fresh";
+
+  return {
+    status,
+    checkedAt: new Date().toISOString(),
+    expectedDocuments: expected.documents,
+    observedDocuments: rowsBySource.size,
+    expectedChunks: expected.chunks,
+    observedChunks: rows.length,
+    observedIndexedChunks: rows.filter((row) => row.indexedAt).length,
+    missingSourceIds,
+    staleSourceIds,
+    expectedByType: expected.byType,
+    detail:
+      status === "fresh"
+        ? "Bundled GrowthRat proof and role source corpus is present and indexed."
+        : `${missingSourceIds.length} bundled sources missing and ${staleSourceIds.length} stale.`,
+  };
 }
 
 async function embedTexts(env: Env, values: string[]) {
@@ -172,7 +387,8 @@ function vectorInfoStats(info: unknown) {
 
 export async function getSourceStats(env: Env): Promise<SourceStats> {
   const bindings = env as Partial<Env>;
-  const [chunkRow, sourceRow, byTypeRows, vectorInfo] = await Promise.all([
+  const [chunkRow, sourceRow, byTypeRows, vectorInfo, freshness] =
+    await Promise.all([
     bindings.DB
       ? bindings.DB.prepare(
           "select count(*) as chunks, sum(case when indexed_at is not null then 1 else 0 end) as indexedChunks from source_chunks",
@@ -208,6 +424,9 @@ export async function getSourceStats(env: Env): Promise<SourceStats> {
           .catch(() => [])
       : Promise.resolve([]),
     bindings.DOC_INDEX ? bindings.DOC_INDEX.describe().catch(() => null) : null,
+    getSourceCorpusFreshness(env).catch(() =>
+      unknownFreshness("Source freshness check failed."),
+    ),
   ]);
 
   const { vectorCount, vectorDimensions } = vectorInfoStats(vectorInfo);
@@ -218,6 +437,7 @@ export async function getSourceStats(env: Env): Promise<SourceStats> {
     sources: Number(sourceRow?.sources ?? 0),
     vectorCount,
     vectorDimensions,
+    freshness,
     byType: byTypeRows.map((row) => ({
       sourceType: row.sourceType,
       sources: Number(row.sources ?? 0),
@@ -234,7 +454,7 @@ async function upsertVectors(env: Env, vectors: VectorizeVector[]) {
 }
 
 async function writeDocumentSource(env: Env, document: SourceCorpusDocument) {
-  const sourceId = slug(document.id);
+  const sourceId = sourceIdForDocument(document);
   const r2Key = `sources/${sourceId}.md`;
 
   await env.ARTIFACT_BUCKET.put(r2Key, document.content, {
@@ -406,6 +626,44 @@ export async function ingestSourceDocuments(
   );
 
   return receipt;
+}
+
+export async function ensureSeedSourceCorpus(
+  env: Env,
+  documents: SourceCorpusDocument[] = sourceCorpus,
+): Promise<SourceCorpusSyncResult> {
+  const before = await getSourceCorpusFreshness(env, documents);
+
+  if (before.status === "fresh" || before.status === "unknown") {
+    return {
+      ok: before.status === "fresh",
+      refreshed: false,
+      before,
+      after: before,
+      receipt: null,
+    };
+  }
+
+  const sourceIdsToRefresh = new Set([
+    ...before.missingSourceIds,
+    ...before.staleSourceIds,
+  ]);
+  const targetedDocuments = documents.filter((document) =>
+    sourceIdsToRefresh.has(sourceIdForDocument(document)),
+  );
+  const receipt = await ingestSourceDocuments(
+    env,
+    targetedDocuments.length > 0 ? targetedDocuments : documents,
+  );
+  const after = await getSourceCorpusFreshness(env, documents);
+
+  return {
+    ok: after.status === "fresh",
+    refreshed: true,
+    before,
+    after,
+    receipt,
+  };
 }
 
 function docsPathToMarkdownUrl(path: string) {

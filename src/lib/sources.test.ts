@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseRevenueCatDocsIndex } from "./sources";
+import {
+  getExpectedSourceCorpusStats,
+  parseRevenueCatDocsIndex,
+  sourceIdForDocument,
+} from "./sources";
+import type { SourceCorpusDocument } from "./source-corpus";
 
 describe("RevenueCat docs index parsing", () => {
   it("parses unique llms.txt entries and maps them to Markdown mirrors", () => {
@@ -26,5 +31,50 @@ describe("RevenueCat docs index parsing", () => {
         markdownUrl: "https://www.revenuecat.com/docs/api-v2.md",
       },
     ]);
+  });
+});
+
+describe("bundled source corpus stats", () => {
+  const documents: SourceCorpusDocument[] = [
+    {
+      id: "GrowthRat Proof",
+      sourceType: "growthrat_artifact",
+      title: "GrowthRat Proof",
+      url: "/proof",
+      retrievedAt: "2026-05-08",
+      content: "A".repeat(1401),
+    },
+    {
+      id: "RevenueCat Docs",
+      sourceType: "revenuecat_docs",
+      title: "RevenueCat Docs",
+      url: "https://www.revenuecat.com/docs",
+      retrievedAt: "2026-05-08",
+      content: "short",
+    },
+  ];
+
+  it("uses the same stable source ids as ingestion", () => {
+    expect(sourceIdForDocument(documents[0])).toBe("growthrat-proof");
+  });
+
+  it("reports expected document and chunk counts by source type", () => {
+    expect(getExpectedSourceCorpusStats(documents)).toEqual({
+      documents: 2,
+      chunks: 3,
+      sourceIds: ["growthrat-proof", "revenuecat-docs"],
+      byType: [
+        {
+          sourceType: "growthrat_artifact",
+          documents: 1,
+          chunks: 2,
+        },
+        {
+          sourceType: "revenuecat_docs",
+          documents: 1,
+          chunks: 1,
+        },
+      ],
+    });
   });
 });
