@@ -99,6 +99,23 @@ const maxEmbeddingBatchSize = 24;
 const maxVectorBatchSize = 100;
 const revenueCatDocsBaseUrl = "https://www.revenuecat.com/docs";
 const revenueCatLlmsIndexUrl = `${revenueCatDocsBaseUrl}/llms.txt`;
+const lexicalStopWords = new Set([
+  "about",
+  "does",
+  "from",
+  "have",
+  "into",
+  "says",
+  "that",
+  "the",
+  "this",
+  "what",
+  "when",
+  "where",
+  "which",
+  "will",
+  "with",
+]);
 
 function shortHash(value: string) {
   let hash = 5381;
@@ -916,17 +933,52 @@ export async function ingestRevenueCatDocsBatch(
   return batchReceipt;
 }
 
-async function fallbackSourceSearch(env: Env, query: string, topK: number) {
-  const needle = `%${query
-    .split(/\s+/)
-    .filter((part) => part.length > 4)
-    .slice(0, 3)
-    .join("%")}%`;
+export function extractSourceSearchTerms(query: string) {
+  const terms: string[] = [];
+
+  for (const match of query.toLowerCase().matchAll(/[a-z0-9][a-z0-9-]{2,}/g)) {
+    const term = match[0].replace(/^-+|-+$/g, "");
+    if (term.length < 4 || lexicalStopWords.has(term)) continue;
+    if (!terms.includes(term)) terms.push(term);
+    if (terms.length >= 6) break;
+  }
+
+  return terms;
+}
+
+async function lexicalSourceSearch(env: Env, query: string, topK: number) {
+  const terms = extractSourceSearchTerms(query);
+
+  if (terms.length === 0) {
+    const { results } = await env.DB.prepare(
+      "select * from source_chunks where content like ? order by updated_at desc limit ?",
+    )
+      .bind("%RevenueCat%", topK)
+      .all<SourceChunkRow>();
+
+    return results.map((row) => ({
+      id: row.id,
+      title: row.title,
+      url: row.url,
+      content: row.content,
+      score: null,
+    }));
+  }
+
+  const clauses = terms
+    .map(() => "(lower(title) like ? or lower(content) like ?)")
+    .join(" or ");
+  const termParams = terms.flatMap((term) => [`%${term}%`, `%${term}%`]);
 
   const { results } = await env.DB.prepare(
-    "select * from source_chunks where content like ? order by updated_at desc limit ?",
+    `select * from source_chunks
+    where ${clauses}
+    order by
+      case when lower(title) like ? then 0 else 1 end,
+      updated_at desc
+    limit ?`,
   )
-    .bind(needle === "%%" ? "%RevenueCat%" : needle, topK)
+    .bind(...termParams, `%${terms[0]}%`, topK)
     .all<SourceChunkRow>();
 
   return results.map((row) => ({
@@ -938,14 +990,32 @@ async function fallbackSourceSearch(env: Env, query: string, topK: number) {
   }));
 }
 
+function dedupeSources(sources: RetrievedSource[], topK: number) {
+  const seen = new Set<string>();
+  const deduped: RetrievedSource[] = [];
+
+  for (const source of sources) {
+    const key = source.url || source.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(source);
+    if (deduped.length >= topK) break;
+  }
+
+  return deduped;
+}
+
 export async function retrieveSources(
   env: Env,
   query: string,
   topK = 4,
 ): Promise<RetrievedSource[]> {
+  const lexicalSourcesPromise = lexicalSourceSearch(env, query, topK).catch(
+    () => [] as RetrievedSource[],
+  );
   const embeddings = await embedTexts(env, [query]);
   const queryVector = embeddings[0];
-  if (!queryVector) return fallbackSourceSearch(env, query, topK);
+  if (!queryVector) return lexicalSourcesPromise;
 
   const matches = await env.DOC_INDEX.query(queryVector, {
     topK,
@@ -954,7 +1024,7 @@ export async function retrieveSources(
   });
 
   const ids = matches.matches.map((match) => match.id);
-  if (ids.length === 0) return fallbackSourceSearch(env, query, topK);
+  if (ids.length === 0) return lexicalSourcesPromise;
 
   const placeholders = ids.map(() => "?").join(", ");
   const { results } = await env.DB.prepare(
@@ -965,7 +1035,7 @@ export async function retrieveSources(
 
   const rowsByVector = new Map(results.map((row) => [row.vector_id, row]));
 
-  return matches.matches
+  const vectorSources = matches.matches
     .map((match) => {
       const row = rowsByVector.get(match.id);
       if (!row) {
@@ -993,6 +1063,9 @@ export async function retrieveSources(
       };
     })
     .filter((source) => source.content.trim().length > 0);
+  const lexicalSources = await lexicalSourcesPromise;
+
+  return dedupeSources([...lexicalSources, ...vectorSources], topK);
 }
 
 export function sourceContextBlock(sources: RetrievedSource[]) {

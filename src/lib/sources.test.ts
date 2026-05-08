@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  extractSourceSearchTerms,
   getExpectedSourceCorpusStats,
   parseRevenueCatDocsIndex,
   sourceIdForDocument,
@@ -76,5 +77,15 @@ describe("bundled source corpus stats", () => {
         },
       ],
     });
+  });
+});
+
+describe("source lexical search terms", () => {
+  it("keeps discriminating product terms and drops filler words", () => {
+    expect(
+      extractSourceSearchTerms(
+        "What does GrowthRat say in its RevenueCat Agent Readiness Review?",
+      ),
+    ).toEqual(["growthrat", "revenuecat", "agent", "readiness", "review"]);
   });
 });
