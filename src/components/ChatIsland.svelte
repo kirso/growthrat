@@ -12,12 +12,14 @@
   type Props = {
     variant?: "embedded" | "compact";
     persist?: boolean;
+    initialOffline?: boolean;
     suggested?: string[];
   };
 
   let {
     variant = "embedded",
     persist = true,
+    initialOffline = false,
     suggested = [
       "What would you ship in your first week?",
       "How would you handle duplicate webhooks for an agent-built app?",
@@ -36,14 +38,19 @@
   };
   const offlineMessage =
     "GrowthRat chat is offline to avoid model spend. Contact the operator if you need live access.";
+  const getInitialOffline = () => Boolean(initialOffline);
 
   let input = $state("");
   let pending = $state(false);
   let error = $state("");
   let threadId = $state("");
-  let messages = $state<Message[]>([seedMessage]);
+  let messages = $state<Message[]>(
+    getInitialOffline()
+      ? [{ role: "assistant", content: offlineMessage, source: "policy" }]
+      : [seedMessage],
+  );
   let logEl = $state<HTMLDivElement | null>(null);
-  let offline = $state(false);
+  let offline = $state(getInitialOffline());
 
   const showSuggested = $derived(messages.length <= 1 && !pending && !offline);
 

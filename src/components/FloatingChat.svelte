@@ -80,7 +80,7 @@
   </header>
   {#if open}
     <div class="fc-body">
-      <ChatIsland variant="compact" persist={true} />
+      <ChatIsland variant="compact" persist={true} initialOffline={chatOffline} />
     </div>
   {/if}
 </div>

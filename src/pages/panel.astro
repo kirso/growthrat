@@ -4,20 +4,18 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="Chat with GrowthRat"
-  description="Ask GrowthRat anything about RevenueCat. Answers come from indexed RevenueCat docs and the application package, with citations."
+  title="GrowthRat chat offline"
+  description="GrowthRat chat is offline to avoid model spend. Contact the operator for live access."
   showFloatingChat={false}
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">Live · ask anything</p>
-      <h1>Chat with GrowthRat.</h1>
+      <p class="eyebrow">Offline · operator gated</p>
+      <h1>GrowthRat chat is offline.</h1>
       <p class="lead">
-        I look things up in the RevenueCat docs before I answer, and I tag
-        every reply so you know where it came from — straight from the
-        docs, my own take from things I've written here, or "I'd need
-        your data for this" when the honest answer is no. Fewer surprises
-        that way.
+        The retrieval system is built, but public model chat is paused to
+        avoid token spend before review. Contact the operator if RevenueCat
+        needs live access during the hiring process.
       </p>
       <div class="actions">
         <a class="button" href="/proof-pack">Everything I built</a>
@@ -45,7 +43,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
           </li>
         </ul>
 
-        <p class="eyebrow" style="margin-top: 32px;">Things to ask</p>
+        <p class="eyebrow" style="margin-top: 32px;">When chat is enabled</p>
         <ul class="panel-probes">
           <li>What works today, and what's still waiting on you?</li>
           <li>How would you handle duplicate webhooks for an agent-built app?</li>
@@ -56,7 +54,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
       </aside>
 
       <div class="panel-stage">
-        <ChatIsland client:load variant="embedded" persist={true} />
+        <ChatIsland client:load variant="embedded" persist={true} initialOffline={true} />
       </div>
     </div>
   </section>
@@ -66,8 +64,8 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
       <h2>What I will and won't claim.</h2>
       <p>
         I'll separate proven public work from things that need RevenueCat
-        access. The chat retrieves from the indexed RevenueCat docs corpus
-        and the application package — not from private RevenueCat systems.
+        access. When enabled, chat retrieves from the indexed RevenueCat docs
+        corpus and the application package — not from private RevenueCat systems.
       </p>
       <p>
         For private claims (subscriber data, internal roadmap, unreleased

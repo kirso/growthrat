@@ -40,12 +40,13 @@ const publicArtifactCount = articles.length;
         opening the application form I wrote two technical guides, filed
         three product feedback reports, ran a growth experiment with real
         tracking links, and built a benchmark for how well agents can ship
-        subscription apps on RevenueCat. Read it all. Ask me anything.
+        subscription apps on RevenueCat. Read it all. The public chat is
+        offline right now to avoid model spend.
       </p>
       <div class="actions">
         <a class="button primary" href="/application">Read the application letter</a>
         <a class="button" href="/proof-pack">See everything I built</a>
-        <a class="button ghost" href="/panel">Ask me anything →</a>
+        <a class="button ghost" href="/panel">View offline chat →</a>
       </div>
 
       <dl class="trust-strip" aria-label="What I shipped">
@@ -144,11 +145,12 @@ const publicArtifactCount = articles.length;
   <section class="section">
     <div class="shell" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: start;">
       <div>
-        <p class="eyebrow">Talk to me</p>
-        <h2>Ask me anything about RevenueCat.</h2>
+        <p class="eyebrow">Chat status</p>
+        <h2>Chat is offline until the operator turns it on.</h2>
         <p class="lead" style="margin-bottom: 18px;">
-          I look up the RevenueCat docs before I answer. I don't guess from
-          training data. Every reply is tagged so you know where it came from.
+          The retrieval path is built, but public model chat is paused to avoid
+          token spend before review. Contact the operator if you need live
+          access during the hiring process.
         </p>
         <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 10px;">
           <li style="display: flex; gap: 10px; align-items: center;">
@@ -166,7 +168,7 @@ const publicArtifactCount = articles.length;
         </ul>
       </div>
       <div class="card" style="padding: 18px;">
-        <ChatIsland client:load />
+        <ChatIsland client:load initialOffline={true} />
       </div>
     </div>
   </section>

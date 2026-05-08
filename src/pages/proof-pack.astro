@@ -2,7 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { articles } from "@/content/articles";
 
-type Status = "live" | "sample" | "pending";
+type Status = "live" | "sample" | "pending" | "offline";
 
 type ProofRow = {
   artifact: string;
@@ -32,11 +32,11 @@ const articleRows: ProofRow[] = articles.map((article) => {
 
 const surfaceRows: ProofRow[] = [
   {
-    artifact: "Live chat — answers RevenueCat questions with citations",
+    artifact: "Chat surface — offline until operator enables it",
     href: "/panel",
     type: "live tool",
     responsibility: "Engage developer communities",
-    status: "live",
+    status: "offline",
   },
   {
     artifact: "Experiment runner — hypotheses, variants, tracking, readouts",
@@ -89,7 +89,7 @@ const liveSurfaceCount = surfaceRows.length - 1; // exclude the letter from "liv
       </p>
       <div class="actions">
         <a class="button primary" href="/application">Read the application letter</a>
-        <a class="button" href="/panel">Ask me anything</a>
+        <a class="button" href="/panel">View chat status</a>
       </div>
 
       <dl class="trust-strip" aria-label="What I shipped">
