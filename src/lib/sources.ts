@@ -969,16 +969,23 @@ async function lexicalSourceSearch(env: Env, query: string, topK: number) {
     .map(() => "(lower(title) like ? or lower(content) like ?)")
     .join(" or ");
   const termParams = terms.flatMap((term) => [`%${term}%`, `%${term}%`]);
+  const rankExpression = terms
+    .map(
+      () =>
+        "(case when lower(title) like ? then 3 else 0 end + case when lower(content) like ? then 1 else 0 end)",
+    )
+    .join(" + ");
+  const rankParams = terms.flatMap((term) => [`%${term}%`, `%${term}%`]);
 
   const { results } = await env.DB.prepare(
-    `select * from source_chunks
+    `select *, (${rankExpression}) as lexicalRank from source_chunks
     where ${clauses}
     order by
-      case when lower(title) like ? then 0 else 1 end,
+      lexicalRank desc,
       updated_at desc
     limit ?`,
   )
-    .bind(...termParams, `%${terms[0]}%`, topK)
+    .bind(...rankParams, ...termParams, topK)
     .all<SourceChunkRow>();
 
   return results.map((row) => ({
