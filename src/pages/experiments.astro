@@ -4,21 +4,22 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="Experiments"
-  description="GrowthRat experiment operating surface for planning, tracking, measuring, and reporting growth loops."
+  title="Run an experiment"
+  description="Hypothesis, variants, tracking links, behavioral events, RevenueCat metric snapshots, and readouts. The growth loop, end to end."
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">Growth · Experiment console</p>
-      <h1>One experiment per week. Measured, not described.</h1>
+      <p class="eyebrow">Growth · run an experiment</p>
+      <h1>One experiment a week. Measured, not described.</h1>
       <p class="lead">
-        The role asks for one new growth experiment every week. This surface
-        turns that requirement into a loop: variants, tracking links, behavioral
-        events, RevenueCat metric snapshots, and readouts.
+        The role asks for one new growth experiment every week. This is the
+        actual tool I'd run them in. Variants, tracking links, behavioral
+        events, RevenueCat metric snapshots, and readouts all write to a
+        real database — not mock data.
       </p>
       <div class="actions">
         <a class="button primary" href="/r/week-one-reference">Try a tracking link</a>
-        <a class="button" href="/pipeline">See weekly loop</a>
+        <a class="button" href="/articles/week-one-experiment-report">Read the week-one experiment</a>
       </div>
     </div>
   </section>
@@ -27,7 +28,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Operating principles</p>
+          <p class="eyebrow">How I run experiments</p>
           <h2>Hypothesis first. Readout always.</h2>
         </div>
       </div>
@@ -35,28 +36,29 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
         <article class="card step-card">
           <span class="step-num">01</span>
           <span class="tag experiment">Plan</span>
-          <h3 style="margin-top: 12px;">Hypothesis before output</h3>
+          <h3 style="margin-top: 12px;">Hypothesis before output.</h3>
           <p>
-            Every experiment starts with a specific audience, channel, variant,
-            expected movement, and stop condition.
+            Audience, channel, variant, expected movement, stop condition —
+            written down before anything ships.
           </p>
         </article>
         <article class="card step-card">
           <span class="step-num">02</span>
           <span class="tag experiment">Measure</span>
-          <h3 style="margin-top: 12px;">Behavior plus monetization</h3>
+          <h3 style="margin-top: 12px;">Behavior plus monetization.</h3>
           <p>
-            Product events explain the funnel. RevenueCat Charts explain
-            subscription outcomes when project access is configured.
+            Product events explain the funnel. RevenueCat Charts explain the
+            subscription outcome. Mixing the two without separating them
+            gives you the wrong answer.
           </p>
         </article>
         <article class="card step-card">
           <span class="step-num">03</span>
           <span class="tag experiment">Learn</span>
-          <h3 style="margin-top: 12px;">Readout or it didn't happen</h3>
+          <h3 style="margin-top: 12px;">Readout, or it didn't happen.</h3>
           <p>
-            A run ends with a decision, a learning, and the next action. Volume
-            without a readout doesn't count.
+            A run ends with a decision and a next action. Volume without a
+            readout doesn't count toward the weekly target.
           </p>
         </article>
       </div>
@@ -67,12 +69,13 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Live console</p>
-          <h2>Run an experiment, end-to-end</h2>
+          <p class="eyebrow">Try it</p>
+          <h2>The actual tool.</h2>
         </div>
         <p class="lead">
-          The console writes to D1: experiments, variants, tracking assets,
-          behavior events, metric snapshots, and readouts. No mock data.
+          Create an experiment, generate variants, mint tracking links, push
+          behavioral events, snapshot a metric, file a readout. Everything
+          you do here writes to D1.
         </p>
       </div>
       <ExperimentConsole client:load />

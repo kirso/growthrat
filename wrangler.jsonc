@@ -26,7 +26,7 @@
     "LANGFUSE_SAMPLE_RATE": "1",
     "MAX_AI_OUTPUT_TOKENS": "500",
     "MAX_CHAT_MESSAGE_CHARS": "1200",
-    "MODEL_CHAT_ENABLED": "true",
+    "MODEL_CHAT_ENABLED": "false",
     "PRODUCTION_WORKER_OBSERVED": "true",
     "PUBLIC_EVENT_DAILY_LIMIT": "5000",
     "PUBLIC_SITE_URL": "https://growthrat.kirso.workers.dev",

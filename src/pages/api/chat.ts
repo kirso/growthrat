@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { answerAgentChat } from "@/lib/agent-chat";
+import { getRuntimePolicySnapshot } from "@/lib/policy";
 
 export const prerender = false;
 
@@ -21,6 +22,18 @@ export async function POST({ request }: { request: Request }) {
 
   if (!message.trim()) {
     return Response.json({ error: "message is required" }, { status: 400 });
+  }
+
+  const policy = await getRuntimePolicySnapshot(env);
+  if (policy.killSwitch || !policy.modelChatEnabled) {
+    return Response.json(
+      {
+        error: "chat is offline",
+        detail:
+          "GrowthRat chat is offline to avoid model spend. Contact the operator if you need live access.",
+      },
+      { status: 423 },
+    );
   }
 
   const result = await answerAgentChat(env, request, message, threadId);

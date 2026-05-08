@@ -4,18 +4,20 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="Connector onboarding"
-  description="RevenueCat-owned account onboarding for GrowthRat. Connect Slack, CMS, Charts, GitHub, and social distribution after the interview gate passes."
+  title="Plug RevenueCat in"
+  description="The post-interview setup flow. Once RevenueCat connects Slack, CMS, GitHub, social, and the Charts API, GrowthRat can run the live weekly loop."
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">RC activation · onboarding</p>
-      <h1>Connect the accounts GrowthRat operates on your behalf.</h1>
+      <p class="eyebrow">After hire · connect your accounts</p>
+      <h1>Connect your accounts. I'll do the work.</h1>
       <p class="lead">
-        Same console as <a href="/sign-in" style="color: inherit; text-decoration: underline; text-underline-offset: 2px;">sign-in</a>,
-        framed for the post-interview onboarding flow. Each connector is
-        explicit: missing, pending, verified, or error. Connector loss fails
-        closed for side effects.
+        Until you connect your own accounts, I run in read-only mode.
+        This page is the same flow as
+        <a href="/sign-in" style="color: inherit; text-decoration: underline; text-underline-offset: 2px;">sign-in</a>,
+        framed for what happens once we've agreed to work together. Every
+        connection is explicit. If a token breaks, posting stops. No
+        silent surprises.
       </p>
     </div>
   </section>
@@ -24,63 +26,67 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">What you'll connect</p>
-          <h2>Five connectors run the weekly loop</h2>
+          <p class="eyebrow">What you'd connect</p>
+          <h2>Six accounts. Each one runs a real part of the weekly loop.</h2>
         </div>
         <p class="lead">
-          Slack owns approvals and reports. CMS owns long-form publishing.
-          GitHub owns code samples and docs PRs. Postiz owns approved social
-          distribution. RevenueCat APIs own monetization truth.
+          Approvals in Slack. Drafts in your CMS. Code samples on GitHub.
+          Social drafts through Postiz. Real monetization metrics from
+          RevenueCat. Search demand from DataForSEO. None of these get
+          touched in read-only mode.
         </p>
       </div>
       <div class="grid">
         <article class="card">
           <span class="tag">Slack</span>
-          <h3 style="margin-top: 12px;">Team requests &amp; approvals</h3>
+          <h3 style="margin-top: 12px;">Where you'd talk to me.</h3>
           <p>
-            Plans, draft approvals, weekly reports, and stop/resume commands run
-            through Slack. Reaction-based approval promotes drafts only when
-            policy allows.
+            Weekly plans, draft approvals, Friday reports, and stop/resume
+            messages run in your Slack channel. A reaction can move a draft
+            into publishing — but only after the right person has signed off.
           </p>
         </article>
         <article class="card">
           <span class="tag">CMS</span>
-          <h3 style="margin-top: 12px;">Long-form publishing</h3>
+          <h3 style="margin-top: 12px;">Where the long form lives.</h3>
           <p>
-            Generated artifacts stay in draft mode in your CMS until a
-            RevenueCat representative approves the final version.
+            Pieces I write land in your CMS as drafts. Nothing publishes
+            until someone at RevenueCat approves the final version.
           </p>
         </article>
         <article class="card">
           <span class="tag">GitHub</span>
-          <h3 style="margin-top: 12px;">Code samples &amp; docs PRs</h3>
+          <h3 style="margin-top: 12px;">Code samples and docs PRs.</h3>
           <p>
-            Sample repos, docs PRs, and feedback issues are filed under a
-            GrowthRat-affiliated account with audit trails on every action.
+            Sample repos, docs PRs, and product issues filed under an
+            account you create — with a record of every action you can read.
           </p>
         </article>
         <article class="card">
           <span class="tag">Postiz</span>
-          <h3 style="margin-top: 12px;">Approved social distribution</h3>
+          <h3 style="margin-top: 12px;">Social, drafted not posted.</h3>
           <p>
-            One approved artifact produces multiple platform-specific drafts.
-            Distribution requires an idempotency key and approval state.
+            One approved piece produces drafts for each platform. Every
+            post carries a unique ID and an approval reference, so I can't
+            double-post or post on my own.
           </p>
         </article>
         <article class="card">
           <span class="tag">RevenueCat</span>
-          <h3 style="margin-top: 12px;">Monetization truth</h3>
+          <h3 style="margin-top: 12px;">Where the truth comes from.</h3>
           <p>
-            Charts and Metrics API access lets the agent reason about
-            subscription outcomes, not just behavioral funnels.
+            Charts and Metrics API access lets me reason about real money,
+            not just behavioral funnels. Without it, growth claims are
+            guesses.
           </p>
         </article>
         <article class="card">
           <span class="tag">DataForSEO</span>
-          <h3 style="margin-top: 12px;">Demand signals</h3>
+          <h3 style="margin-top: 12px;">What developers are searching for.</h3>
           <p>
-            Keyword difficulty, intent, and SERP data feed the opportunity
-            engine. Score components are inspectable per opportunity.
+            Keyword difficulty, search intent, and SERP data turn into a
+            scored list of things to write. Topic selection becomes math,
+            not a hunch.
           </p>
         </article>
       </div>
@@ -91,13 +97,13 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Connect now</p>
-          <h2>Onboarding console</h2>
+          <p class="eyebrow">Connect</p>
+          <h2>Connect your accounts.</h2>
         </div>
         <p class="lead">
-          You'll need an authenticated RevenueCat representative session.
-          Tokens are stored encrypted as connected-account records, not
-          platform secrets.
+          You'll need a signed-in RevenueCat session. Each token is
+          encrypted and stays with you — I can't read them in plaintext,
+          and they don't live as global secrets I control.
         </p>
       </div>
       <ConnectorConsole client:load />
@@ -106,19 +112,20 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 
   <section class="section lavender">
     <div class="shell prose">
-      <h2>Trust boundaries</h2>
+      <h2>How your tokens stay yours.</h2>
       <p>
-        Platform secrets (operator-owned) live in Wrangler. Connector tokens
-        (RevenueCat-owned) live in encrypted connected-account records created
-        by an authenticated representative. The agent cannot read connector
-        secrets in plaintext and cannot operate connectors that fail
-        verification.
+        The keys that run my own infrastructure (Cloudflare, the model gateway,
+        a few internal secrets) live with the operator who set me up.
+        Your tokens — Slack, CMS, GitHub, Postiz, RevenueCat — are different.
+        They're encrypted per-account when you sign in, and I can't read
+        them in plaintext.
       </p>
       <p>
-        Each connector goes through one of: <code>missing</code>,
-        <code>pending</code>, <code>verified</code>, <code>manual_verification</code>,
-        or <code>error</code>. Connector loss must degrade reads clearly and
-        fail closed for side effects.
+        Each connection is in one of five states: <code>missing</code>,
+        <code>pending</code>, <code>verified</code>,
+        <code>manual_verification</code>, or <code>error</code>. Anything
+        other than <code>verified</code> means I'll read from that account
+        but I won't write to it.
       </p>
     </div>
   </section>

@@ -1,10 +1,33 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { onMount } from "svelte";
   import ChatIsland from "./ChatIsland.svelte";
 
-  export let mode = "interview_proof";
+  type Props = {
+    mode?: string;
+    modeLabel?: string;
+  };
 
-  let open = false;
+  let {
+    mode = "interview_proof",
+    modeLabel = "Applying — read-only",
+  }: Props = $props();
+
+  let open = $state(false);
+  let chatOffline = $state(false);
+
+  async function loadPolicy() {
+    try {
+      const response = await fetch("/api/policy");
+      if (!response.ok) return;
+      const policy = (await response.json()) as {
+        killSwitch?: boolean;
+        modelChatEnabled?: boolean;
+      };
+      chatOffline = Boolean(policy.killSwitch || policy.modelChatEnabled === false);
+    } catch {
+      // Keep the API-side guard authoritative if this best-effort status fails.
+    }
+  }
 
   function toggle() {
     open = !open;
@@ -24,12 +47,11 @@
 
   onMount(() => {
     window.addEventListener("keydown", handleKey);
-  });
+    void loadPolicy();
 
-  onDestroy(() => {
-    if (typeof window !== "undefined") {
+    return () => {
       window.removeEventListener("keydown", handleKey);
-    }
+    };
   });
 </script>
 
@@ -37,12 +59,12 @@
   type="button"
   class="fc-bubble"
   class:hidden={open}
-  on:click={toggle}
+  onclick={toggle}
   aria-label="Open GrowthRat chat (⌘K)"
-  title="Talk to GrowthRat — ⌘K"
+  title={chatOffline ? "GrowthRat chat is offline — contact the operator" : "Talk to GrowthRat — ⌘K"}
 >
-  <span class="fc-dot"></span>
-  Talk to GrowthRat
+  <span class:offline={chatOffline} class="fc-dot"></span>
+  {chatOffline ? "Chat offline" : "Talk to GrowthRat"}
   <kbd>⌘K</kbd>
 </button>
 
@@ -50,9 +72,9 @@
   <header class="fc-head">
     <div>
       <strong>GrowthRat</strong>
-      <span class="fc-mode">{mode} · grounded</span>
+      <span class="fc-mode" title={`mode: ${mode}`}>{modeLabel}</span>
     </div>
-    <button type="button" class="fc-close" on:click={close} aria-label="Close chat">
+    <button type="button" class="fc-close" onclick={close} aria-label="Close chat">
       ✕
     </button>
   </header>
@@ -68,7 +90,7 @@
     type="button"
     class="fc-backdrop"
     aria-label="Close chat"
-    on:click={close}
+    onclick={close}
   ></button>
 {/if}
 
@@ -118,6 +140,10 @@
     border-radius: 50%;
     background: var(--cta);
     box-shadow: 0 0 0 3px rgba(23, 136, 113, 0.16);
+  }
+  .fc-dot.offline {
+    background: var(--muted);
+    box-shadow: 0 0 0 3px rgba(102, 112, 122, 0.14);
   }
 
   .fc-drawer {

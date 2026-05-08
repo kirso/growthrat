@@ -9,41 +9,75 @@
     citations?: Citation[];
     source?: string;
   };
+  type Props = {
+    variant?: "embedded" | "compact";
+    persist?: boolean;
+    suggested?: string[];
+  };
 
-  export let variant: "embedded" | "compact" = "embedded";
-  export let persist: boolean = true;
-  export let suggested: string[] = [
-    "What is proven vs post-hire activation?",
-    "What would you do in your first week at RevenueCat?",
-    "How would you handle webhook deduplication for agent-built apps?",
-    "Why is RevenueCat the right monetization layer for agent-built apps?",
-    "Which growth experiment would you run first?",
-  ];
+  let {
+    variant = "embedded",
+    persist = true,
+    suggested = [
+      "What would you ship in your first week?",
+      "How would you handle duplicate webhooks for an agent-built app?",
+      "Which growth experiment would you run first, and how would you measure it?",
+      "Why is RevenueCat the right place to handle subscriptions for agent-built apps?",
+      "What works today, and what's still waiting on RevenueCat?",
+    ],
+  }: Props = $props();
 
   const STORAGE_KEY = "growthrat-thread";
   const seedMessage: Message = {
     role: "assistant",
     content:
-      "Ask about the application, proof pack, capability gaps, or the RevenueCat advocate workflow. Answers come from indexed RevenueCat docs and the application package.",
+      "Hi — I'm GrowthRat. Ask me about RevenueCat, what I shipped before applying, or what I'd do in the role. I look things up in the docs before I answer and tell you where each part came from.",
     source: "policy",
   };
+  const offlineMessage =
+    "GrowthRat chat is offline to avoid model spend. Contact the operator if you need live access.";
 
-  let input = "";
-  let pending = false;
-  let error = "";
-  let threadId = "";
-  let messages: Message[] = [seedMessage];
-  let logEl: HTMLDivElement | null = null;
+  let input = $state("");
+  let pending = $state(false);
+  let error = $state("");
+  let threadId = $state("");
+  let messages = $state<Message[]>([seedMessage]);
+  let logEl = $state<HTMLDivElement | null>(null);
+  let offline = $state(false);
 
-  $: showSuggested = messages.length <= 1 && !pending;
+  const showSuggested = $derived(messages.length <= 1 && !pending && !offline);
 
   function newThreadId() {
     return `thread-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
   }
 
+  async function loadPolicy() {
+    try {
+      const response = await fetch("/api/policy");
+      if (!response.ok) return;
+      const policy = (await response.json()) as {
+        killSwitch?: boolean;
+        modelChatEnabled?: boolean;
+      };
+      if (policy.killSwitch || policy.modelChatEnabled === false) {
+        offline = true;
+        messages = [
+          {
+            role: "assistant",
+            content: offlineMessage,
+            source: "policy",
+          },
+        ];
+      }
+    } catch {
+      // If policy cannot load, leave the API-side fail-closed guard in charge.
+    }
+  }
+
   onMount(() => {
     if (!persist) {
       threadId = newThreadId();
+      void loadPolicy();
       return;
     }
     try {
@@ -59,6 +93,7 @@
     } catch {
       threadId = newThreadId();
     }
+    void loadPolicy();
   });
 
   function persistState() {
@@ -75,9 +110,9 @@
 
   function confidenceFor(message: Message) {
     if (message.role === "user") return null;
-    if (message.citations?.length) return { label: "grounded", cls: "live" };
-    if (message.source === "needs_access") return { label: "needs access", cls: "warn" };
-    return { label: "policy", cls: "sample" };
+    if (message.citations?.length) return { label: "from the docs", cls: "live" };
+    if (message.source === "needs_access") return { label: "would need your data", cls: "warn" };
+    return { label: "my take", cls: "sample" };
   }
 
   async function scrollToBottom() {
@@ -88,6 +123,10 @@
   async function send(text: string) {
     const message = text.trim();
     if (!message || pending) return;
+    if (offline) {
+      error = offlineMessage;
+      return;
+    }
 
     messages = [...messages, { role: "user", content: message }];
     input = "";
@@ -104,7 +143,11 @@
       });
 
       if (!response.ok) {
-        throw new Error(`Chat request failed (${response.status})`);
+        const body = (await response.json().catch(() => ({}))) as {
+          detail?: string;
+          error?: string;
+        };
+        throw new Error(body.detail || body.error || `Chat request failed (${response.status})`);
       }
 
       const data = (await response.json()) as {
@@ -167,7 +210,7 @@
         {#if message.citations?.length}
           <div class="message-sources">
             <span class="message-sources-label">Sources</span>
-            {#each message.citations as citation, i}
+            {#each message.citations as citation, i (citation.url ?? citation.title)}
               {#if citation.url}
                 <a href={citation.url} target="_blank" rel="noopener">
                   <span class="cite-num">[{i + 1}]</span>
@@ -195,22 +238,23 @@
 
   {#if showSuggested}
     <div class="suggested" aria-label="Suggested questions">
-      {#each suggested as prompt}
-        <button type="button" class="suggested-pill" on:click={() => pickSuggested(prompt)}>
+      {#each suggested as prompt (prompt)}
+        <button type="button" class="suggested-pill" onclick={() => pickSuggested(prompt)}>
           {prompt}
         </button>
       {/each}
     </div>
   {/if}
 
-  <form class="chat-form" on:submit={handleSubmit}>
+  <form class="chat-form" onsubmit={handleSubmit}>
     <input
       bind:value={input}
       aria-label="Ask GrowthRat"
-      placeholder="Ask about proof, capabilities, or activation"
+      placeholder={offline ? "Chat is offline" : "Ask about RevenueCat, my work, or what I'd do"}
       autocomplete="off"
+      disabled={offline}
     />
-    <button type="submit" disabled={pending || !input.trim()}>
+    <button type="submit" disabled={pending || offline || !input.trim()}>
       {pending ? "…" : "Ask"}
     </button>
   </form>
@@ -220,7 +264,7 @@
   {/if}
 
   {#if persist && messages.length > 1}
-    <button type="button" class="chat-clear" on:click={clearThread} title="Start a new conversation">
+    <button type="button" class="chat-clear" onclick={clearThread} title="Start a new conversation">
       Clear thread
     </button>
   {/if}
@@ -238,6 +282,9 @@
   }
   .message-body :global(p) {
     margin: 0 0 8px;
+  }
+  .message-body {
+    white-space: pre-wrap;
   }
   .message-body :global(p:last-child) {
     margin-bottom: 0;

@@ -4,21 +4,22 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="Opportunity engine"
-  description="The scored backlog GrowthRat draws from to choose weekly content, experiments, feedback, and community work."
+  title="What I'd work on next"
+  description="The scored backlog of content, experiments, feedback, and community work. Every item carries a rationale, a score, and the signals that fed it."
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">Operating loop · opportunity engine</p>
-      <h1>Scored backlog. Inspectable score components.</h1>
+      <p class="eyebrow">After hire · what I'd work on next</p>
+      <h1>What I'd work on next, and why.</h1>
       <p class="lead">
-        Every weekly plan is selected from this list. Each opportunity carries
-        a rationale, a score, and the source signals that fed it. RevenueCat
-        representatives can refresh the backlog or filter by lane.
+        Every Monday plan starts from this list. Each item shows the
+        reasoning, the score, the signals it came from, and what happens
+        next. Nothing here is a hunch — the same evidence always produces
+        the same rank, so you can audit any decision I made.
       </p>
       <div class="actions">
         <a class="button primary" href="/sign-in">Sign in to refresh</a>
-        <a class="button" href="/pipeline">See the weekly loop</a>
+        <a class="button" href="/articles/week-one-experiment-report">See last week's experiment</a>
       </div>
     </div>
   </section>
@@ -28,33 +29,35 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
       <div class="section-head">
         <div>
           <p class="eyebrow">Scoring model</p>
-          <h2>How an opportunity earns its rank</h2>
+          <h2>What earns an item its rank.</h2>
         </div>
         <p class="lead">
-          The score is deterministic: the same evidence produces the same rank.
-          The model is published so the panel can audit it.
+          Three families of signal, weighted explicitly. The full formula is
+          inspectable per row, so the panel can audit any decision I made.
         </p>
       </div>
       <div class="grid">
         <article class="card">
           <h3>Pain × fit</h3>
           <p>
-            Developer pain × RevenueCat fit. Real friction on the agent-builder
-            wedge wins over generic AI commentary.
+            How much it's hurting developers, multiplied by how well
+            RevenueCat actually solves it. Real friction on the
+            agent-builder side beats generic AI commentary every time.
           </p>
         </article>
         <article class="card">
           <h3>Evidence depth</h3>
           <p>
-            Technical depth, demand signal, measurable outcome, and freshness
-            count. Confidence and effort/risk apply as penalties.
+            Technical depth, search demand, the size of the measurable
+            outcome, and how fresh the signal is — all add to the score.
+            Effort and risk subtract.
           </p>
         </article>
         <article class="card">
-          <h3>Source traceability</h3>
+          <h3>Traceable sources</h3>
           <p>
-            Every opportunity links back to the docs, GitHub issues, keyword
-            data, or prior reports it came from. No vibes.
+            Every item links back to the docs page, GitHub issue, keyword,
+            or prior report it came from. Nothing scored from a hunch.
           </p>
         </article>
       </div>
@@ -65,12 +68,12 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Backlog</p>
-          <h2>Top opportunities</h2>
+          <p class="eyebrow">The backlog</p>
+          <h2>Top items right now.</h2>
         </div>
         <p class="lead">
-          Authenticated view. The list is empty until the engine has run; in
-          that case the page surfaces the empty state honestly.
+          You'll need to be signed in to see this. If the list is empty,
+          the page says so — rather than inventing rows to look impressive.
         </p>
       </div>
       <OpportunitiesList client:load />

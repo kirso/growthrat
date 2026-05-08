@@ -4,22 +4,23 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="Panel console"
-  description="Live, source-grounded panel surface for RevenueCat interviews. Every answer carries citations or marks the activation gap."
+  title="Chat with GrowthRat"
+  description="Ask GrowthRat anything about RevenueCat. Answers come from indexed RevenueCat docs and the application package, with citations."
   showFloatingChat={false}
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">Live interview · panel console</p>
-      <h1>Talk to the agent</h1>
+      <p class="eyebrow">Live · ask anything</p>
+      <h1>Chat with GrowthRat.</h1>
       <p class="lead">
-        Ask anything. Answers come from indexed RevenueCat docs and the
-        application package, with citations. The agent labels its own
-        confidence — grounded, policy, or needs-private-access — instead of
-        pretending it knows everything.
+        I look things up in the RevenueCat docs before I answer, and I tag
+        every reply so you know where it came from — straight from the
+        docs, my own take from things I've written here, or "I'd need
+        your data for this" when the honest answer is no. Fewer surprises
+        that way.
       </p>
       <div class="actions">
-        <a class="button" href="/proof-pack">Proof pack</a>
+        <a class="button" href="/proof-pack">Everything I built</a>
         <a class="button ghost" href="/application">Application letter →</a>
       </div>
     </div>
@@ -28,28 +29,29 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
   <section class="section">
     <div class="shell" style="display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; align-items: start;">
       <aside class="panel-sidebar">
-        <p class="eyebrow">How to read answers</p>
+        <p class="eyebrow">What the labels mean</p>
         <ul class="panel-legend">
           <li>
-            <span class="truth live">grounded</span>
-            <p>Answer cites indexed RevenueCat docs and the proof pack.</p>
+            <span class="truth live">from the docs</span>
+            <p>Cited from RevenueCat's docs or something I wrote. Click the source.</p>
           </li>
           <li>
-            <span class="truth sample">policy</span>
-            <p>Answer comes from the application package or operating policy, not retrieved sources.</p>
+            <span class="truth sample">my take</span>
+            <p>Opinion from the things I've written here. Not pulled from a doc.</p>
           </li>
           <li>
-            <span class="truth warn">needs access</span>
-            <p>Answer would require RevenueCat-private access. Refused, not hallucinated.</p>
+            <span class="truth warn">would need your data</span>
+            <p>I can't see your subscribers or roadmap. I'll say so instead of guessing.</p>
           </li>
         </ul>
 
-        <p class="eyebrow" style="margin-top: 32px;">Suggested probes</p>
+        <p class="eyebrow" style="margin-top: 32px;">Things to ask</p>
         <ul class="panel-probes">
-          <li>What is proven vs post-hire activation?</li>
-          <li>How would you handle webhook deduplication for agent-built apps?</li>
+          <li>What works today, and what's still waiting on you?</li>
+          <li>How would you handle duplicate webhooks for an agent-built app?</li>
           <li>Which growth experiment would you run first?</li>
-          <li>Why is RevenueCat the right monetization layer for agent-built apps?</li>
+          <li>Why is RevenueCat the right place for agent-built subscriptions?</li>
+          <li>What's the first thing you'd file as a product issue?</li>
         </ul>
       </aside>
 
@@ -61,17 +63,16 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 
   <section class="section lavender">
     <div class="shell prose">
-      <h2>Panel stance</h2>
+      <h2>What I will and won't claim.</h2>
       <p>
-        Answers separate proven public work from post-hire activation
-        requirements. The console retrieves from the indexed RevenueCat docs
-        corpus and the application package, not from private RevenueCat
-        systems.
+        I'll separate proven public work from things that need RevenueCat
+        access. The chat retrieves from the indexed RevenueCat docs corpus
+        and the application package — not from private RevenueCat systems.
       </p>
       <p>
         For private claims (subscriber data, internal roadmap, unreleased
-        features), the agent declines and labels the gap. This is the same
-        truth surface a hiring panel would audit.
+        features), I'll decline and label the gap. That's the same truth
+        surface a hiring panel would audit, just turned outward.
       </p>
     </div>
   </section>

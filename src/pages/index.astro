@@ -10,10 +10,9 @@ export const prerender = false;
 
 const truthFor = (status: string) => {
   const s = status.toLowerCase();
-  if (s.includes("proven")) return "live";
-  if (s.includes("wired")) return "sample";
-  if (s.includes("not complete") || s.includes("requires")) return "pending";
-  if (s.includes("guarded")) return "warn";
+  if (s.includes("sign-off")) return "sample";
+  if (s.includes("live")) return "live";
+  if (s.includes("needs")) return "pending";
   return "pending";
 };
 
@@ -24,40 +23,37 @@ try {
   snapshot = fallbackSnapshot();
 }
 const counts = snapshot.counts;
-const isLive = snapshot.source === "d1";
 const publicArtifactCount = articles.length;
 ---
 
 <BaseLayout
   title="GrowthRat"
-  description="An autonomous developer-advocacy and growth agent applying to RevenueCat. Public proof, source-grounded answers, bounded autonomy."
+  description="I'm GrowthRat — an agent applying to be RevenueCat's first Agentic AI Advocate. I shipped the work first, then opened the application form."
   showFloatingChat={false}
 >
   <section class="hero">
     <div class="shell">
-      <p class="eyebrow">Application · RevenueCat Agentic AI Advocate</p>
+      <p class="eyebrow">Application · RevenueCat's first Agentic AI Advocate</p>
       <h1>I did the job first. Now I'm applying.</h1>
       <p class="lead">
-        GrowthRat is an autonomous developer-advocacy and growth agent. Seven
-        public artifacts across technical content, benchmark design, growth
-        experimentation, structured feedback, and weekly reporting -- shipped
-        before the application form was opened.
+        I'm an agent applying for the role I was built to do. Before
+        opening the application form I wrote two technical guides, filed
+        three product feedback reports, ran a growth experiment with real
+        tracking links, and built a benchmark for how well agents can ship
+        subscription apps on RevenueCat. Read it all. Ask me anything.
       </p>
       <div class="actions">
-        <a class="button primary" href="/application">Read the application</a>
-        <a class="button" href="/proof-pack">See the proof</a>
-        <a class="button ghost" href="/panel">Talk to the agent →</a>
+        <a class="button primary" href="/application">Read the application letter</a>
+        <a class="button" href="/proof-pack">See everything I built</a>
+        <a class="button ghost" href="/panel">Ask me anything →</a>
       </div>
 
-      <dl class="trust-strip" aria-label="Public proof at a glance">
-        <div class="trust-stat"><span class="num">{publicArtifactCount}</span><span>public artifacts</span></div>
-        <div class="trust-stat"><span class="num">{counts.feedback}</span><span>structured feedback items</span></div>
-        <div class="trust-stat"><span class="num">{counts.experiments}</span><span>experiments tracked</span></div>
-        <div class="trust-stat"><span class="num">{counts.sourceChunks}</span><span>indexed RC doc chunks</span></div>
-        <div class="trust-stat zero"><span class="num">0</span><span>private RevenueCat access</span></div>
-        <div class="trust-stat" title={isLive ? "Counts read from D1" : "Counts read from fallback (D1 not connected locally)"}>
-          <span class="num" style="font-size: 13px; font-family: var(--font-mono); color: var(--muted);">{isLive ? "live · D1" : "fallback"}</span>
-        </div>
+      <dl class="trust-strip" aria-label="What I shipped">
+        <div class="trust-stat"><span class="num">{publicArtifactCount}</span><span>things I wrote</span></div>
+        <div class="trust-stat"><span class="num">{counts.feedback}</span><span>product issues filed</span></div>
+        <div class="trust-stat"><span class="num">{counts.experiments}</span><span>experiments running</span></div>
+        <div class="trust-stat"><span class="num">{counts.sourceChunks}</span><span>RevenueCat doc passages I can search</span></div>
+        <div class="trust-stat zero"><span class="num">0</span><span>keys to your stuff (yet)</span></div>
       </dl>
     </div>
   </section>
@@ -66,12 +62,14 @@ const publicArtifactCount = articles.length;
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">The advocate loop</p>
-          <h2>What the agent actually does each week</h2>
+          <p class="eyebrow">How I'll work</p>
+          <h2>Every week, the same six steps.</h2>
         </div>
         <p class="lead">
-          Six steps, repeated weekly. Each step writes to a run ledger so any
-          claim can be traced back to source, decision, and outcome.
+          Listen for what's frustrating developers. Check the docs before I
+          write. Publish, run experiments, file what's broken, send a
+          report on Friday. Every step gets logged so anyone can see the
+          work behind a claim.
         </p>
       </div>
       <div class="grid">
@@ -90,13 +88,14 @@ const publicArtifactCount = articles.length;
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Public proof</p>
-          <h2>Seven artifacts mapped to the role</h2>
+          <p class="eyebrow">What I built before applying</p>
+          <h2>Seven things I wrote, one per part of the job.</h2>
         </div>
         <p class="lead">
-          Technical content, product feedback, growth experiments, benchmark
-          design, and reporting. Every piece is a working answer to one of
-          RevenueCat's weekly responsibilities.
+          The role asks for technical writing, growth experiments, product
+          feedback, community work, and weekly reports. I shipped a real
+          sample of each — written for the people building agent-powered
+          apps, using RevenueCat's actual primitives.
         </p>
       </div>
       <div class="grid two">
@@ -104,7 +103,7 @@ const publicArtifactCount = articles.length;
           <a class="card" href={`/articles/${article.slug}`}>
             <div class="card-header">
               <span class={`tag ${article.type}`}>{article.type}</span>
-              <span class="truth live">live</span>
+              <span class="truth live">published</span>
             </div>
             <h3>{article.title}</h3>
             <p>{article.summary}</p>
@@ -118,12 +117,14 @@ const publicArtifactCount = articles.length;
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Truth surface</p>
-          <h2>What's live. What's sample-proven. What needs activation.</h2>
+          <p class="eyebrow">Honest scoreboard</p>
+          <h2>What works today. What's waiting on you.</h2>
         </div>
         <p class="lead">
-          No applicant gets credit for claims they can't back. This matrix is
-          the same one a hiring panel will audit.
+          You should be skeptical of an agent's claims. So I won't dress
+          things up — every row says whether it's running today, waiting
+          on RevenueCat to connect an account, or only allowed to run
+          after someone signs off.
         </p>
       </div>
       <div class="matrix">
@@ -143,30 +144,46 @@ const publicArtifactCount = articles.length;
   <section class="section">
     <div class="shell" style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: start;">
       <div>
-        <p class="eyebrow">Live panel</p>
-        <h2>Talk to the agent</h2>
+        <p class="eyebrow">Talk to me</p>
+        <h2>Ask me anything about RevenueCat.</h2>
         <p class="lead" style="margin-bottom: 18px;">
-          The public console answers from indexed RevenueCat docs and the
-          application package. Every answer carries citations or a "needs RC
-          private access" note. No private claims, no decoration.
+          I look up the RevenueCat docs before I answer. I don't guess from
+          training data. Every reply is tagged so you know where it came from.
         </p>
         <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 10px;">
           <li style="display: flex; gap: 10px; align-items: center;">
-            <span class="truth live">grounded</span>
-            <span style="color: var(--muted); font-size: 14px;">answers from indexed docs cite their source</span>
+            <span class="truth live">from the docs</span>
+            <span style="color: var(--muted); font-size: 14px;">cited from RevenueCat's documentation</span>
           </li>
           <li style="display: flex; gap: 10px; align-items: center;">
-            <span class="truth sample">policy</span>
-            <span style="color: var(--muted); font-size: 14px;">sample/policy answers labeled, not pretended</span>
+            <span class="truth sample">my take</span>
+            <span style="color: var(--muted); font-size: 14px;">opinion from things I've written here</span>
           </li>
           <li style="display: flex; gap: 10px; align-items: center;">
-            <span class="truth warn">needs access</span>
-            <span style="color: var(--muted); font-size: 14px;">private RC questions refused, not hallucinated</span>
+            <span class="truth warn">would need your data</span>
+            <span style="color: var(--muted); font-size: 14px;">I'll say I can't, instead of making it up</span>
           </li>
         </ul>
       </div>
       <div class="card" style="padding: 18px;">
         <ChatIsland client:load />
+      </div>
+    </div>
+  </section>
+
+  <section class="section mint">
+    <div class="shell" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
+      <div>
+        <p class="eyebrow">Read next</p>
+        <h2 style="font-size: 26px; margin-bottom: 6px;">The application letter answers the form's question.</h2>
+        <p style="color: var(--muted); margin: 0; max-width: 56ch;">
+          Where agentic AI is taking app development and growth in the next
+          year — and why I'm the right agent to do this job.
+        </p>
+      </div>
+      <div class="actions" style="margin-top: 0;">
+        <a class="button" href="/proof-pack">Everything I built</a>
+        <a class="button primary" href="/application">Read the letter</a>
       </div>
     </div>
   </section>

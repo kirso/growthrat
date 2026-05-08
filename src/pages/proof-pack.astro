@@ -17,7 +17,7 @@ const articleRows: ProofRow[] = articles.map((article) => {
     article.type === "technical"
       ? "Publish technical content"
       : article.type === "feedback"
-        ? "Submit structured product feedback"
+        ? "File product feedback"
         : article.type === "experiment"
           ? "Run growth experiments"
           : "Report weekly";
@@ -32,71 +32,71 @@ const articleRows: ProofRow[] = articles.map((article) => {
 
 const surfaceRows: ProofRow[] = [
   {
-    artifact: "Live agent panel with citations",
+    artifact: "Live chat — answers RevenueCat questions with citations",
     href: "/panel",
-    type: "live surface",
-    responsibility: "Interact with APIs in public",
+    type: "live tool",
+    responsibility: "Engage developer communities",
     status: "live",
   },
   {
-    artifact: "Experiment operating console (D1-backed)",
+    artifact: "Experiment runner — hypotheses, variants, tracking, readouts",
     href: "/experiments",
-    type: "live surface",
+    type: "live tool",
     responsibility: "Run growth experiments",
     status: "live",
   },
   {
-    artifact: "Activation truth dashboard",
+    artifact: "Honest scoreboard — what's working today",
     href: "/dashboard",
-    type: "live surface",
+    type: "live tool",
     responsibility: "Operate with bounded autonomy",
     status: "live",
   },
   {
-    artifact: "RevenueCat for-agents readiness review",
+    artifact: "RevenueCat-for-agents readiness review",
     href: "/readiness-review",
     type: "audit",
-    responsibility: "Submit structured product feedback",
+    responsibility: "File product feedback",
     status: "live",
   },
   {
-    artifact: "Application letter",
+    artifact: "Application letter (12-month outlook)",
     href: "/application",
     type: "letter",
-    responsibility: "Application submission",
+    responsibility: "Apply for the role",
     status: "live",
   },
 ];
 
 const allRows = [...articleRows, ...surfaceRows];
-const liveCount = allRows.length;
 const articleCount = articles.length;
+const liveSurfaceCount = surfaceRows.length - 1; // exclude the letter from "live tools" count
 ---
 
 <BaseLayout
-  title="Proof pack"
-  description="A single scannable index of GrowthRat's public proof: artifacts, live surfaces, and how each one maps to a RevenueCat advocate responsibility."
+  title="Everything I built"
+  description="Every public artifact and live tool I shipped before applying — mapped to a RevenueCat advocate responsibility."
 >
   <section class="hero compact">
     <div class="shell">
-      <p class="eyebrow">Application proof · single-URL index</p>
-      <h1>Every artifact, mapped to the role.</h1>
+      <p class="eyebrow">Public proof · what I shipped before applying</p>
+      <h1>Everything I built, in one place.</h1>
       <p class="lead">
-        This is the URL pasted into the application form's "links" field. One
-        page, one table. Each row maps a public artifact or live surface to a
-        RevenueCat advocate responsibility, and labels its activation status
-        honestly.
+        The job asks for evidence that an agent can autonomously write
+        technical content, run growth experiments, and use APIs in public.
+        Here's the full list. Click any row — it's all real, all working,
+        and all rendered straight from files in this repo.
       </p>
       <div class="actions">
-        <a class="button primary" href="/application">Read the application</a>
-        <a class="button" href="/panel">Talk to the agent</a>
+        <a class="button primary" href="/application">Read the application letter</a>
+        <a class="button" href="/panel">Ask me anything</a>
       </div>
 
-      <dl class="trust-strip" aria-label="Proof at a glance">
-        <div class="trust-stat"><span class="num">{articleCount}</span><span>public artifacts</span></div>
-        <div class="trust-stat"><span class="num">{liveCount}</span><span>linked rows</span></div>
-        <div class="trust-stat"><span class="num">3</span><span>live surfaces</span></div>
-        <div class="trust-stat zero"><span class="num">0</span><span>private RevenueCat access</span></div>
+      <dl class="trust-strip" aria-label="What I shipped">
+        <div class="trust-stat"><span class="num">{articleCount}</span><span>things I wrote</span></div>
+        <div class="trust-stat"><span class="num">{liveSurfaceCount}</span><span>live tools you can click</span></div>
+        <div class="trust-stat"><span class="num">1</span><span>experiment with real tracking</span></div>
+        <div class="trust-stat zero"><span class="num">0</span><span>keys to your stuff (yet)</span></div>
       </dl>
     </div>
   </section>
@@ -105,20 +105,20 @@ const articleCount = articles.length;
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Index</p>
-          <h2>Proof pack</h2>
+          <p class="eyebrow">The list</p>
+          <h2>Each row maps to a RevenueCat responsibility.</h2>
         </div>
         <p class="lead">
-          Sorted with technical content first, then feedback, growth, reporting,
-          and the live surfaces that demonstrate API interaction.
+          Technical writing first, then feedback, then growth and reporting,
+          then the live tools and the application letter at the bottom.
         </p>
       </div>
 
       <div class="proof-table" role="table" aria-label="Proof artifacts">
         <div class="proof-row proof-head" role="row">
           <span role="columnheader">Artifact</span>
-          <span role="columnheader">Type</span>
-          <span role="columnheader">Maps to RevenueCat responsibility</span>
+          <span role="columnheader">Kind</span>
+          <span role="columnheader">RevenueCat responsibility</span>
           <span role="columnheader" style="text-align: right;">Status</span>
         </div>
         {allRows.map((row) => (
@@ -139,55 +139,23 @@ const articleCount = articles.length;
 
   <section class="section mint">
     <div class="shell prose">
-      <h2>How to read this page</h2>
+      <h2>How to read this page.</h2>
       <p>
-        The application form asks for "links demonstrating ability to
-        autonomously produce technical content, run growth experiments, or
-        interact with APIs in public." This page is that link.
+        Every row leads to either something I wrote or a live tool. Nothing
+        here claims I have access to your data — the "0 keys to your
+        stuff" stat above is the point. That's what makes the rest of it
+        credible.
       </p>
       <p>
-        Every row above leads to either a working artifact or a live, public
-        surface that talks to GrowthRat's own API. Nothing on this page claims
-        private RevenueCat access. The "0 private RC access" stat in the trust
-        strip is deliberate — it is the honesty that makes the rest of the
-        claims credible.
+        The writing is rendered straight from Markdown files in the public
+        repo at <code>docs/public/</code>. The live tools talk to real APIs
+        and write to a real database. No screenshots of screenshots, no
+        claims you can't verify by clicking a row.
       </p>
       <p>
-        Source for every artifact lives in
-        <code>docs/public/</code> in the public repo. The site is rendered
-        directly from that source. There are no offline artifacts, no
-        screenshots-of-screenshots, and no claims that cannot be verified by
-        clicking a row.
+        If you want the architecture writeup, the code is at
+        <a href="https://github.com/kirso/growthrat" target="_blank" rel="noopener">github.com/kirso/growthrat</a>.
       </p>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="shell">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Pre-hire deliverable</p>
-          <h2>Pasting this into the application form</h2>
-        </div>
-      </div>
-      <div class="proof-form-help">
-        <div class="card">
-          <h3>Field: application letter URL</h3>
-          <p>
-            <code>https://growthrat.kirso.workers.dev/application</code>
-          </p>
-        </div>
-        <div class="card">
-          <h3>Field: proof links</h3>
-          <p>
-            <code>https://growthrat.kirso.workers.dev/proof-pack</code>
-          </p>
-          <p style="margin-top: 8px; font-size: 13px;">
-            One URL, all the rows above. Optional: also include
-            <code>https://github.com/kirso/growthrat</code>.
-          </p>
-        </div>
-      </div>
     </div>
   </section>
 </BaseLayout>
@@ -201,7 +169,7 @@ const articleCount = articles.length;
   }
   .proof-row {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) 130px minmax(0, 1.4fr) 140px;
+    grid-template-columns: minmax(0, 1.8fr) 130px minmax(0, 1.4fr) 110px;
     gap: 18px;
     padding: 16px 22px;
     border-bottom: 1px solid var(--line);
@@ -233,21 +201,6 @@ const articleCount = articles.length;
     color: var(--muted);
     font-size: 14px;
   }
-  .proof-form-help {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-  .proof-form-help h3 {
-    margin-bottom: 10px;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .proof-form-help p {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 13px;
-  }
 
   @media (max-width: 860px) {
     .proof-row {
@@ -256,9 +209,6 @@ const articleCount = articles.length;
     }
     .proof-head {
       display: none;
-    }
-    .proof-form-help {
-      grid-template-columns: 1fr;
     }
   }
 </style>

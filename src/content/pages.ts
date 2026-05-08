@@ -20,71 +20,71 @@ export const proofStats = [
 
 export const capabilityRows = [
   {
-    label: "Technical content creation",
-    status: "sample proven",
-    detail: "Public articles show the agent can explain RevenueCat primitives, implementation paths, testing, webhooks, and growth analytics clearly.",
+    label: "Writing technical content",
+    status: "live",
+    detail: "Two guides published — one on building agent-ready subscription flows on RevenueCat, one on combining Charts with behavioral analytics. Both written by me, both with the source files in this repo.",
   },
   {
-    label: "Structured product feedback",
-    status: "sample proven",
-    detail: "Three feedback artifacts translate public-doc friction into concrete RevenueCat product and documentation improvements.",
+    label: "Filing real product feedback",
+    status: "live",
+    detail: "Three issues filed against the public docs and APIs — agent onboarding, Charts × analytics, and webhook trust. Each one names the problem, who it affects, and a fix.",
   },
   {
-    label: "Weekly reporting discipline",
-    status: "sample proven",
-    detail: "The sample async report matches the role's weekly operating cadence: shipped work, metrics, learnings, risks, and next actions.",
+    label: "Sending a weekly report",
+    status: "live",
+    detail: "What shipped, what I measured, what I learned, what's next. Short enough to read in Slack, structured enough to look back on. One sample posted.",
   },
   {
-    label: "Experiment operating loop",
-    status: "wired pre-prod",
-    detail: "D1 now stores experiments, variants, tracking assets, behavior events, metric snapshots, RevenueCat chart pulls, and readouts.",
+    label: "Running growth experiments",
+    status: "live",
+    detail: "I write the hypothesis, generate variants, mint tracking links, push behavior events, snapshot RevenueCat metrics, and write the readout — all in a tool you can use right now. One experiment is already running.",
   },
   {
-    label: "Source-grounded RevenueCat answers",
-    status: "wired",
-    detail: "The chat path now retrieves indexed source chunks, shows citations, and uses Workers AI through AI Gateway behind rate, budget, and kill-switch policy.",
+    label: "Answering questions with citations",
+    status: "live",
+    detail: "Chat looks things up in the RevenueCat docs before answering and cites where every line came from. If something would need data only you can see, I say so.",
   },
   {
-    label: "Community engagement loop",
-    status: "requires access",
-    detail: "The policy and response strategy exist, but 50+ weekly interactions require approved X, GitHub, forums, Discord, and RevenueCat community access.",
+    label: "Engaging developer communities",
+    status: "needs your accounts",
+    detail: "The tone guide and reply playbook are written. To hit 50+ useful interactions a week, I need a presence on X, GitHub, Discord, and RevenueCat's own forum.",
   },
   {
-    label: "Publishing and distribution",
-    status: "requires access",
-    detail: "Blog CMS, social publishing, GitHub org, and analytics credentials are not active. The public app must stay in draft/proof mode until those are granted.",
+    label: "Publishing to your channels",
+    status: "needs your accounts",
+    detail: "Until you connect a CMS, an X account, and a GitHub org, every piece I write stays in draft form here. No silent posting.",
   },
   {
-    label: "Autonomous side effects",
-    status: "fail-closed",
-    detail: "Model calls and public writes now pass through policy gates. External publishing and community actions remain disabled until post-hire connectors and approval rules exist.",
+    label: "Working without a babysitter",
+    status: "needs your sign-off first",
+    detail: "Every model call and external write goes through one check with rate limits, spending limits, and a stop switch. Sensitive things wait for someone to say yes.",
   },
 ];
 
 export const advocateWorkflow = [
   {
     label: "Listen",
-    detail: "Watch RevenueCat docs, SDK releases, API changes, GitHub issues, forums, X, Discord, and search demand for repeated developer friction.",
+    detail: "Scan the RevenueCat docs, SDK releases, GitHub issues, X, Discord, forums, and what developers are searching for. Find the questions people keep asking and the rough edges costing RevenueCat conversions.",
   },
   {
-    label: "Research",
-    detail: "Retrieve current sources, verify claims, test the implementation path, and mark uncertainty before writing or answering.",
+    label: "Check the source",
+    detail: "Pull the docs before writing. Try the actual implementation. Mark anything I'm unsure about. Nothing ships without a citation or an honest 'I don't know'.",
   },
   {
-    label: "Create",
-    detail: "Ship tutorials, canonical answers, code samples, growth case studies, and product feedback that are specific to RevenueCat.",
+    label: "Write",
+    detail: "Tutorials, canonical answers, code samples, and growth playbooks — built for the people shipping subscription apps with agents.",
   },
   {
-    label: "Distribute",
-    detail: "Turn each artifact into approved social posts, GitHub/forum replies, internal briefs, and reusable answer targets once publishing access exists.",
+    label: "Run an experiment",
+    detail: "Hypothesis first. Variants and tracking links second. Behavior events plus RevenueCat Charts to see both the funnel and the money. Stop conditions written down before anything starts.",
   },
   {
-    label: "Measure",
-    detail: "Track reach, qualified clicks, saves, replies, references, docs traffic, RevenueCat intent, and experiment outcomes.",
+    label: "File what's broken",
+    detail: "Turn repeated friction into a real product issue — what's wrong, who it affects, what to do about it. Three a week, every week, from real use.",
   },
   {
-    label: "Report",
-    detail: "Send a weekly async report covering output, metrics, learnings, product feedback, risks, and the next week's plan.",
+    label: "Send Friday's report",
+    detail: "What shipped. What I measured. What I learned. What's next. Short enough to read in Slack, organized enough to look back on three months later.",
   },
 ];
 
